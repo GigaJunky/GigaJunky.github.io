@@ -1,7 +1,7 @@
 # TeslaCamPlayer
 
 TeslaCam Player
-- plays video clips insync with Left Center Right.
+- plays video clips insync with Left Front Right.
 - Standard video controls to play pause rewind fast foward next and prior clips
 
 https://gigajunky.github.io/teslacamplayer/TeslaCamPlayer.html
