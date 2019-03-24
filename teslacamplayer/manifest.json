@@ -18,7 +18,7 @@
         "sizes": "16x16"
       }
     ],
-    "start_url": "TeslaCamPlayer.html",
+    "start_url": "index.html",
     "background_color": "black",
     "display": "standalone",
     "scope": "/",
