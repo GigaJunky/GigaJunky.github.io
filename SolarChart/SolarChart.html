@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Tesla Solar City Performance Chart</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.js" type="text/javascript"></script>
+</head>
+
+<body>
+    <div style="width: 75%">
+        <div class="chartjs-size-monitor">
+            <div class="chartjs-size-monitor-expand">
+                <div class=""></div>
+            </div>
+            <div class="chartjs-size-monitor-shrink">
+                <div class=""></div>
+            </div>
+        </div>
+        <canvas id="canvas" style="display: block; width: 1378px; height: 689px;" width="1378" height="689" class="chartjs-render-monitor"></canvas>
+    </div>
+    <div>
+        <fieldset>
+            <input type='button' id='btnDateInc' value='-' onclick='DateAdd(-1)'>
+            <input type="date" id='tbStartDate' value="2019-06-01">
+            <input type='button' id='btnDateInc' value='+' onclick='DateAdd(1)'>
+            <input type='button' id='btnLoad' value='Load' onclick='teslaCmd()'>
+            <input type='button' id='btnDownload' value='Download' onclick='downloadToday()'>
+            <label for="cbCache" >Cache</label>
+            <input type='checkbox' id='cbCache' checked=true >
+            <label for="cbCombine" >Combine Production</label>
+            <input type='checkbox' id='cbCombine' checked=true >
+
+            <br>
+            <label id="lblMsg"></label>
+        </fieldset>
+        <fieldset>
+            <legend>Solar City IDs</legend>
+            <label for="tbCustomerGUID" >Customer ID</label>
+            <input type='text' id='tbCustomerGUID' size="34" />
+
+            <label for="tbDefaultInstallationGUID" >Installation ID</label>
+            <input type='text' id='tbDefaultInstallationGUID' size="34" />
+        </fieldset>
+        <fieldset>
+                <legend>Dark Sky Weather API:</legend>
+                <label for="tbDarkSkyID" >DarkSky ID</label>
+                <input type='text' id='tbDarkSkyID' size="34" />
+    
+                <label for="tbLatitude" >Latitude</label>
+                <input type='text' id='tbLatitude' />
+
+                <label for="tbLongitude" >Latitude</label>
+                <input type='text' id='tbLongitude' />
+
+    
+        </fieldset>
+    </div>
+    <!--
+    <form id="jsonFile" name="jsonFile" enctype="multipart/form-data" method="post">
+        <fieldset>
+            <h3>Json File</h3>
+            <input type='file' id='fileinput'>
+            <input type='button' id='btnLoad' value='Load' onclick='teslaCmd()'>
+        </fieldset>
+    </form>
+    -->
+        <script src="SolarChart.js"></script>
+    </script>
+</body>
+
+</html>
