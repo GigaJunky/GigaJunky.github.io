@@ -10,17 +10,46 @@ tbDefaultInstallationGUID = document.getElementById('tbDefaultInstallationGUID')
               tbLongitude = document.getElementById('tbLongitude'),
               tbStartDate.value = new Date().toISOString().substr(0, 10)
               , config = {}
+          
 
-
-tbDarkSkyID.addEventListener('change', function () {
-    console.log('dsid changed:', tbDarkSkyID.value)
-    LoadConfig(true)
-  })
-  
+, configs = document.querySelectorAll('.config').forEach(c => c.addEventListener('change', () => updateConfig()))
 
 LoadConfig()
 
 function isGUID(GUID){ return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(GUID) }
+
+function updateConfig()
+{
+    let sParams = location.search // .hash.replace('#','?')
+        ,params = new URLSearchParams(sParams)
+    console.log('params: ', [...params].length,  sParams)
+    console.log('tbCustomerGUID.value: ', tbCustomerGUID.value)
+
+    config.CustomerGUID = tbCustomerGUID.value
+    config.DefaultInstallationGUID = tbDefaultInstallationGUID.value
+    config.DarkSkyID = tbDarkSkyID.value
+    config.Lat = tbLatitude.value
+    config.Long = tbLongitude.value
+    console.log('updateConfig:', config)
+
+    updateParam(params, 'CustomerID', 'CustomerGUID')
+    updateParam(params, 'InstallID', 'DefaultInstallationGUID')
+    updateParam(params, 'DarkSkyID')
+    updateParam(params, 'Lat')
+    updateParam(params, 'Long')
+
+    if(sParams !== params.toString()) location.search = params.toString()
+}
+
+function updateParam(params, p, cn)
+{
+    if(!cn) cn = p
+    console.log('cn: ', cn)
+    let v = config[cn]
+    if(v && v!=='undefined')
+        if(!params.has(p)) params.append(p, config[cn]); else params.set(p, config[cn])
+    
+}
 
 function LoadConfig(bReload = false)
 {
@@ -28,19 +57,17 @@ function LoadConfig(bReload = false)
     //if(lsConfig) config = JSON.parse(lsConfig)
 
     let sParams = location.search //.hash.replace('#','?')
-    console.log('sParams: ', sParams)
-    let params = new URLSearchParams(sParams)
-    console.log('params: ', [...params].length)
-
+    ,params = new URLSearchParams(sParams)
+    console.log('params: ', [...params].length,  sParams)
     config.DefaultInstallationGUID = params.get('InstallID')
     config.CustomerGUID = params.get('CustomerID')
     config.DarkSkyID = params.get('DarkSkyID')
     config.Lat = params.get('Lat')
     config.Long = params.get('Long')
 
-    tbDefaultInstallationGUID.value = config.DefaultInstallationGUID.toUpperCase()
-    tbCustomerGUID.value = config.CustomerGUID.toUpperCase()
-    tbDarkSkyID.value = config.DarkSkyID.toUpperCase()
+    tbDefaultInstallationGUID.value = config.DefaultInstallationGUID
+    tbCustomerGUID.value = config.CustomerGUID
+    tbDarkSkyID.value = config.DarkSkyID
     tbLatitude.value = config.Lat
     tbLongitude.value = config.Long
 
@@ -80,7 +107,7 @@ function LoadConfig(bReload = false)
         } else return false
     }
     */
-    return true
+    return true //isGUID(config.CustomerGUID) && isGUID(config.DefaultInstallationGUID)
 }
 
 
@@ -154,7 +181,7 @@ function createCmdUrl(type, sStartDate, sEndDate) {
 }
 function createDSdUrl(sDate) {
     let utime = Math.round((new Date(sDate).getTime()) / 1000),
-    urlprefix = '' //'https://cors-anywhere.herokuapp.com/'
+    urlprefix = 'https://cors-anywhere.herokuapp.com/'
     return `${urlprefix}https://api.darksky.net/forecast/${config.DarkSkyID}/${config.Lat},${config.Long},${utime}`
 }
 
@@ -187,7 +214,7 @@ function teslaCmd() {
             ajax(cmd, (c) => {
                 console.log('Tesla Command: ', cmd, type, c)
                 lblMsg.innerText = m.Message ? m.Message : ''
-                ajax(createDSdUrl(sStartDate), w => {
+                getWeather(sStartDate, w => {
                     console.log('w: ', w)
                     let mc = reduceData({ m, c, w })
                     localStorage.setItem(sStartDate, JSON.stringify(mc))
@@ -197,6 +224,15 @@ function teslaCmd() {
             })
         })
     }
+}
+
+function getWeather(sStartDate, cb)
+{
+    if(config.DarkSkyID === null) cb(null)
+    ajax(createDSdUrl(sStartDate), w => {
+        console.log('w: ', w)
+        cb(w)
+    })
 }
 
 function ajax(cmd, cb) {
@@ -214,9 +250,13 @@ function Sum(nums) { return nums.reduce((total, sum) => total + sum) }
 function reduceData(data) {
     var day = data.m.Devices[0].Measurements[0].Timestamp.substr(0, 10)
         , c = data.c.Consumption.map(o => o.ConsumptionInIntervalkWh)
-        , temp = data.w.hourly.data.map(o => o.temperature)
-        , uv = data.w.hourly.data.map(o => o.uvIndex)
-        , e = []
+        , e = [], temp = [], uv = []
+
+    if (data.w) {
+         temp = data.w.hourly.data.map(o => o.temperature)
+         uv = data.w.hourly.data.map(o => o.uvIndex)
+    }
+        
     //for (let i=0;i<data.m.Devices.length; i++) e[i] = data.m.Devices[i].Measurements.map(o => o.EnergyInIntervalkWh) // not allways 24
     data.m.Devices.forEach((d,i) => e[i] = Measureto24Hours(d.Measurements))
     return { day, e: e, c, temp, uv, retrieved: new Date().toISOString() }
