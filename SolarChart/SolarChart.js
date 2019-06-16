@@ -8,9 +8,9 @@ tbDefaultInstallationGUID = document.getElementById('tbDefaultInstallationGUID')
               tbDarkSkyID = document.getElementById('tbDarkSkyID'),
                tbLatitude = document.getElementById('tbLatitude'),
               tbLongitude = document.getElementById('tbLongitude'),
-                      
-tbStartDate.value = new Date().toISOString().substr(0, 10)
-, config = {}
+              tbStartDate.value = new Date().toISOString().substr(0, 10)
+              , config = {}
+
 
 tbDarkSkyID.addEventListener('change', function () {
     console.log('dsid changed:', tbDarkSkyID.value)
@@ -24,10 +24,29 @@ function isGUID(GUID){ return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-
 
 function LoadConfig(bReload = false)
 {
-    let lsConfig = localStorage.getItem('config')
-    console.log(lsConfig)
-    if(lsConfig) config = JSON.parse(lsConfig)
+    //let lsConfig = localStorage.getItem('config')
+    //if(lsConfig) config = JSON.parse(lsConfig)
+
+    let sParams = location.search //.hash.replace('#','?')
+    console.log('sParams: ', sParams)
+    let params = new URLSearchParams(sParams)
+    console.log('params: ', [...params].length)
+
+    config.DefaultInstallationGUID = params.get('InstallID')
+    config.CustomerGUID = params.get('CustomerID')
+    config.DarkSkyID = params.get('DarkSkyID')
+    config.Lat = params.get('Lat')
+    config.Long = params.get('Long')
+
+    tbDefaultInstallationGUID.value = config.DefaultInstallationGUID.toUpperCase()
+    tbCustomerGUID.value = config.CustomerGUID.toUpperCase()
+    tbDarkSkyID.value = config.DarkSkyID.toUpperCase()
+    tbLatitude.value = config.Lat
+    tbLongitude.value = config.Long
+
+    /*
     if(!bReload) bReLoad = isGUID(config.CustomerGUID) && isGUID(config.DefaultInstallationGUID)
+    console.log('load config: ', bReload, config)
 
     if (!bReload ){
         console.log('config: ', config)
@@ -37,6 +56,16 @@ function LoadConfig(bReload = false)
         tbDarkSkyID.value = config.DarkSkyID
         tbLatitude.value = config.Lat
         tbLongitude.value = config.Long
+        
+        if(!params.has('CustomerID')) params.append('CustomerID', config.CustomerGUID)
+        if(!params.has('InstallID'))  params.append('InstallID', config.DefaultInstallationGUID)
+        if(!params.has('DarkSkyID'))  params.append('DarkSkyID', config.DarkSkyID)
+        if(!params.has('Lat')) params.append('Lat', config.Lat)
+        if(!params.has('Long')) params.append('Long', config.Long)
+        console.log('params: ', ...params)
+        //InstallID=AB575606-2AFC-4612-B600-B9A936B1FA8D&DarkSkyID=2201d75803a232b0c55d4133be6c7dda&Lat=41.716&Long=-88.0138
+
+        //if(params.length !=5) location.search = params.toString()
 
     }else{
         config.DefaultInstallationGUID = tbDefaultInstallationGUID.value.toUpperCase()
@@ -50,6 +79,7 @@ function LoadConfig(bReload = false)
             return true
         } else return false
     }
+    */
     return true
 }
 
@@ -123,9 +153,9 @@ function createCmdUrl(type, sStartDate, sEndDate) {
     return `https://mysolarcity.com/solarcity-api/powerguide/v1.0/${type}/${config.DefaultInstallationGUID}?ID=${config.CustomerGUID}&IsByDevice=true&Period=Hour&StartTime=${sEndDate}T00:00:00&EndTime=${sStartDate}T23:59:59`
 }
 function createDSdUrl(sDate) {
-    let utime = Math.round((new Date(sDate).getTime()) / 1000)
-    return `https://cors-anywhere.herokuapp.com/https://api.darksky.net/forecast/e6af5b5feb891b272e18f5e2fc0370a6/${config.Lat},${config.Long},${utime}`
-    //return `https://api.darksky.net/forecast/${config.DarkSkyID}/${config.lat},${config.long},${utime}`
+    let utime = Math.round((new Date(sDate).getTime()) / 1000),
+    urlprefix = '' //'https://cors-anywhere.herokuapp.com/'
+    return `${urlprefix}https://api.darksky.net/forecast/${config.DarkSkyID}/${config.Lat},${config.Long},${utime}`
 }
 
 
