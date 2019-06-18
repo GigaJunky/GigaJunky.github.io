@@ -20,7 +20,7 @@
         <canvas id="canvas" style="display: block; width: 1378px; height: 689px;" width="1378" height="689" class="chartjs-render-monitor"></canvas>
     </div>
     <div>
-        <fieldset>
+        <fieldset id="controls" title="Double Click to Show/Hide Config Form" >
             <input type='button' id='btnDateInc' value='-' onclick='DateAdd(-1)'>
             <input type="date" id='tbStartDate' value="2019-06-01">
             <input type='button' id='btnDateInc' value='+' onclick='DateAdd(1)'>
@@ -30,11 +30,10 @@
             <input type='checkbox' id='cbCache' checked=true >
             <label for="cbCombine" >Combine Production</label>
             <input type='checkbox' id='cbCombine' checked=true >
-
             <br>
             <label id="lblMsg"></label>
         </fieldset>
-        <fieldset>
+        <fieldset id="configSC" style="display: none">
             <legend>Solar City IDs</legend>
             <label for="tbCustomerGUID" >Customer ID</label>
             <input type='text' id='tbCustomerGUID' size="34" class='config'/>
@@ -42,7 +41,7 @@
             <label for="tbDefaultInstallationGUID" >Installation ID</label>
             <input type='text' id='tbDefaultInstallationGUID' size="34"  class='config'/>
         </fieldset>
-        <fieldset>
+        <fieldset id="configWeather" style="display: none">
                 <legend>Dark Sky Weather API:</legend>
                 <label for="tbDarkSkyID" >DarkSky ID</label>
                 <input type='text' id='tbDarkSkyID' size="34"  class='config'/>

@@ -8,11 +8,20 @@ tbDefaultInstallationGUID = document.getElementById('tbDefaultInstallationGUID')
               tbDarkSkyID = document.getElementById('tbDarkSkyID'),
                tbLatitude = document.getElementById('tbLatitude'),
               tbLongitude = document.getElementById('tbLongitude'),
+                 ConfigSC = document.getElementById('configSC'),
+            ConfigWeather = document.getElementById('configWeather')
               tbStartDate.value = new Date().toISOString().substr(0, 10)
               , config = {}
-          
-
 , configs = document.querySelectorAll('.config').forEach(c => c.addEventListener('change', () => updateConfig()))
+document.getElementById('controls').addEventListener('dblclick',toggleConfigForm)
+
+function toggleConfigForm(e, bShow){
+    if(bShow === undefined) bShow = configSC.style.display === 'none'
+    display = bShow ? 'block' : 'none'
+    console.log('display: ', display, bShow)
+         configSC.style.display = display
+    configWeather.style.display = display
+}
 
 LoadConfig()
 
@@ -107,7 +116,7 @@ function LoadConfig(bReload = false)
         } else return false
     }
     */
-    return true //isGUID(config.CustomerGUID) && isGUID(config.DefaultInstallationGUID)
+    return isGUID(config.CustomerGUID) && isGUID(config.DefaultInstallationGUID)
 }
 
 
@@ -189,6 +198,7 @@ function createDSdUrl(sDate) {
 function teslaCmd() {
     if(!LoadConfig()){
         alert('Please Enter Customer and Installation ID')
+        toggleConfigForm(null, true)
         return false
     }
     let mc, cache, sStartDate = tbStartDate.value, sEndDate = sStartDate
