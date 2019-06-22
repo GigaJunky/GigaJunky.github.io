@@ -3,17 +3,17 @@
     "name": "Teslacam Player",
     "icons": [
       {
-        "src": "./teslacamplayer/icons/tesla196.png",
+        "src": "./icons/tesla196.png",
         "type": "image/png",
         "sizes": "196x196"
       },
       {
-        "src": "./teslacamplayer/icons/tesla128.png",
+        "src": "./icons/tesla128.png",
         "type": "image/png",
         "sizes": "128x128"
       },
       {
-        "src": "./teslacamplayer/icons/tesla16.png",
+        "src": "./icons/tesla16.png",
         "type": "image/png",
         "sizes": "16x16"
       }
