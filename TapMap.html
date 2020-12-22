@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Tap Map</title>
+    <style>
+        body { font-family: Arial, Helvetica, sans-serif }
+        table, th, td { border: 1px solid #000000; border-collapse: collapse; padding: 4px }
+        th {background-color: lightgray}
+    </style>
+</head>
+<h1>Tap Map</h1>
+<body>
+    <div style="display:flex">
+    <table id='tbl1'><tr><th onclick="LoadTable('n')">Key</th><th onclick="LoadTable('d')">D</th><th onclick="LoadTable('x2')">x2</th><th onclick="LoadTable('x3')">x3</th><th onclick="LoadTable('l')">Left</th><th onclick="LoadTable('r')">Right</th></tr><tbody id='tb'></tbody></table>
+    <textarea id='ta1'></textarea>
+    <label id="lblCharCount"></label>
+    </div>
+</body>
+<script>
+
+    class TypeSpeed {
+        constructor(ta, lbl) {
+            this.ta1 = document.getElementById(ta)
+            this.lbl1 = document.getElementById(lbl)
+            this.start = 0, this.stop = 0, this.charCount = 0, this.wordCount = 0, this.elapsed = 0, this.cpm = 0, this.wpm = 0, this.pcharCount = 0, this.presses = 0
+
+            ta1.addEventListener("keydown", (e) => {
+                this.presses++
+                this.charCount = this.ta1.value.length
+                if(this.charCount === this.pcharCount) return
+                else this.pcharCount = this.charCount
+                this.wordCount = this.ta1.value.split(' ').filter(c => c.length).length
+                if (this.charCount == 1) {this.start = performance.now(); this.presses = 0}
+
+                this.elapsed = Math.round((performance.now() - this.start) / 1000)
+                this.cps = Math.round(this.charCount / this.elapsed)
+                this.wpm = Math.round(this.wordCount / this.elapsed * 60)
+                this.lbl1.innerText = `key ${e.key} Chars: ${this.charCount} Words: ${this.wordCount} CPS: ${this.cps} WPM: ${this.wpm} Elasped = ${this.elapsed} Presses ${this.presses}.`
+            })
+        }
+    }
+
+    class TapMap {    
+        constructor() {
+            this.tapmap = {
+                alpha: '.UOSIZL]EBMXTQ<HAYK_DWGCNPFV^JR ' ,
+                digit: ' 54938  27     016              ' ,
+                punc2: '  Q J / ![, "  -  ? & >: (    \' ',
+                punc3: ' _    + =   #   @ * $         % ',
+                cname: { ' ': ' Space', '<': ' Back Space', '_': ' Return', '^' : ' Shift', ']': ' Switch'},
+                //trans: ['0', '1'],
+                //transq: ['\u25A1', '\u25A0'],
+                trans: ['\u25CE', '\u25C9'],
+                o: 'd', d: 1
+                //,ctm : []
+            }
+        }
+        //http://www.alanwood.net/demos/wingdings.html
+        dec2bin(dec) { return ('00000' + (dec >>> 0).toString(2)).slice(-5) }
+        tc(s){ return s.replaceAll('0', this.tapmap.trans[0] ).replaceAll('1', this.tapmap.trans[1])}
+        reverse(s) { return s.split("").reverse().join("") }
+        CreateTapMap(){
+            let m = [], tm = this.tapmap
+            for(let i=1;i<32;i++)
+                m.push({
+                    i: i, d: tm.digit[i], x2: tm.punc2[i], x3: tm.punc3[i],
+                    n: tm.cname.hasOwnProperty(tm.alpha[i]) ? tm.cname[tm.alpha[i]] : tm.alpha[i],
+                    l: this.reverse(this.dec2bin(i)), r: this.dec2bin(i)
+                })
+            tm.ctm = m.sort((a,b)=>a[tm.o]>b[tm.o]?tm.d:-tm.d)
+        }   
+
+    }
+
+    function LoadTable(o, d){
+        if (o!=tm.tapmap.o) tm.tapmap.o = o
+        else tm.tapmap.d = tm.tapmap.d * -1
+         
+        let h = ''
+        tm.CreateTapMap(o,d)
+        for (const i of tm.tapmap.ctm) h+=`<tr><td>${i.n}</td><td>${i.d}</td><td>${i.x2}</td><td>${i.x3}</td><td>${tm.tc(i.l)}</td><td>${tm.tc(i.r)}</td></tr>`
+        document.getElementById('tb').innerHTML = h
+    }
+
+    let p = 0, tm = new TapMap()
+       ,ts = new TypeSpeed('ta1', 'lblCharCount')
+       , tbl1 = document.getElementById('tbl1')
+    LoadTable('n', 0)
+    ta1.addEventListener("keydown", (e) => {
+        let i = tm.tapmap.ctm.findIndex( t => t.d === e.key || t.x2 === e.key || t.x3 === e.key || t.n === e.key.toUpperCase() );
+        tbl1.rows[i+1].style.backgroundColor = 'red'
+        tbl1.rows[p].style.backgroundColor = 'white'
+        p = i+1
+    })
+    
+</script>
+</html>
