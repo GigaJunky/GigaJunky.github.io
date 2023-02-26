@@ -31,8 +31,10 @@
     })
 
     Audio.onloadedmetadata = ()=>{
-        console.log('Audio duration: ', Audio.duration)
-        AudioDuration = AudioDuration.duration
+        console.log('Audio duration: ', Audio.duration, Audio)
+        AudioDuration = Audio.duration
+        //h.create(AudioDuration, [ { c: 'mf', d: 'blank'}, { c: 'sp', d: 'Tesla Light Show Player 2022.01'}])
+
     }
     Audio.onplaying = () => {
         TrackPaused = false
@@ -65,14 +67,16 @@
         }
         console.log('files: ', files)
         Audio.src = window.URL.createObjectURL(files.audio)
-        let reader = new FileReader()
-        reader.readAsArrayBuffer(files.fseq)
-        reader.onload = () => {
-            h.readHeader(new Uint8Array(reader.result))
-            MemBar()
-            console.log('LastNonZero(),', h.LastNonZero(), h.data.length )
 
-            onPlay()
+        if(files.fseq){
+            let reader = new FileReader()
+            reader.readAsArrayBuffer(files.fseq)
+            reader.onload = () => {
+                h.readHeader(new Uint8Array(reader.result))
+                MemBar()
+                console.log('LastNonZero(),', h.LastNonZero(), h.data.length )
+                onPlay()
+            }
         }
     }
 
@@ -86,12 +90,11 @@
 
     function findLSFiles(filelist)
     {
-        if(filelist.length < 2) return;
+        //if(filelist.length < 2) return;
         let files = {}
         for (const f of filelist)
             if(!files.fseq && /\.fseq$/i.test(f.name)) files.fseq = f
             else if(!files.audio && /\.(mp3|wav)$/i.test(f.name)) files.audio = f
-
         return files
     }
 
@@ -148,6 +151,61 @@
             e.push(`Expected total duration to be less than 5 minutes or 300 seconds, got ${h.duration_s}}`)
         return e
     }
+
+    function DrawCanvas1()
+    {
+        var c = document.getElementById("canvas1")
+        var ctx = c.getContext("2d")
+        console.log(h)
+        c.width = h.FrameCount 
+        ctx.beginPath()
+        ctx.lineWidth = 40;
+        ctx.strokeStyle = "white";
+        ctx.stroke()
+        let cc1 = h.ChToggleCount1()
+
+        console.log('chs:', cc1)
+        for (const i of cc1[14]) {
+            if(i.value ==0){
+                console.log(i)
+                ctx.moveTo(i.startTime, 50)
+                //ctx.lineTo(50, i.startTime)
+                ctx.lineTo( i.endTime, 50)
+                ctx.stroke()
+            }
+        }
+    }
+
+    function DrawCanvas() {
+        var c = document.getElementById("canvas1")
+        var ctx = c.getContext("2d")
+        c.width = h.FrameCount
+        ctx.scale(2, 2) 
+
+        var black = ctx.createImageData(1,1)
+        var d  = black.data  
+        d[0] = 0
+        d[1] = 0
+        d[2] = 0
+        d[3] = 0
+
+        var white = ctx.createImageData(1,1)
+        var d  = white.data
+        d[0] = 255
+        d[1] = 255
+        d[2] = 255
+        d[3] = 255
+        
+        for (let f = 0; f < h.FrameCount; f++) {
+            let os =  f * h.ChannelCount  + h.ChannelDataOffset
+            for (let ch = 0; ch < h.ChannelCount; ch++) {
+                let chVal = h.data[os + ch]
+                ctx.putImageData(chVal == 0 ? black : white, f, ch * 2);
+
+            }
+        }
+    }
+
 
     function Download()
     {

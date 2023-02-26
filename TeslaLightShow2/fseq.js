@@ -182,7 +182,7 @@ class FSeq {
                 }
             }
         }
-        console.log('chs:', chs)
+        return chs
     }
 
     memoryUsed() {

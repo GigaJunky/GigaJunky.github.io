@@ -30,35 +30,37 @@
       <div class="img-overlay-wrap">
         <img src="./s_headlights.png" class="mirror" style="width: 700px" onclick="clickHotspotImage(event)">
         <svg viewBox="0 0 1200 760" class="mirror">
-      <polygon class="LeftInnerMainBeam" points="336,204,365,212,513,210,500,271,370,278,243,241"/>
-      <polygon class="LeftOuterMainBeam" points="517,214 698,199 725,156 779,160 782,206 762,238 719,255 510,272"/>
-      <polygon class="LeftSignature" points="357,173,496,144,647,123,761,122,815,134,820,195,807,248,775,266,669,284,637,273,744,252,778,237,795,199,797,144,689,136,528,151,402,171,244,239,228,234"/>
-      <polygon class="LeftChannel4" points="620,142,704,140,679,188,617,195"/>
-      <polygon class="LeftChannel5" points="499,160 613,144 613,196 498,200"/>
-      <polygon class="LeftChannel6" points="413,173 490,159 494,202 393,206 357,194"/>
-      <polygon class="LeftFrontTurn" points="679,288,711,282,798,266,817,230,821,134,837,138,841,199,821,273,745,288,695,297"/>
-      <polygon class="LeftFrontFog" points="792,602 845,602 845,634 792,634"/>
-      <polygon class="LeftAuxPark" points="560,650,598,637,735,622,752,641,564,659"/>
-      <polygon class="LeftSideMarker" points="518,670,558,651,554,677,518,681"/>
-    </svg>
+            <polygon class="LeftInnerMainBeam" points="336,204,365,212,513,210,500,271,370,278,243,241"/>
+            <polygon class="LeftOuterMainBeam" points="517,214 698,199 725,156 779,160 782,206 762,238 719,255 510,272"/>
+            <polygon class="LeftSignature" points="357,173,496,144,647,123,761,122,815,134,820,195,807,248,775,266,669,284,637,273,744,252,778,237,795,199,797,144,689,136,528,151,402,171,244,239,228,234"/>
+            <polygon class="LeftChannel4" points="620,142,704,140,679,188,617,195"/>
+            <polygon class="LeftChannel5" points="499,160 613,144 613,196 498,200"/>
+            <polygon class="LeftChannel6" points="413,173 490,159 494,202 393,206 357,194"/>
+            <polygon class="LeftFrontTurn" points="679,288,711,282,798,266,817,230,821,134,837,138,841,199,821,273,745,288,695,297"/>
+            <polygon class="LeftFrontFog" points="792,602 845,602 845,634 792,634"/>
+            <polygon class="LeftAuxPark" points="560,650,598,637,735,622,752,641,564,659"/>
+            <polygon class="LeftSideMarker" points="518,670,558,651,554,677,518,681"/>
+        </svg>
     </div>
 
     <div class="img-overlay-wrap">
         <img src="./s_headlights.png" style="width: 700px" onclick="clickHotspotImage(event)">
         <svg viewBox="0 0 1200 760">
-    <polygon class="RightOuterMainBeam" points="517,214 698,199 725,156 779,160 782,206 762,238 719,255 510,272"/>
-    <polygon class="RightInnerMainBeam" points="336,204,365,212,513,210,500,271,370,278,243,241"/>
-    <polygon class="RightSignature" points="357,173,496,144,647,123,761,122,815,134,820,195,807,248,775,266,669,284,637,273,744,252,778,237,795,199,797,144,689,136,528,151,402,171,244,239,228,234"/>
-    <polygon class="RightChannel4" points="620,142,704,140,679,188,617,195"/>
-    <polygon class="RightChannel5" points="499,160 613,144 613,196 498,200"/>
-    <polygon class="RightChannel6" points="413,173 490,159 494,202 393,206 357,194"/>
-    <polygon class="RightFrontTurn" points="679,288,711,282,798,266,817,230,821,134,837,138,841,199,821,273,745,288,695,297"/>
-    <polygon class="RightFrontFog" points="792,602 845,602 845,634 792,634"/>
-    <polygon class="RightAuxPark" points="560,650,598,637,735,622,752,641,564,659"/>
-    <polygon class="RightSideMarker" points="518,670,558,651,554,677,518,681"/>
-
-  </svg>
+            <polygon class="RightOuterMainBeam" points="517,214 698,199 725,156 779,160 782,206 762,238 719,255 510,272"/>
+            <polygon class="RightInnerMainBeam" points="336,204,365,212,513,210,500,271,370,278,243,241"/>
+            <polygon class="RightSignature" points="357,173,496,144,647,123,761,122,815,134,820,195,807,248,775,266,669,284,637,273,744,252,778,237,795,199,797,144,689,136,528,151,402,171,244,239,228,234"/>
+            <polygon class="RightChannel4" points="620,142,704,140,679,188,617,195"/>
+            <polygon class="RightChannel5" points="499,160 613,144 613,196 498,200"/>
+            <polygon class="RightChannel6" points="413,173 490,159 494,202 393,206 357,194"/>
+            <polygon class="RightFrontTurn" points="679,288,711,282,798,266,817,230,821,134,837,138,841,199,821,273,745,288,695,297"/>
+            <polygon class="RightFrontFog" points="792,602 845,602 845,634 792,634"/>
+            <polygon class="RightAuxPark" points="560,650,598,637,735,622,752,641,564,659"/>
+            <polygon class="RightSideMarker" points="518,670,558,651,554,677,518,681"/>
+      </svg>
   </div>
+  <div style="max-width:1800px; overflow-x: scroll;">
+    <canvas id="canvas1" width="1000px" height="96" style=" background-color: black;"></canvas>
+</div>   
     <div class="grid-container">
         <div class="LeftOuterMainBeam channel"></div>
         <div class="RightOuterMainBeam channel" ></div>
@@ -126,8 +128,9 @@
     <!--  webkitdirectory directory >-->
     <audio id="Audio" controls></audio>
     <button id="btnPlay" onclick="onPlay()">Play</button>
-    <button id="btnPlay" onclick="h.clear()">Clear</button>
-    <button id="btnPlay" onclick="h.ChToggleCount()">Ch Count</button>
+    <button id="btnClear" onclick="h.clear()">Clear</button>
+    <button id="btnMemUsed" onclick="h.memoryUsed()">Ch Count</button>
+    <button id="btnDraw" onclick="DrawCanvas()">Ch Count</button>
     <button id="btnDownload" onclick="Download()">Download</button>
     <div class="progress-bar" title="">
         <span id="MemoryUsed" class="progress-bar-fill" style="width: 0%">0%</span>
