@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<header>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</header>
+
+<body>
+    <textarea style="width:95vw;height: 95vh;" id="tOut"></textarea>
+    <br>
+    <input type="text" id="tIn" style="width: 95%" />
+</body>
+<script src="jsAdv.js"></script>
+<script src="blackSanctum.js"></script>
+<script>
+
+var tIn = document.getElementById("tIn"),
+     tOut = document.getElementById("tOut")
+     
+    document.getElementById("tIn").addEventListener("keyup", e => { if (e.keyCode === 13) handleInput() })
+    tOut.value = Look()
+    tIn.focus()
+
+    function handleInput() {
+        tOut.value += "\r\n \r\n<=" + tIn.value
+        tOut.value  += "\r\n \r\n" + Parser(tIn.value)
+        tIn.value = ''
+        tOut.scrollTop = tOut.scrollHeight;
+    }
+
+</script>
+</html>
