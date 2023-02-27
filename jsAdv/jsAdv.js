@@ -1,4 +1,23 @@
+/*
+const fs = require("fs")
+,readline = require('readline')
+,adv = JSON.parse(fs.readFileSync("blackSanctum.json"))
+const locs = adv.locs, events = adv.events, gets = adv.gets
+*/
 let currentLoc = 0, turns = 0, light = { on: false, t: 40 }, maxinv = 5, inv = []
+/*
+for (const i in adv.info) {
+    console.log(i, adv.info[i])
+}
+console.log()
+
+
+let rl = readline.createInterface(process.stdin, process.stdout)
+
+rl.on('line', function (line) {
+    console.log(Parser(line))
+})
+*/
 
     function CheckEvents() {
 
@@ -37,8 +56,6 @@ let currentLoc = 0, turns = 0, light = { on: false, t: 40 }, maxinv = 5, inv = [
         if (input.trim() === "") return Look()
 
         let cmds = input.toLowerCase().split(' ').map(i => i.trim())
-
-        console.log(cmds, "newsud".indexOf(cmds[0]))
 
         if ("newsud".indexOf(cmds[0]) >= 0) return Go(cmds[0])
         const verb = cmds[0].substring(0,4), cl = locs[currentLoc]
@@ -102,8 +119,6 @@ let currentLoc = 0, turns = 0, light = { on: false, t: 40 }, maxinv = 5, inv = [
                 }
                 return "Don't be rediculus."
 
-            case "invocare": //EPISCOPUS
-                return "The building trembles and unearthly shrieks fill the room. A hideous demon appears in the circle as it burst into flames. \nCongratulations, you've destroyed them.\n  The Adventure is over.\n {turns} moves where used.\n Pay again (Y/n)?"
             // drink, taste
             //drink wine return "It tastes like burgandy."
             //There's water in it.
@@ -122,11 +137,25 @@ let currentLoc = 0, turns = 0, light = { on: false, t: 40 }, maxinv = 5, inv = [
 
     function Missing(inv, required){
         if(!inv || !required) return false
-        const m = findIndexes(inv, required).filter(f => f <0).length >0
-        console.log("missing:", inv, required, m)
-        return m
+        return findIndexes(inv, required).filter(f => f <0).length >0
     }
+
     function fnCall(fn, noun)
+    {
+        if(fn == "Get")return Get(noun)
+        else return fn+noun 
+
+    }
+
+    function fnCallN(fn, noun)
+    {
+        if (fn in global && typeof global[fn] === "function") {
+            return global[fn](noun)
+          }
+          else return fn + noun
+    }
+
+    function fnCallB(fn, noun)
     {
         f = window[fn]
         if (typeof f === "function") return f(noun)
@@ -134,21 +163,18 @@ let currentLoc = 0, turns = 0, light = { on: false, t: 40 }, maxinv = 5, inv = [
     }
 
     function Look(i) {
-        turns++
-        console.log(`Look: ${turns} ${i}`)
         const l = locs[currentLoc]
 
         if (!i){ //room
             if(locs[currentLoc].dark)
                 if (!light.on) return "It's now pitch black. I can't see anything. It's dangerous to move around in the dark!"
-            return `[${currentLoc}] ${CheckEvents()} ${l.desc}.
+            return `${CheckEvents()} ${l.desc}.
 ${ObDirs(l.d)}
 ${ISee(l)}`
         }
 
         var el = l.i.find(a => a.n.includes(i))
         if(el){
-            console.log('look i:', el)
             if(el.i && el.i.length > 0){
                 l.i.push(el.i.shift())
                 return 'Hey, I found somthing!'
@@ -175,7 +201,6 @@ ${ISee(l)}`
     }
 
     function ObDirs(d) {
-        console.log("obDirs: ", d)
         if (!d) return ""
         var ds = Object.keys(d).map(k => lookup(k)).filter(f => f)
         return ds.length ? "Obvious directions: " +  ds.join(", ") : ""
@@ -184,7 +209,6 @@ ${ISee(l)}`
     function ISee(l) {
         let items = []
         if (l.i) for (const i of l.i) if(i.w > -2) items.push(i.n)
-        console.log("I See:", items, l.i)
         return `I see: ${items.join(", ")}.`
     }
 
@@ -204,7 +228,6 @@ ${ISee(l)}`
         const dn = Object.keys(locs[currentLoc].d).find( f => f.includes(direction))
         const d = locs[currentLoc].d[dn]
         
-        console.log("Go: ", direction, dn)
         if (!d || dn.length > 1 && direction.length < 3) return "I see no way to go in that direction."
 
         if (typeof d === "number")
@@ -219,11 +242,9 @@ ${ISee(l)}`
 
     function Light(i){
         let l = carry("unlit lantern")
-        console.log(`Light: ${i.substr(0,4)} ${i} ${carry("matches")}  ${l}`)
         if(i.substr(0,4) === "lant" && carry("matches") !== -1 && l !== -1){
             light.on = true
             inv[l].n = "lit lantern"
-            console.log(inv[l])
             return "It's lit"
         }
         return `I don't understand light ${i}`
@@ -234,7 +255,6 @@ ${ISee(l)}`
         if(i === "lant" && l !== -1){
             light.on = false
             inv[l].n = "unlit lantern"
-            console.log(inv[l])
             return "It's off"
         }
         return `I don't understand unlight ${i}`
@@ -282,7 +302,6 @@ ${ISee(l)}`
 
         var el = l.i.findIndex(a => a.n.includes(i))
         if (el < 0) return "I don't see it."
-        console.log("get: ", el)
         if(l.i[el].w >= 0){
             inv.push(l.i[el])
             l.i.splice(el, 1)
@@ -294,10 +313,8 @@ ${ISee(l)}`
     function Drop(i) {
         const l = locs[currentLoc]
         if(i === "all"){
-            console.log(inv, l.i)
             l.i = l.i.concat(inv)
             inv = []
-            console.log(inv, l.i)
             return Look()
         }
         var el = inv.findIndex(a => a.n.includes(i))
@@ -305,7 +322,6 @@ ${ISee(l)}`
         if (!l.i) l.i = []
         l.i.push(inv[el])
         inv.splice(el, 1)
-        console.log("drop: ", el)
         return Look()
     }
 
@@ -321,7 +337,6 @@ ${ISee(l)}`
         d.status = state
         return `It't ${lookup(d.status)}.`
     }
-
 
     function getRandomInt(max) { return Math.floor(Math.random() * max) }
     function range(size, startAt = 0) { return [...Array(size).keys()].map(i => i + startAt)}
