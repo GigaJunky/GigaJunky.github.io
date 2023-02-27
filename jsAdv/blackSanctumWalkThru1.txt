@@ -1,0 +1,140 @@
+get need
+go cabin
+open door
+go door
+l mant
+get all
+go stairs
+go door
+get robe
+go mirr
+s
+drop need
+drop match
+drop net
+e
+s
+s
+s
+go stairs
+get all
+give wine
+get all
+d
+n
+n
+n
+l book
+l book
+get music
+s
+w
+unlock door
+go door
+play bach
+drop saw
+drop keys
+drop music
+get shears
+n
+w
+s
+s
+s
+e
+get lant
+w
+n
+n
+n
+get jug
+s
+e
+n
+go mirr
+w
+d
+get snow
+go stairs
+#l woman
+#get mess
+#l mess
+#drop mess
+cut hair
+drop shears
+get hair
+l bed
+get sheet
+go door
+go mirr
+s
+drop hair
+drop jug
+get matc
+get net
+go door
+go pass
+drop sheet
+get rave
+drop net
+get feather
+drop rave
+go vent
+light lant
+n
+drop feat
+get hamm
+open coff
+lisen
+s
+go vent
+unli lant
+go pass
+n
+w
+s
+s
+e
+pull nail
+light lant
+drop match
+get nail
+get board
+go door
+n
+drop nail
+drop boar
+drop hamm
+s
+go vent
+go pass
+N
+get all
+go door
+go pass
+go vent
+N
+drop hair
+drop need
+drop jug
+s
+go vent
+l circle
+get salt
+get sheet
+go pass
+get saw
+go pass
+go vent
+N
+drop saw
+drop salt
+drop sheet
+make alter
+listen
+get ashes
+s
+go vent
+drop ash
+invocare episcopus
+score

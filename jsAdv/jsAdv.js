@@ -1,23 +1,36 @@
-/*
-const fs = require("fs")
-,readline = require('readline')
-,adv = JSON.parse(fs.readFileSync("blackSanctum.json"))
-const locs = adv.locs, events = adv.events, gets = adv.gets
-*/
 let currentLoc = 0, turns = 0, light = { on: false, t: 40 }, maxinv = 5, inv = []
-/*
-for (const i in adv.info) {
-    console.log(i, adv.info[i])
+//for nodejs console
+if (typeof window === 'undefined'){
+    const fs = require("fs")
+    ,readline = require('readline')
+    ,adv = JSON.parse(fs.readFileSync("blackSanctum.json"))
+    locs = adv.locs, events = adv.events, gets = adv.gets
+
+    for (const i in adv.info) {
+        console.log(i, adv.info[i])
+    }
+    console.log()
+
+    let rl = readline.createInterface(process.stdin, process.stdout)
+
+    rl.on('line', function (line) {
+        console.log(Parser(line))
+    })
+
+    function TestWalkThru(fn){
+        const steps = fs.readFileSync(fn).toString().split(/\r?\n/)
+        console.log(steps)
+        
+        for (const step of steps) {
+            console.log(">" + step)
+            if(step[0]!="#")console.log(Parser(step))
+        }
+        
+    }
+
+    TestWalkThru("blackSanctumWalkThru1.txt")
 }
-console.log()
 
-
-let rl = readline.createInterface(process.stdin, process.stdout)
-
-rl.on('line', function (line) {
-    console.log(Parser(line))
-})
-*/
 
     function CheckEvents() {
 

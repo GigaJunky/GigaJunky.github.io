@@ -3,6 +3,14 @@
      Ported to javascript 2023 by BitJunky
      https://www.myabandonware.com/game/the-black-sanctum-1q3 */
 
+const info = {
+    "Copyright": "1981 Mark Data Products",
+    "Title": "The Black Sanctum",
+    "By": "Stephen O'Dea & Bob Withers",
+    "Ported": "to javascript 2023 by BitJunky",
+    "Ref": "https://www.myabandonware.com/game/the-black-sanctum-1q3"
+    }
+
 
  const events = { minloc: 5, rand: 4,  event: [
      { say: "I hear chanting."},
@@ -217,3 +225,6 @@
          ]
      }
  ]
+
+//const fs = require("fs")
+// fs.writeFileSync("adv.json", JSON.stringify({ info: info, events: events, locs: locs }))
