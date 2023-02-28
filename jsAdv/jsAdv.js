@@ -1,4 +1,4 @@
-let currentLoc = 0, turns = 0, light = { on: false, t: 40 }, maxinv = 5, inv = []
+let currentLoc = 0, turns = 0, light = { on: false, turns: 60 }, maxinv = 5, inv = []
 //for nodejs console
 if (typeof window === 'undefined'){
     const fs = require("fs")
@@ -34,15 +34,20 @@ if (typeof window === 'undefined'){
 
     function CheckEvents() {
 
+        estatus = ""
+        if(light.on && light.turns < 20){
+            estatus += `Light runs out in ${light.turns} moves.\r\n`
+        }
+
         if (currentLoc > events.minloc && getRandomInt(events.rand) == 0){
             const e = events.event[getRandomInt(events.event.length)]
             if(Missing(inv, e.inv)){
                 currentLoc = e.loc
-                return e.miss
+                return estatus += "\r\n" + e.miss
             } 
-            return e.say
+                estatus += "\r\n" + e.say
         }
-        return ""
+        return estatus
     }
 
     function parseItems(){
@@ -64,7 +69,8 @@ if (typeof window === 'undefined'){
 
     function Parser(input) {
         turns++
-        if(light.on) light.t-=1
+        if(light.turns<=0) light.on = false
+        if(light.on) light.turns-=1
 
         if (input.trim() === "") return Look()
 
@@ -237,6 +243,11 @@ ${ISee(l)}`
 
     function Go(direction) {
         // todo: Something wont fit (boards)
+        if(locs[currentLoc].dark && !light.on){
+            currentLoc =16
+            return `I fell down and cracked my head. I'm dead!\r\nThis adventure is over. ${turns} where used.`
+        }
+
         if (!direction || !locs[currentLoc].d) return Look()
         const dn = Object.keys(locs[currentLoc].d).find( f => f.includes(direction))
         const d = locs[currentLoc].d[dn]
@@ -344,7 +355,8 @@ ${ISee(l)}`
 
     function SetDoor(i, state) {
         const l = locs[currentLoc]
-        const d = (l.d && l.d[i] && l.d[i].status) ? l.d[i] : null
+        //const d = (l.d && l.d[i] && l.d[i].status) ? l.d[i] : null
+        const d = (l?.d[i]?.status) ? l.d[i] : null
         if(!d) return "I can't do that"
         if(d.status === "l" && Missing(inv, d.unlock)) return d.miss || `It't ${lookup(d.status)}.`
         d.status = state
