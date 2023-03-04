@@ -2,37 +2,41 @@
 Todo:
     jug - snow vs water outside
     bed/sheets and woman/note
-    boards can not go thru boarded door 
 */
 let currentLoc = 0, turns = 0, light = { on: false, turns: 60 }, maxinv = 5, inv = []
  //for nodejs console
 if (typeof window === 'undefined'){
-    const fs = require("fs")
+    const fs = require("fs"), path = require("path")
         ,readline = require('readline')
-        ,adv = JSON.parse(fs.readFileSync("blackSanctum.json"))
-    locs = adv.locs, events = adv.events, gets = adv.gets
+        adv = loadJson("blackSanctum")
 
-    for (const i in adv.info) {
-        console.log(i, adv.info[i])
-    }
-    console.log()
+    for(const i in adv.info) console.log(i, adv.info[i])
 
     let rl = readline.createInterface(process.stdin, process.stdout)
-
-    rl.on('line', function (line) {
-        console.log(Parser(line))
-    })
+    rl.on('line', function(line){ console.log(Parser(line)) })
 
     function TestWalkThru(fn){
         const steps = fs.readFileSync(fn).toString().split(/\r?\n/)
-        console.log(steps)
 
-        for (const step of steps) {
+        for(const step of steps){
             console.log(">" + step)
-            if(step[0]!="#")console.log(Parser(step))
+            if(step.trim() != "" && step[0]!="#")console.log(Parser(step))
         }
-
     }
+
+    function loadJson(fn){
+        jsToJson(fn)
+        return JSON.parse(fs.readFileSync(`${fn}.json`, "utf8"))
+    }
+
+    function jsToJson(fn){
+        if(!fs.existsSync(`${fn}.json`)){
+            const gd = fs.readFileSync(`${fn}.js`,"utf8")
+            eval(gd)
+            fs.writeFileSync(`${fn}.json`, JSON.stringify(adv))
+        }
+    }
+  
     if (process.argv[2] && fs.existsSync(process.argv[2]))
         TestWalkThru("blackSanctumWalkThru1.txt")
 }
@@ -45,8 +49,8 @@ function CheckEvents() {
         estatus += `Light runs out in ${light.turns} moves.\r\n`
     }
 
-    if (currentLoc > events.minloc && getRandomInt(events.rand) == 0){
-        const e = events.event[getRandomInt(events.event.length)]
+    if (currentLoc > adv.events.minloc && getRandomInt(adv.events.rand) == 0){
+        const e = adv.events.event[getRandomInt(adv.events.event.length)]
         if(Missing(inv, e.inv)){
             currentLoc = e.loc
             return estatus += "\r\n" + e.miss
@@ -57,20 +61,20 @@ function CheckEvents() {
 }
 
 function parseItems(){
-    for (let x = 0; x < locs.length; x++){
+    for (let x = 0; x < adv.locs.length; x++){
         let items = []
-        if(locs[x].i){
-            for (let i of locs[x].i)
+        if(adv.locs[x].i){
+            for (let i of adv.locs[x].i)
                 if(typeof i === "string")
                     items.push({ n: i, w: -1})
                 else {
                     i.loc = x
                     items.push(i)
                 }
-            locs[x].i = items
+            adv.locs[x].i = items
         }
     }
-    console.log(locs)
+    console.log(adv.locs)
 }
 
 function Parser(input) {
@@ -83,7 +87,7 @@ function Parser(input) {
     let cmds = input.toLowerCase().split(' ').map(i => i.trim())
 
     if ("newsud".indexOf(cmds[0]) >= 0) return Go(cmds[0])
-    const verb = cmds[0].substring(0,4), cl = locs[currentLoc]
+    const verb = cmds[0].substring(0,4), cl = adv.locs[currentLoc]
     const noun = cmds.length >1 ? cmds[1].substring(0,4) : ""
 
     switch (verb) {
@@ -125,7 +129,7 @@ function Parser(input) {
 
                     if(t.rooms)
                         for(const r of t.rooms){
-                            const tl = locs[r.id]
+                            const tl = adv.locs[r.id]
                             if(r.d) tl.d = r.d
 
                             if(r.del)
@@ -188,10 +192,10 @@ function fnCallB(fn, noun)
 }
 
 function Look(i) {
-    const l = locs[currentLoc]
+    const l = adv.locs[currentLoc]
 
     if (!i){ //room
-        if(locs[currentLoc].dark)
+        if(adv.locs[currentLoc].dark)
             if (!light.on) return "It's now pitch black. I can't see anything. It's dangerous to move around in the dark!"
         return `${CheckEvents()} ${l.desc}.
 ${ObDirs(l.d)}
@@ -249,24 +253,22 @@ function Inventory() {return `I am carrying the following:\n${inv.map(i => i.n).
 
 function Go(direction) {
     // todo: Something wont fit (boards)
-    if(locs[currentLoc].dark && !light.on){
+    if(adv.locs[currentLoc].dark && !light.on){
         currentLoc =16
         return `I fell down and cracked my head. I'm dead!\r\nThis adventure is over. ${turns} where used.`
     }
 
-    if (!direction || !locs[currentLoc].d) return Look()
-    const dn = Object.keys(locs[currentLoc].d).find( f => f.includes(direction))
-    const d = locs[currentLoc].d[dn]
+    if (!direction || !adv.locs[currentLoc].d) return Look()
+    const dn = Object.keys(adv.locs[currentLoc].d).find( f => f.includes(direction))
+    const d = adv.locs[currentLoc].d[dn]
 
     if (!d || dn.length > 1 && direction.length < 3) return "I see no way to go in that direction."
 
-    if (typeof d === "number")
-        currentLoc = d
-    else
-    if (d.status && d.status === "o") currentLoc = d.l
-    else
-        return `It's ${lookup(d.status)}.`
-
+    if (typeof d === "number") currentLoc = d
+    else if (d.status && d.status === "o"){
+        if(d.block && !Missing(inv, d.block))return d.blocked || "Something won't fit."
+        currentLoc = d.l
+    } else return `It's ${lookup(d.status)}.`
     return Look()
 }
 
@@ -293,7 +295,7 @@ function UnLight(i){
 function carry(i){ return inv.findIndex(a => a.n == i)}
 
 function Get(i) {
-    const l = locs[currentLoc]
+    const l = adv.locs[currentLoc]
 
     if (!l.i) return "I don't see anything."
     if(inv.findIndex(a => a.n.includes(i))>=0) return "I allready have it."
@@ -311,7 +313,7 @@ function Get(i) {
         return Look()
     }
 
-    const g = gets.find(f=> f.n.includes(i))
+    const g = adv.gets.find(f=> f.n.includes(i))
     if(g){
         if(!g.locs || g.locs.includes(currentLoc))
             if(!Missing(inv, g.inv) && !Missing(l.i, g.inRoom)){
@@ -340,7 +342,7 @@ function Get(i) {
 }
 
 function Drop(i) {
-    const l = locs[currentLoc]
+    const l = adv.locs[currentLoc]
     if(i === "all"){
         l.i = l.i.concat(inv)
         inv = []
@@ -359,11 +361,11 @@ function Clos(i){return SetDoor(i,'c')}
 function Unlo(i){return SetDoor(i,'o')}
 
 function SetDoor(i, state) {
-    const l = locs[currentLoc]
+    const l = adv.locs[currentLoc]
     //const d = (l.d && l.d[i] && l.d[i].status) ? l.d[i] : null
     const d = (l?.d[i]?.status) ? l.d[i] : null
     if(!d) return "I can't do that"
-    if(d.status === "l" && Missing(inv, d.unlock)) return d.miss || `It't ${lookup(d.status)}.`
+    if(d.status === "l" && Missing(inv, d.unlock)) return d.locked || `It't ${lookup(d.status)}.`
     d.status = state
     return `It't ${lookup(d.status)}.`
 }

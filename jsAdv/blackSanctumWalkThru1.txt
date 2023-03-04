@@ -15,9 +15,8 @@ drop net
 e
 s
 s
-s
 go stairs
-get all
+#get all
 give wine
 get all
 d
@@ -35,13 +34,13 @@ play bach
 drop saw
 drop keys
 drop music
-get shears
 n
 w
 s
 s
 s
 e
+#drop saw
 get lant
 w
 n
@@ -85,10 +84,12 @@ n
 drop feat
 get hamm
 open coff
-lisen
+listen
 s
 go vent
 unli lant
+drop lant
+drop match
 go pass
 n
 w
@@ -96,43 +97,73 @@ s
 s
 e
 pull nail
-light lant
+get all
+go door
+w
+n
+n
+e
+go door
+go pass
+drop nail
+get lant
+get match
+ligh lant
 drop match
 get nail
-get board
-go door
+go vent
 n
-drop nail
-drop boar
 drop hamm
+drop board
+drop nail
 s
 go vent
+unlit lant
 go pass
 N
 get all
 go door
 go pass
-go vent
-N
 drop hair
 drop need
-drop jug
-s
-go vent
+get net
+get rave
+drop net
+get feat
+drop feat
+drop rave
 l circle
-get salt
-get sheet
 go pass
 get saw
 go pass
+get match
+light lant
+drop match
+get sheet
 go vent
 N
 drop saw
-drop salt
-drop sheet
 make alter
+drop jug
+drop sheet
+s
+go vent
+get salt
+get hair
+get pine
+go vent
+N
+drop hair
+drop salt
+drop need
+s
+go vent
+get black
+go vent
+N
+drop feat
 listen
-get ashes
+get ash
 s
 go vent
 drop ash

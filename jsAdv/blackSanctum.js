@@ -1,18 +1,14 @@
-    /*Copyright 1981 Mark Data Products presents
-                                                                     The Black Sanctum By: Stephen O'Dea & Bob Withers
-                                                                     Ported to javascript 2023 by BitJunky
-                                                                     https://www.myabandonware.com/game/the-black-sanctum-1q3 */
 
-    const info = {
+var adv = {
+    
+    info : {
         "Copyright": "1981 Mark Data Products",
         "Title": "The Black Sanctum",
         "By": "Stephen O'Dea & Bob Withers",
         "Ported": "to javascript 2023 by BitJunky",
         "Ref": "https://www.myabandonware.com/game/the-black-sanctum-1q3"
-    }
-
-
-    const events = {
+    },
+    events : {
         minloc: 5,
         rand: 4,
         event: [
@@ -25,9 +21,8 @@
                 miss: "A figure in a black robe approaches. He spots me, raises his arms and begins to chant. My body feels paralyzed!",
             }
         ]
-    }
-
-    const gets = [
+    },
+    gets: [
         { n: "need", inRoom: ["pine trees"], add: [{ n: "pine needles", w: 1 }] }, { n: "feat", inv: ["raven"], add: [{ n: "black feather", w: 1 }] }, { n: "rave", inv: ["net"], inRoom: ["raven"], miss: "The raven squawks and flies away." }, {
             n: "snow",
             inv: ["an empty jug"],
@@ -36,10 +31,8 @@
             say: "The snow melts and fills the jug with water.",
             miss: "The snow melts and gets me all wet. I need a container."
         }
-    ]
-
-
-    var locs = [{
+    ],
+    locs:[{
             //0
             desc: "I'm in rugged mountain country, Snow is falling",
             d: { n: 1, s: 1, w: 1, cabin: 2 },
@@ -130,8 +123,12 @@
         { desc: "I'm at the end of a long narrow corridor", d: { n: 8, e: 12 } }, //10
         { desc: "I'm in a small room", d: { s: 19, w: 21 }, i: [] }, //11
         { //12
-            desc: "I'm in a small alcove", //status: It's now pitch dark. I can't see anything.
-            d: { w: 10, door: { l: 17, status: "l", unlock: ["boards"], miss: "There are wooden boards nailed across it." } }, // nailed with boards
+            desc: "I'm in a small alcove",
+            d: { w: 10, 
+                 door: { l: 17, status: "l",
+                unlock: ["boards"], locked: "There are wooden boards nailed across it."
+                }
+            },
             i: [
                 { n: "a boarded up doorway", w: -1, l: "There are wooden boards nailed across it." },
                 { n: "unlit lantern", w: 1 },
@@ -144,7 +141,7 @@
                 say: "Boy, that was hard work!",
                 rooms: [{
                         id: 12,
-                        d: { w: 10, door: { l: 17, status: "o" } },
+                        d: { w: 10, door: { l: 17, status: "o", block: ["boards"] } },
                         add: [{ n: "nails", w: 1 }, { n: "wooden boards", w: 1 }],
                         chg: [{ id: 0, v: { n: "a doorway", w: -1, l: "It's opened." } }]
                     },
@@ -208,7 +205,9 @@
         { //17
             desc: "I'm in an arched passage under the monastery",
             dark: true,
-            d: { n: 18, vent: 22, door: { l: 12, status: "l", unlock: ["boards"], miss: "doesn't work" } },
+            d: { n: 18, vent: 22, door: { l: 12, status: "l",
+             unlock: ["boards"], locked: "doesn't work",
+              block: ["boards"], blocked: "Something won't fit." } },
             i: [{
                     n: "large stone steps leading to a doorway",
                     w: -1,
@@ -273,3 +272,4 @@
             }]
         }
     ]
+}
