@@ -75,6 +75,12 @@
         {"n": "mantle", "w": -2, "i": [{"n": "matches", "w": 1}]},
         {"n": "a large wooden door", "w": -1},
         {"n": "a flight of stairs", "w": -1}
+      ],
+      "events": [
+        {
+          "test": "cl.d.door.status === 'o';",
+          "say": "It's getting cold in here, maybe I should close the door."
+        }
       ]
     },
     {
