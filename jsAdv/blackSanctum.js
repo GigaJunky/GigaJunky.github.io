@@ -1,6 +1,4 @@
-
-var adv = {
-    
+    var adv = {
     info : {
         "Copyright": "1981 Mark Data Products",
         "Title": "The Black Sanctum",
@@ -8,39 +6,30 @@ var adv = {
         "Ported": "to javascript 2023 by BitJunky",
         "Ref": "https://www.myabandonware.com/game/the-black-sanctum-1q3"
     },
-    events : {
-        minloc: 5,
-        rand: 4,
-        event: [
+    events : { minloc: 5, rand: 4,  event: [
             { say: "I hear chanting." },
             { say: "A rat scurries past my feet." },
-            {
-                inv: ["robe"],
-                loc: 16,
-                say: "A figure in a black robe is approaching. He nodes and continues on his way.",
+            { inv: ["robe"], loc: 16, say: "A figure in a black robe is approaching. He nodes and continues on his way.",
                 miss: "A figure in a black robe approaches. He spots me, raises his arms and begins to chant. My body feels paralyzed!",
             }
         ]
     },
-    gets: [
-        { n: "need", inRoom: ["pine trees"], add: [{ n: "pine needles", w: 1 }] }, { n: "feat", inv: ["raven"], add: [{ n: "black feather", w: 1 }] }, { n: "rave", inv: ["net"], inRoom: ["raven"], miss: "The raven squawks and flies away." }, {
-            n: "snow",
-            inv: ["an empty jug"],
-            chg: ["a jug full of water"],
-            locs: [0, 1, 2, 3],
-            say: "The snow melts and fills the jug with water.",
-            miss: "The snow melts and gets me all wet. I need a container."
-        }
-    ],
+    gets: [{ n: "need", inRoom: ["pine trees"], add: [{ n: "pine needles", w: 1 }] },
+     { n: "feat", inv: ["raven"], add: [ { n: "black feather", w: 1 }] },
+     { n: "rave", inv: ["net"], inRoom: ["raven"], miss: "The raven squawks and flies away." },
+     { n: "snow", inv: ["an empty jug"],chg: ["a jug full of water"], locs: [0, 1, 2, 3], //todo: snow/water
+        say: "The snow melts and fills the jug with water.",
+        miss: "The snow melts and gets me all wet. I need a container."
+    }],
     locs:[{
             //0
             desc: "I'm in rugged mountain country, Snow is falling",
             d: { n: 1, s: 1, w: 1, cabin: 2 },
-            i: [{ n: "pine trees", w: -1 }, { n: "a cabin in the distance", w: -1 }]
+            i: [{ n: "pine trees", w: iType.fixed }, { n: "a cabin in the distance", w: iType.fixed }]
         },
         { //1
             desc: "I'm in rugged mountain country, Snow is falling",
-            d: { n: 1, s: 2, w: 0 },
+            d: { n: 1, s: 1, e: 0, w: 1 },
             i: [{ n: "pine trees", w: -1 }]
         },
         { //2
@@ -58,25 +47,24 @@ var adv = {
                 { n: "mantle", w: -2, i: [{ n: "matches", w: 1 }] },
                 { n: "a large wooden door", w: -1 },
                 { n: "a flight of stairs", w: -1 },
-            ]
+            ],
+            events: [ {test: "cl.d.door.status === 'o';", say: "It's getting cold in here, maybe I should close the door."}]
+            
         },
         { //4
             desc: "I'm in a dimly lit bedroom",
             d: { d: 3, "closet doorway": 5 },
             i: [{ n: "a closet doorway", w: -1 }, { n: "a flight of stairs", w: -1 },
-                { n: "a bed", w: -1, l: "It's queen size with white sheets.", i: [{ n: "a white sheet", w: 1 }] },
-                {
-                    n: "a young woman",
-                    w: 1,
-                    l: "She's quite preaty with long dark hair. She apears to be in a trance. There's a note cluched in here hand.",
-                    i: [{ n: "a handwritten message", w: 1, l: "It says: They're after me. Remember 'Invocare Episcopus'" }]
+                { n: "a bed", w: -1, l: "It's queen size with white sheets." },
+                { n: "a white sheet", w: iType.hide },
+                { n: "a handwritten message", w: iType.hide,
+                    l: "It says: They're after me. Remember 'Invocare Episcopus'" },
+                { n: "a young woman", w: 1,
+                    l: "She's quite preaty with long dark hair. She apears to be in a trance. There's a note cluched in here hand."
                 }
             ],
             cut: [{
-                n: "hair",
-                inRoom: ["woman"],
-                inv: ["shears"],
-                say: "snip.",
+                n: "hair", inRoom: ["woman"], inv: ["shears"], say: "snip.",
                 miss: "I have nothing to cut it with.",
                 rooms: [{ id: 4, add: [{ n: "a lock of hair", w: 1 }] }]
             }]
@@ -106,14 +94,10 @@ var adv = {
             d: { n: 19, s: 10, w: 9 }
         },
         { //9
-            desc: "I'm in a old study",
-            d: { s: 20, e: 8 },
+            desc: "I'm in a old study", d: { s: 20, e: 8 },
             i: [{
-                n: "bookcases",
-                w: -1,
-                i: [{
-                        n: "a old manuscript",
-                        w: 1,
+                n: "bookcases",  w: -1, i: [{
+                        n: "a old manuscript", w: 1,
                         r: "A lot of the writing has faded. Here's an intesting entry: 'June 8, 1781 - The bishop has succumbed to the plague. He has been laid to rest in the crypt and the brothers have elected to close the monastery'."
                     },
                     { n: "a parchment with musical scoring", w: 1, r: "It's a Bach fuge" }
@@ -139,24 +123,21 @@ var adv = {
                 inv: ["hammer"],
                 miss: "You don't have something to pull the nails with.",
                 say: "Boy, that was hard work!",
-                rooms: [{
-                        id: 12,
-                        d: { w: 10, door: { l: 17, status: "o", block: ["boards"] } },
+                rooms: [
+                    { 
+                        id: 12, d: { w: 10, door: { l: 17, status: "o", block: ["boards"] } },
                         add: [{ n: "nails", w: 1 }, { n: "wooden boards", w: 1 }],
                         chg: [{ id: 0, v: { n: "a doorway", w: -1, l: "It's opened." } }]
                     },
                     {
-                        id: 17,
-                        d: { n: 18, vent: 22, door: 12 },
+                        id: 17, d: { n: 18, vent: 22, door: 12 },
                         chg: [{ id: 0, v: { n: "large stone steps leading to a doorway", w: -1, l: "It's opened." } }]
                     }
                 ],
             }]
         },
         { //13
-            desc: "I'm at the end of a long narrow corridor",
-            d: { n: 21, stairs: 14 },
-            i: [{ n: "a flight of stairs", w: -1 }]
+            desc: "I'm at the end of a long narrow corridor", d: { n: 21, stairs: 14 }, i: [{ n: "a flight of stairs", w: -1 }]
         },
         { //14
             desc: "I'm in a loft at the top of the stairs",

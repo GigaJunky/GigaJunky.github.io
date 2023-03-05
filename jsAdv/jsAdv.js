@@ -3,6 +3,7 @@ Todo:
     jug - snow vs water outside
     bed/sheets and woman/note
 */
+const iType = { fixed: -1, fixedHide: -2, hide: -3}
 let currentLoc = 0, turns = 0, light = { on: false, turns: 60 }, maxinv = 5, inv = []
  //for nodejs console
 if (typeof window === 'undefined'){
@@ -43,8 +44,9 @@ if (typeof window === 'undefined'){
 
 
 function CheckEvents() {
+    const cl=adv.locs[currentLoc]
+    let estatus = ""
 
-    estatus = ""
     if(light.on && light.turns < 20){
         estatus += `Light runs out in ${light.turns} moves.\r\n`
     }
@@ -55,8 +57,14 @@ function CheckEvents() {
             currentLoc = e.loc
             return estatus += "\r\n" + e.miss
         }
-        estatus += "\r\n" + e.say
+        estatus += "\r\n" + e.say + "\r\n"
     }
+    
+    if(cl.events)
+    for (const e of cl.events) {
+        if(eval(e.test)) estatus += "\r\n" + e.say
+    }
+
     return estatus
 }
 
@@ -120,8 +128,8 @@ function Parser(input) {
             if(t){
                 if(t.n === "*" || t.n.includes(noun)){
                     if (t.test && eval(t.test)) return t.testFail
-                    if(Missing(cl.i, t.inRoom)) return fnCall(t.missR || "I don't see it.", noun)
                     if(Missing(inv, t.inv))     return t.miss  || "I don't have it."
+                    if(Missing(cl.i, t.inRoom)) return fnCall(t.missR || "I don't see it.", noun)
 
                     if(t.Inv && t.Inv.del)
                         for(const d of findIndexes(inv, t.Inv.del).reverse())
@@ -151,7 +159,6 @@ function Parser(input) {
             // drink, taste
             //drink wine return "It tastes like burgandy."
             //There's water in it.
-            //It's getting cold in here, maybe I should close the door.
 
         default: return `I don't understand ${input}.`
     }
@@ -172,23 +179,8 @@ function Missing(inv, required){
 function fnCall(fn, noun)
 {
     if(fn == "Get")return Get(noun)
-    else return fn+noun
+    else return `I don't undertand ${fn} ${noun}.`
 
-}
-
-function fnCallN(fn, noun)
-{
-    if (fn in global && typeof global[fn] === "function") {
-        return global[fn](noun)
-    }
-    else return fn + noun
-}
-
-function fnCallB(fn, noun)
-{
-    f = window[fn]
-    if (typeof f === "function") return f(noun)
-    else return fn + noun
 }
 
 function Look(i) {
@@ -197,16 +189,15 @@ function Look(i) {
     if (!i){ //room
         if(adv.locs[currentLoc].dark)
             if (!light.on) return "It's now pitch black. I can't see anything. It's dangerous to move around in the dark!"
-        return `${CheckEvents()} ${l.desc}.
-${ObDirs(l.d)}
-${ISee(l)}`
+        return `${l.desc}.\r\n${ObDirs(l.d)}
+        \r\n${ISee(l)}\r\n${CheckEvents()}\r\n`
     }
 
     var el = l.i.find(a => a.n.includes(i))
     if(el){
         if(el.i && el.i.length > 0){
             l.i.push(el.i.shift())
-            return 'Hey, I found somthing!'
+            return 'Hey, I found something!'
         }
         if(el.l) return el.l
 
@@ -262,7 +253,7 @@ function Go(direction) {
     const dn = Object.keys(adv.locs[currentLoc].d).find( f => f.includes(direction))
     const d = adv.locs[currentLoc].d[dn]
 
-    if (!d || dn.length > 1 && direction.length < 3) return "I see no way to go in that direction."
+    if (d==undefined || dn.length > 1 && direction.length < 3) return "I see no way to go in that direction."
 
     if (typeof d === "number") currentLoc = d
     else if (d.status && d.status === "o"){
@@ -333,7 +324,8 @@ function Get(i) {
 
     var el = l.i.findIndex(a => a.n.includes(i))
     if (el < 0) return "I don't see it."
-    if(l.i[el].w >= 0){
+    if(l.i[el].w >= 0  || l.i[el].w == iType.hide ){
+        if(l.i[el].w <0) l.i[el].w = 1
         inv.push(l.i[el])
         l.i.splice(el, 1)
     }else return "It's beyond my power to do that."
