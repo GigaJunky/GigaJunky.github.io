@@ -9,7 +9,7 @@ let currentLoc = 0, turns = 0, light = { on: false, turns: 60 }, maxinv = 5, inv
 if (typeof window === 'undefined'){
     const fs = require("fs"), path = require("path")
         ,readline = require('readline')
-        adv = loadJson("blackSanctum")
+        adv = loadJson(process.argv[2] || "blackSanctum")
 
     for(const i in adv.info) console.log(i, adv.info[i])
 
@@ -31,14 +31,14 @@ if (typeof window === 'undefined'){
     }
 
     function jsToJson(fn){
-        if(!fs.existsSync(`${fn}.json`)){
+        //if(!fs.existsSync(`${fn}.json`)){
             const gd = fs.readFileSync(`${fn}.js`,"utf8")
             eval(gd)
             fs.writeFileSync(`${fn}.json`, JSON.stringify(adv))
-        }
+        //}
     }
   
-    if (process.argv[2] && fs.existsSync(process.argv[2]))
+    if (process.argv[3] && fs.existsSync(process.argv[3]))
         TestWalkThru("blackSanctumWalkThru1.txt")
 }
 
@@ -288,8 +288,8 @@ function carry(i){ return inv.findIndex(a => a.n == i)}
 function Get(i) {
     const l = adv.locs[currentLoc]
 
-    if (!l.i) return "I don't see anything."
     if(inv.findIndex(a => a.n.includes(i))>=0) return "I allready have it."
+    if (!l.i || i ==="") return "I don't see anything."
     if(inv.length >= maxinv) return "I can't carry anymore."
 
 
@@ -304,23 +304,29 @@ function Get(i) {
         return Look()
     }
 
-    const g = adv.gets.find(f=> f.n.includes(i))
+    const gi = adv.gets.findIndex(f=> f.n.includes(i))
+    const g = adv.gets[gi]
     if(g){
         if(!g.locs || g.locs.includes(currentLoc))
             if(!Missing(inv, g.inv) && !Missing(l.i, g.inRoom)){
-                if(g.add){
+                if(g.add)
                     inv = inv.concat(g.add)
-                    return "Ok."
-                }
+                if(g.rchg)
+                    for(const i of g.rchg)
+                       l.i[i.id] = i.i
+
                 if(g.chg){
                     c = 0
                     for(const i of findIndexes(inv, g.inv)) {
                         inv[i].n =  g.chg[c++]
                     }
-                    return g.say
                 }
-            } else return g.miss
-    }
+            } else return "something is missing." || g.miss
+            adv.gets.splice(gi,1)
+            return "Ok." || g.say
+        }
+
+    // check items inv
 
     var el = l.i.findIndex(a => a.n.includes(i))
     if (el < 0) return "I don't see it."

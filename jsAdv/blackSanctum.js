@@ -16,8 +16,14 @@
     },
     gets: [{ n: "need", inRoom: ["pine trees"], add: [{ n: "pine needles", w: 1 }] },
      { n: "feat", inv: ["raven"], add: [ { n: "black feather", w: 1 }] },
+     { n: "note", inRoom: ["woma"]
+        , add: [ { n: "a handwritten message", w: 1, l: "It says: They're after me. Remember 'Invocare Episcopus'" }]
+        , rchg: [ {id: 3 , i: { n: "a young woman", w: 1, l: "She's quite preaty with long dark hair. She apears to be in a trance."}}
+        ]
+     },
      { n: "rave", inv: ["net"], inRoom: ["raven"], miss: "The raven squawks and flies away." },
-     { n: "snow", inv: ["an empty jug"],chg: ["a jug full of water"], locs: [0, 1, 2, 3], //todo: snow/water
+     { n: "shee", inRoom: ["bed"], add: [ { n: "a white sheet", w: 1 }] },     
+     { n: "snow", inv: ["an empty jug"], chg: ["a jug full of water"], locs: [0, 1, 2, 3], //todo: snow/water
         say: "The snow melts and fills the jug with water.",
         miss: "The snow melts and gets me all wet. I need a container."
     }],
@@ -54,14 +60,10 @@
         { //4
             desc: "I'm in a dimly lit bedroom",
             d: { d: 3, "closet doorway": 5 },
-            i: [{ n: "a closet doorway", w: -1 }, { n: "a flight of stairs", w: -1 },
+            i: [{ n: "a closet doorway", w: -1 },
+                { n: "a flight of stairs", w: -1 },
                 { n: "a bed", w: -1, l: "It's queen size with white sheets." },
-                { n: "a white sheet", w: iType.hide },
-                { n: "a handwritten message", w: iType.hide,
-                    l: "It says: They're after me. Remember 'Invocare Episcopus'" },
-                { n: "a young woman", w: 1,
-                    l: "She's quite preaty with long dark hair. She apears to be in a trance. There's a note cluched in here hand."
-                }
+                { n: "a young woman", w: 1, l: "She's quite preaty with long dark hair. She apears to be in a trance. There's a note cluched in here hand." }
             ],
             cut: [{
                 n: "hair", inRoom: ["woman"], inv: ["shears"], say: "snip.",
