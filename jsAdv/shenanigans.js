@@ -33,30 +33,29 @@ adv = {
             ]
         },
         { id: 2, desc: "You are in a dimly lit hallway."
-        , d: { n: 3, window: 0, door: 1 }
+        , d: { n: 3, door: 0 }
         , i: [
              { n: "a closed window", w: -1, l: "Won't budge!" }
             ,{ n: "a open door", w: -1, l: "It's room 203." }
             ]
         },
         { id: 3, desc: "You are at the top of an old staircase."
-            , d: {s: 2, d: 4}
+            , d: {s: 2, d:{ l: 4, status: "o", block: ["land"], blocked: 'The landlord says: "Your rent is long overdue". He is standing there blocking your way!'} }
             , i: [
-                { n: "the landlord.", w: -1}
+                { n: "the landlord.", w: -1, l: "He sure looks angry!"}
                 // 'The landlord says: "Your rent is long overdue". He is standing there blocking your way!'
                 // give rent = You don't have enough money. The landloard thanks you and walks away.
             ]
-            , "give": [
-                {
-                  "n": "rent", "inv": ["curr"], "inRoom": ["landlord"],
-                  "say": "The landlord thanks you and wlks away.",
-                  "miss": "You don't have it.",
-                  "missR": "Nobody to give it to?",
-                  "Inv": {"del": ["money"]}
-                }
-              ],
+            , "give": [{
+                n: "rent", inv: ["curr"], inRoom: ["landlord"],
+                say: "The landlord thanks you and walks away. I wonder what he is snickering about.", // no clothes
+                miss: "You don't have it.",
+                missR: "Nobody to give it to?",
+                Inv: {del: ["curr"], add: [{n: "$2 U.S. currency", w: 1}] },
+                rooms: [{ id: 3, del: ["land"] }]
+            }],
         },
-        {id: 4, n: "You are in the vestibule at the bottom of the stairs."
+        {id: 4, desc: "You are in the vestibule at the bottom of the stairs."
         , d: { n:5,  u: 3}
         , i: [{ n: "mail boxes.", w: -1}]
         }

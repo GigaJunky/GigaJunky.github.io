@@ -23,7 +23,7 @@
      },
      { n: "rave", inv: ["net"], inRoom: ["raven"], miss: "The raven squawks and flies away." },
      { n: "shee", inRoom: ["bed"], add: [ { n: "a white sheet", w: 1 }] },     
-     { n: "snow", inv: ["an empty jug"], chg: ["a jug full of water"], locs: [0, 1, 2, 3], //todo: snow/water
+     { n: "snow", inv: ["an empty jug"], chg: [{ n: "a jug full of water", w: 1, l: "There's water in it."}], locs: [0, 1, 2, 3], //todo: snow/water  drink/taste
         say: "The snow melts and fills the jug with water.",
         miss: "The snow melts and gets me all wet. I need a container."
     }],
@@ -48,6 +48,7 @@
             d: { stairs: 4, door: { l: 2, status: "o" } },
             i: [
                 { n: "a jug of wine", w: 1, l: "It tastes like burgandy." },
+
                 { n: "a butterfly net", w: 1 },
                 { n: "a fireplace", w: -1, l: "It's made of large stones with a wood mantle" },
                 { n: "mantle", w: -2, i: [{ n: "matches", w: 1 }] },
@@ -100,9 +101,9 @@
             i: [{
                 n: "bookcases",  w: -1, i: [{
                         n: "a old manuscript", w: 1,
-                        r: "A lot of the writing has faded. Here's an intesting entry: 'June 8, 1781 - The bishop has succumbed to the plague. He has been laid to rest in the crypt and the brothers have elected to close the monastery'."
+                        l: "A lot of the writing has faded. Here's an intesting entry: 'June 8, 1781 - The bishop has succumbed to the plague. He has been laid to rest in the crypt and the brothers have elected to close the monastery'."
                     },
-                    { n: "a parchment with musical scoring", w: 1, r: "It's a Bach fuge" }
+                    { n: "a parchment with musical scoring", w: 1, l: "It's a Bach fuge" }
                 ]
             }]
         },

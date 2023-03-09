@@ -1,8 +1,4 @@
-/*
-Todo:
-    jug - snow vs water outside
-    bed/sheets and woman/note
-*/
+/* Todo: jug - snow vs water outside */
 const iType = { fixed: -1, fixedHide: -2, hide: -3}
 let currentLoc = 0, turns = 0, light = { on: false, turns: 60 }, maxinv = 5, inv = []
  //for nodejs console
@@ -21,6 +17,7 @@ if (typeof window === 'undefined'){
 
         for(const step of steps){
             console.log(">" + step)
+            if(step == "##") break
             if(step.trim() != "" && step[0]!="#")console.log(Parser(step))
         }
     }
@@ -37,19 +34,33 @@ if (typeof window === 'undefined'){
             fs.writeFileSync(`${fn}.json`, JSON.stringify(adv))
         //}
     }
+
+    function parseItems(){
+        let items = []
+        for (let x = 0; x < adv.locs.length; x++){
+            if(adv.locs[x].i){
+                for (let i of adv.locs[x].i){
+                    i.loc = x
+                    items.push(i)
+                }
+            }
+        }
+        console.log(items)
+        fs.writeFileSync(`items.json`, JSON.stringify(items))
+    }
   
+    //parseItems()
+
     if (process.argv[3] && fs.existsSync(process.argv[3]))
         TestWalkThru("blackSanctumWalkThru1.txt")
 }
-
 
 function CheckEvents() {
     const cl=adv.locs[currentLoc]
     let estatus = ""
 
-    if(light.on && light.turns < 20){
+    if(light.on && light.turns < 20)
         estatus += `Light runs out in ${light.turns} moves.\r\n`
-    }
 
     if (currentLoc > adv.events.minloc && getRandomInt(adv.events.rand) == 0){
         const e = adv.events.event[getRandomInt(adv.events.event.length)]
@@ -61,28 +72,10 @@ function CheckEvents() {
     }
     
     if(cl.events)
-    for (const e of cl.events) {
+    for (const e of cl.events) 
         if(eval(e.test)) estatus += "\r\n" + e.say
-    }
 
     return estatus
-}
-
-function parseItems(){
-    for (let x = 0; x < adv.locs.length; x++){
-        let items = []
-        if(adv.locs[x].i){
-            for (let i of adv.locs[x].i)
-                if(typeof i === "string")
-                    items.push({ n: i, w: -1})
-                else {
-                    i.loc = x
-                    items.push(i)
-                }
-            adv.locs[x].i = items
-        }
-    }
-    console.log(adv.locs)
 }
 
 function Parser(input) {
@@ -135,6 +128,9 @@ function Parser(input) {
                         for(const d of findIndexes(inv, t.Inv.del).reverse())
                             inv.splice(d,1)
 
+                    if(t.Inv && t.Inv.add)
+                         inv = inv.concat(t.Inv.add)    
+
                     if(t.rooms)
                         for(const r of t.rooms){
                             const tl = adv.locs[r.id]
@@ -148,18 +144,12 @@ function Parser(input) {
 
                             if(r.chg)
                                 for (const c of r.chg)
-                                    tl.
-                            i[c.id] = c.v
+                                    tl.i[c.id] = c.v
                         }
                     return t.say
                 }
             }
             return "Don't be rediculus."
-
-            // drink, taste
-            //drink wine return "It tastes like burgandy."
-            //There's water in it.
-
         default: return `I don't understand ${input}.`
     }
 }
@@ -180,7 +170,6 @@ function fnCall(fn, noun)
 {
     if(fn == "Get")return Get(noun)
     else return `I don't undertand ${fn} ${noun}.`
-
 }
 
 function Look(i) {
@@ -232,32 +221,25 @@ function ISee(l) {
     return `I see: ${items.join(", ")}.`
 }
 
-function ISeeOld(l) {
-    if (!l.i && !l.h) return ""
-    let i = l.i, h = l.h
-    if (!i) i = []
-    if (!h) h = []
-    return `I see: ${i.concat(h).join(", ")}.`
-}
-
 function Inventory() {return `I am carrying the following:\n${inv.map(i => i.n).join(",\n")}.`}
 
 function Go(direction) {
-    // todo: Something wont fit (boards)
-    if(adv.locs[currentLoc].dark && !light.on){
-        currentLoc =16
+    const cl = adv.locs[currentLoc]
+    
+    if(cl.dark && !light.on){
+        currentLoc=16
         return `I fell down and cracked my head. I'm dead!\r\nThis adventure is over. ${turns} where used.`
     }
 
-    if (!direction || !adv.locs[currentLoc].d) return Look()
-    const dn = Object.keys(adv.locs[currentLoc].d).find( f => f.includes(direction))
-    const d = adv.locs[currentLoc].d[dn]
+    if (!direction || !cl.d) return Look()
+    const dn = Object.keys(cl.d).find( f => f.includes(direction))
+    const d = cl.d[dn]
 
     if (d==undefined || dn.length > 1 && direction.length < 3) return "I see no way to go in that direction."
 
     if (typeof d === "number") currentLoc = d
     else if (d.status && d.status === "o"){
-        if(d.block && !Missing(inv, d.block))return d.blocked || "Something won't fit."
+        if(d.block && (!Missing(inv, d.block) || !Missing(cl.i, d.block)) )return d.blocked || "Something won't fit."
         currentLoc = d.l
     } else return `It's ${lookup(d.status)}.`
     return Look()
@@ -317,9 +299,8 @@ function Get(i) {
 
                 if(g.chg){
                     c = 0
-                    for(const i of findIndexes(inv, g.inv)) {
-                        inv[i].n =  g.chg[c++]
-                    }
+                    for(const i of findIndexes(inv, g.inv))
+                        inv[i] = g.chg[c++]
                 }
             } else return "something is missing." || g.miss
             adv.gets.splice(gi,1)
@@ -327,7 +308,6 @@ function Get(i) {
         }
 
     // check items inv
-
     var el = l.i.findIndex(a => a.n.includes(i))
     if (el < 0) return "I don't see it."
     if(l.i[el].w >= 0  || l.i[el].w == iType.hide ){
