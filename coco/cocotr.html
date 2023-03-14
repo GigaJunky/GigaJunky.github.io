@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head>
+<body>
+    <input id="fileItem" type="file" accept=".cas" onchange="readFile()">
+    <audio id="Audio" controls="" src="Lander (T&D Software).wav"></audio>
+    <button id="btnDownload" onclick="Download()">Download</button>
+<script>
+
+    const enc = new TextDecoder("utf-8")
+    , Audio = document.getElementById("Audio")
+    let cocoCasWave
+
+    //https://stackoverflow.com/questions/44157522/play-wav-byte-data-on-the-browser-on-a-player
+
+    function countOnesAndZeros(fb)
+    {
+        let z = 0, o= 0
+        for (let i = 0; i < fb.length; i++) {
+            
+            let bits = fb[i].toString(2).padStart(8, '0')
+            //console.log(bits)
+            for (const b of bits) if(b === '1') o++ ; else z ++
+        }
+        console.log(`z: ${z}, o:${o} = sz:(z*8 + o*4) ${(z*8)+(o*8)}}`)
+        return z*8 + o*4
+    }
+    
+    function createAudio(fb)
+    {
+        const waves = [[ 0xA6, 0xDC, 0xDC, 0xA6, 0x59, 0x23, 0x23, 0x59 ],[ 0xC6, 0xC6, 0x39, 0x39] ] //9600
+        let fl =  countOnesAndZeros(fb) + 0x3000 + 44
+        let d = new Uint8Array(fl) //fb.length * 8 * 8 + 44)
+        d.set(encStr('RIFF'),        0)        //Contains the letters "RIFF" in ASCII
+        d.set(convert32(fl-8), 4) // This is the size of the entire file in bytes minus 8 bytes
+        d.set(encStr('WAVEfmt '),    8) //Format
+        d.set(convert32(16),        16) //Subchunk1Size 16 for PCM
+        d.set(convert32(1),         20) //AudioFormat PCM = 1
+        d.set(convert16(1),         22) //NumChannels MONO = 1
+        d.set(convert32(9600),      24) //SampleRate  * NumChannels * BitsPerSample/8
+        d.set(convert32(9600),      28) //ByteRate = SampleRate  * NumChannels * BitsPerSample/8
+        d.set(convert16(1),         32) //BlockAlign MONO = 1
+        d.set(convert16(8),         34) //BitsPerSample 
+        d.set(encStr('data'),       36) //Subchunk2ID
+        d.set(convert32(fl-44),     40) //Subchunk2Size
+        let o = 44
+        
+        while(o <= 0x82b) d[o++] = 0x80 //silence 1
+        console.log("end s1:", o.toString(16))
+        //o = 0x082c
+        //0x24B8
+        //nameblock 0x11e
+        for (const b of fb.subarray(0, 0x95)) {
+            let bits = b.toString(2).padStart(8, '0').split("").reverse().join("")
+            for (const b of bits){
+                    let sw = waves[parseInt(b)]
+                        d.set(sw, o)
+                        o+= sw.length
+                }
+        }
+        console.log('end nb:', o.toString(16))
+        //o = 0x24b8
+
+        while(o <= 0x44b7) d[o++] = 0x80 //silence 2
+        console.log("e s2: 44b9: ", o.toString(16))
+        //o = 0x44b9
+        
+        
+        //data 0x94
+        for (let i = 0x95; i < fb.length ; i++){
+            let bits = fb[i].toString(2).padStart(8, '0').split("").reverse().join("")
+                for (const b of bits){
+                    let sw = waves[parseInt(b)]
+                        d.set(sw, o)
+                        o+= sw.length
+                }
+        }
+
+        console.log("e d: ",o.toString(16))
+
+        while(o <= d.length) d[o++] = 0x80 //silence end
+
+        return d
+    }
+
+    function readFile()
+    {
+        let reader = new FileReader()
+        reader.readAsArrayBuffer(event.target.files[0])
+        reader.onload = () => {
+            h = readHeader(new Uint8Array(reader.result))
+        }
+    }
+
+    //https://retrocomputing.stackexchange.com/questions/150/what-format-is-used-for-coco-cassette-tapes
+    function readHeader(ab)
+    {
+        let h = {}
+        console.log(ab.length)
+        h.leader1 = ab.subarray(0, 128)
+        let nb = readNameBlock(ab.subarray(129,129+20))
+        h.leader2 = ab.subarray(129+15, 129+15+128)
+        console.log(nb)
+        //readDataBlocks(ab)
+         //createAudio(ab)
+         cocoCasWave = createAudio(ab)
+         Audio.src = URL.createObjectURL(new Blob([cocoCasWave], { type: 'audio/wav' }))
+        return h
+    }
+
+    function readNameBlock(ab)
+    {
+        let nb = {}
+        nb.leader = ab[0]
+        nb.sync = ab[1]
+        nb.type = ab[2]
+        nb.len = ab[3]
+        nb.name = enc.decode(ab.subarray(4, 4+8))
+        nb.type = ab[12]
+        nb.ascii = ab[13]
+        nb.gap = ab[14]
+        nb.start = readInt(ab.subarray(15,16))
+        nb.load = readInt(ab.subarray(17,18))
+        return nb
+    }
+
+    function readDataBlocks(ab)
+    {
+        let os = 278
+        while(os < ab.length){
+            let db = {}
+            db.leader = ab[os+0]
+            db.sync = ab[os+1]
+            db.type =ab[os+2]
+            db.len = ab[os+3]
+            db.data = ab.subarray(os+4, os+db.len)
+            console.log(`os: ${os} type: ${db.type} len: ${db.len}`)
+            os += db.len+6
+        }
+    }
+
+    function Download()
+    {
+        var saveByteArray = (function () {
+        var a = document.createElement("a")
+        a.style = 'display: none'
+        document.body.appendChild(a)
+        return function (data, name) {
+            var blob = new Blob([data], {type: "application/octet-stream"}),
+                url = window.URL.createObjectURL(blob)
+            a.href = url
+            a.download = name
+            a.click()
+            a.remove()
+            window.URL.revokeObjectURL(url)
+        }
+        }())
+        saveByteArray(cocoCasWave, 'test.wav')
+        //saveByteArray(h.data, 'my.fseq')
+    }
+
+    function encStr(s){return new TextEncoder("utf-8").encode(s) } 
+    function convert16(n) { return  new Uint8Array(new Uint16Array([n]).reverse().buffer) }
+    function convert32(n) { return  new Uint8Array(new Uint32Array([n]).reverse().buffer) }
+    function readInt(array) {
+        let value = 0
+        for (let i = array.length -1; i >= 0 ; i--) //little endian
+            value = (value * 256) + array[i]
+        return value
+    }
+
+</script>
+
+</body></html>
