@@ -4,18 +4,17 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>CocoCas2Wav.js v1.0</title>
         <style>
-            html { font: 16px Arial, sans-serif; background: black; color: whitesmoke; }
-            body { background: black; padding: 0 20px; width: 90%; margin: 0 auto; }
+            html { font: 16px Arial, sans-serif; background: black; color: black    ; }
+            body { background: #95DB54; padding: 0 20px; width: 90%; margin: 0 auto; }
             audio { width: 90%;}
             button, audio, input[type="file"]::file-selector-button {
-                background-color: gray; color: white;
+                background-color:  black; color: white;
                 border: none; border-radius: 4px; padding: 15px 32px; text-align: center;
                 text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px;
                 cursor: pointer; opacity: 0.6; transition: 0.3s;
             }
 
             button:hover, input[type="file"]::file-selector-button:hover {opacity: 1}
-}
 
         </style>
     </head>
@@ -24,19 +23,24 @@
     <div>by Bitjunky</div>
     <div>
         <audio id="Audio" controls=""></audio>
-        <input type="file" accept=".cas" onchange="readFile()">
-        <button onclick="Download()">Save as .wav</button>
+        <input type="file" accept=".cas,.zip" id="file-input">
+        <button id="btnSaveWav">Save as .wav</button>
+        <select  id="selZFiles" size="10" style="width: 300px">
+        </select>
+
         <pre>
             Converts .cas (Cassette) data files to .wav to play into a real Color Computer
             Works well depnding on sound hardware..  Seems to work well on most PCs audio out with sound on very high without distortion..
             If it don't work on one, try anouther.  Does not seem to work on my Samsung Phones/Tablets.. Maybe sound is not loud enough?
             Currently no options or validation to keep it as simple as posible..  only supports 9600 bit rate.
-            Not sure other rates would help for other audio hardware?  
+            Not sure other rates would help for other audio hardware? 
+            23-03-15 Added Unzip  You can have multiple files in a zip and will list them. Double click to Load.
         </pre>
         <footer>
             <a href="https://gigajunky.github.io/coco/">gigajunky.github.io/coco/</a>
         </footer>
     </div>
+    <script src="https://unpkg.com/unzipit@1.4.0/dist/unzipit.js"></script>    
 <script>
     /*
         CocoCas2wav.js v1.0 - Ported to Javascript by Bitjunky 2023-03-13
@@ -51,10 +55,17 @@
         Works well depnding on hardware..  Seems to work well on most PCs audio out with sound on very high without distortion.. If it don't work on one, try anouther.  Does not seem to work on my Samsung Phones/Tablets.. Maybe sound is not loud enough?
         Currently no options.. Not sure if needed for other hardware?  Currently only supports 9600 bit rate.
     */
-
+    (async function() {
     const enc = new TextDecoder("utf-8")
     , Audio = document.getElementById("Audio")
-    let cocoCasWave
+    , fileInput = document.getElementById("file-input")
+    , btnSaveWav = document.getElementById("btnSaveWav")
+    , selZFiles = document.getElementById("selZFiles")
+    btnSaveWav.onclick = Download
+    fileInput.onchange = readZipFiles //readFile
+    selZFiles.ondblclick = selZFilesOnChange
+    
+    let zentries, cocoCasWave
     
 
     function countOnesAndZeros(fb) {
@@ -121,9 +132,9 @@
         return d
     }
 
-    function readFile() {
+    function readFile(f) {
         let reader = new FileReader()
-        reader.readAsArrayBuffer(event.target.files[0])
+        reader.readAsArrayBuffer(f)
         reader.onload = () => {
             cocoCasWave = createAudio(new Uint8Array(reader.result))
             Audio.src = URL.createObjectURL(new Blob([cocoCasWave], { type: 'audio/wav' }))
@@ -153,6 +164,35 @@
     function convert16(n) { return  new Uint8Array(new Uint16Array([n]).reverse().buffer) }
     function convert32(n) { return  new Uint8Array(new Uint32Array([n]).reverse().buffer) }
 
+    //for unzipit
+    async function readZipFiles() {
+        const f = fileInput.files[0]
+        if(f.name.toLowerCase().endsWith(".zip")){
+            const {entries} = await unzipit.unzip(f)
+            // print all entries and their sizes
+            zentries = entries
+            selZFiles.options.length = 0
+            for (const [name, entry] of Object.entries(zentries)) {
+                console.log(name, entry.size);
+                var opt = document.createElement('option')
+                opt.value = name
+                opt.innerHTML = name
+                selZFiles.appendChild(opt)
+            }
+        } else{
+            selZFiles.options.length = 0
+            readFile(f)
+        }
+    }
+
+    async function selZFilesOnChange() {
+        console.log("You selected: " + selZFiles.value)
+        const arrayBuffer = await zentries[selZFiles.value].arrayBuffer()
+        cocoCasWave = createAudio(new Uint8Array(arrayBuffer))
+        Audio.src = URL.createObjectURL(new Blob([cocoCasWave], { type: 'audio/wav' }))
+    }
+
+}())
 </script>
 
 </body></html>
