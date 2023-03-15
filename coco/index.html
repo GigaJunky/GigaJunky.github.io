@@ -4,10 +4,10 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>CocoCas2Wav.js v1.0</title>
         <style>
-            html { font: 16px Arial, sans-serif; background: black; color: black    ; }
-            body { background: #95DB54; padding: 0 20px; width: 90%; margin: 0 auto; }
-            audio { width: 90%;}
-            button, audio, input[type="file"]::file-selector-button {
+            html { font: 16px Arial, sans-serif; background: black; color: black }
+            body { background: #95DB54; padding: 0 20px; width: 90%; margin: 0 auto }
+            audio { width: 90% }
+            button, audio, select, input[type="file"]::file-selector-button {
                 background-color:  black; color: white;
                 border: none; border-radius: 4px; padding: 15px 32px; text-align: center;
                 text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px;
@@ -19,13 +19,13 @@
         </style>
     </head>
 <body>
-    <h2>CocoCas2wav.js v1.0</h2>
+    <h2>CocoCas2wav.js v1.1</h2>
     <div>by Bitjunky</div>
     <div>
         <audio id="Audio" controls=""></audio>
         <input type="file" accept=".cas,.zip" id="file-input">
         <button id="btnSaveWav">Save as .wav</button>
-        <select  id="selZFiles" size="10" style="width: 300px">
+        <select id="selZFiles" size="10" style="width: 600px">
         </select>
 
         <pre>
@@ -34,7 +34,7 @@
             If it don't work on one, try anouther.  Does not seem to work on my Samsung Phones/Tablets.. Maybe sound is not loud enough?
             Currently no options or validation to keep it as simple as posible..  only supports 9600 bit rate.
             Not sure other rates would help for other audio hardware? 
-            23-03-15 Added Unzip  You can have multiple files in a zip and will list them. Double click to Load.
+            23-03-15 v1.1 - Added Unzip You can have multiple files in a zip and will list them. Double click to Load.
         </pre>
         <footer>
             <a href="https://gigajunky.github.io/coco/">gigajunky.github.io/coco/</a>
