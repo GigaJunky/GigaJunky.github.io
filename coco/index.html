@@ -4,7 +4,9 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>CocoCas2Wav.js v1.1</title>
         <style>
-            html { font: 16px Arial, sans-serif; background: black; color: black }
+            @import url('https://fonts.cdnfonts.com/css/color-basic');
+            
+            html { font-family: 'Color Basic', sans-serif; font-size: 16px; background: black; color: black }
             body { background: #95DB54; padding: 0 20px; width: 90%; margin: 0 auto }
             audio { width: 90% }
             button, audio, select, input[type="file"]::file-selector-button {
@@ -19,8 +21,8 @@
         </style>
     </head>
 <body>
-    <h2>CocoCas2wav.js v1.1</h2>
-    <div>by Bitjunky</div>
+    <h2>COCOCAS2WAV.JS  V1.1</h2>
+    <div>By BitJunky</div>
     <div>
         <audio id="Audio" controls=""></audio>
         <input type="file" accept=".cas,.zip" id="file-input">
@@ -35,6 +37,7 @@
             Currently no options or validation to keep it as simple as posible..  only supports 9600 bit rate.
             Not sure other rates would help for other audio hardware? 
             23-03-15 v1.1 - Added Unzip You can have multiple files in a zip and will list them. Double click to Load.
+            23-03-21 v1.2 - Added Timex/Sinclair ZX81.. .P files..  Yes, my first computer and have one so...
         </pre>
         <footer>
             <a href="https://gigajunky.github.io/coco/">gigajunky.github.io/coco/</a>
@@ -77,23 +80,85 @@
         console.log(`z: ${z}, o:${o} = sz:${z*8 + o*4}`)
         return z*8 + o*4
     }
-    
-    function createAudio(fb) {
-        const SilenceByte = 0x80, waves = [[ 0xA6, 0xDC, 0xDC, 0xA6, 0x59, 0x23, 0x23, 0x59 ],[ 0xC6, 0xC6, 0x39, 0x39] ] //9600
-        let fl =  countOnesAndZeros(fb) + 0x3000 + 44 // padding for added silence and wav header
-        let d = new Uint8Array(fl) //fb.length * 8 * 8 + 44)
-        d.set(encStr('RIFF'),        0)        //Contains the letters "RIFF" in ASCII
-        d.set(convert32(fl-8), 4) // This is the size of the entire file in bytes minus 8 bytes
+
+    function countOnesAndZeros(fb) {
+    let z = 0, o= 0
+    for (let i = 0; i < fb.length; i++) {
+        let bits = fb[i].toString(2).padStart(8, '0')
+        for (const b of bits) if(b === '1') o++ ; else z ++
+    }
+    console.log(`z: ${z}, o:${o}`)
+    return { o, z }
+}
+
+    function writeWavHeader(fl,r, d) {
+        d.set(encStr('RIFF'),        0) //Contains the letters "RIFF" in ASCII
+        d.set(convert32(fl-8), 4)       // This is the size of the entire file in bytes minus 8 bytes
         d.set(encStr('WAVEfmt '),    8) //Format
         d.set(convert32(16),        16) //Subchunk1Size 16 for PCM
         d.set(convert32(1),         20) //AudioFormat PCM = 1
         d.set(convert16(1),         22) //NumChannels MONO = 1
-        d.set(convert32(9600),      24) //SampleRate  * NumChannels * BitsPerSample/8
-        d.set(convert32(9600),      28) //ByteRate = SampleRate  * NumChannels * BitsPerSample/8
+        d.set(convert32(r),     24) //SampleRate  * NumChannels * BitsPerSample/8
+        d.set(convert32(r),     28) //ByteRate = SampleRate  * NumChannels * BitsPerSample/8
         d.set(convert16(1),         32) //BlockAlign MONO = 1
         d.set(convert16(8),         34) //BitsPerSample 
         d.set(encStr('data'),       36) //Subchunk2ID
         d.set(convert32(fl-44),     40) //Subchunk2Size
+    }
+
+    function createAudioZX81(fb) {
+        const waves = [[0xE3, 0xFB, 0xB7, 0x49, 0x05, 0x1D]] //22050
+
+        //var fb = new Uint8Array(f.length + 1)
+        //fb[0] = 0xB5
+        //fb.set(f, 1)
+//        var fb = new Uint8Array([ 0xB5, ...f ]) //doesn't work?
+        //console.log('zx81:', fb) /
+        let oz = countOnesAndZeros(fb)
+        fl = oz.z*54 + oz.o*89 + 5000 + 45 +1000 // padding for added silence and wav header 312482 // 5360060 //
+        console.log(oz, fl)
+        let d = new Uint8Array(fl)
+        d.fill(0x80)
+        writeWavHeader(fl, 22050, d)
+        let o = 44
+        for (let x = 0; x <= 5000; x++) d[o++] = 0x80 //silence
+        console.log("o:", o)
+
+        //prefix file with 0xB5 the hard way because set did not work
+        for (const b of 0xB5.toString(2).padStart(8, '0').split("").join("")){
+                    let c = b === '0' ? 4:9
+                    for (let x = 0; x < c; x++) {
+                        d.set(waves[0], o)
+                        o+= waves[0].length
+                        d[o++] = 0x80
+                    }
+                    for (let x = 0; x < 26; x++) d[o++] = 0x80
+            }
+        
+        for (const b of fb) {
+            let bits = b.toString(2).padStart(8, '0').split("").join("")
+
+            for (const b of bits){
+                        let c = b === '0' ? 4:9
+                        for (let x = 0; x < c; x++) {
+                            d.set(waves[0], o)
+                            o+= waves[0].length
+                            d[o++] = 0x80
+                        }
+                        for (let x = 0; x < 26; x++) d[o++] = 0x80
+                }
+        }
+        console.log('end:', o.toString(16), fl.toString(16), fb[0], d[0])
+        //console.log("zxd:", d)
+        return d
+    }
+    
+    function createAudioCoCo(fb) {
+        const SilenceByte = 0x80, waves = [[ 0xA6, 0xDC, 0xDC, 0xA6, 0x59, 0x23, 0x23, 0x59 ],[ 0xC6, 0xC6, 0x39, 0x39] ] //9600
+        , oz = countOnesAndZeros(fb)
+        , fl =  oz.z*8 + oz.o*4  + 0x3000 + 44 // padding for added silence and wav header
+        let d = new Uint8Array(fl)
+        writeWavHeader(fl, 9600, d)
         let o = 44
         
         while(o <= 0x82b) d[o++] = SilenceByte //silence 1
@@ -128,15 +193,20 @@
         console.log("e d: ",o.toString(16))
 
         while(o <= d.length) d[o++] = SilenceByte //silence end
-
         return d
     }
 
     function readFile(f) {
         let reader = new FileReader()
+        console.log(f.name)
         reader.readAsArrayBuffer(f)
         reader.onload = () => {
-            cocoCasWave = createAudio(new Uint8Array(reader.result))
+
+            if(f.name.toLowerCase().endsWith(".p"))
+                cocoCasWave = createAudioZX81(new Uint8Array(reader.result))
+            else
+                cocoCasWave = createAudioCoCo(new Uint8Array(reader.result))
+            
             Audio.src = URL.createObjectURL(new Blob([cocoCasWave], { type: 'audio/wav' }))
 
         }
@@ -188,7 +258,12 @@
     async function selZFilesOnChange() {
         console.log("You selected: " + selZFiles.value)
         const arrayBuffer = await zentries[selZFiles.value].arrayBuffer()
-        cocoCasWave = createAudio(new Uint8Array(arrayBuffer))
+        console.log(arrayBuffer.toString())
+        if(selZFiles.value.toLowerCase().endsWith(".p"))
+            cocoCasWave = createAudioZX81(new Uint8Array(arrayBuffer))
+        else
+            cocoCasWave = createAudioCoCo(new Uint8Array(arrayBuffer))
+
         Audio.src = URL.createObjectURL(new Blob([cocoCasWave], { type: 'audio/wav' }))
     }
 
