@@ -1,5 +1,5 @@
     /*
-        CocoCas2wav.js v1.0 - Ported to Javascript by Bitjunky 2023-03-13
+        CocoCas2wav.js v1.4 - Ported to Javascript by Bitjunky 2023-03-13
         Based on source cas2wav.c from http://www.6809.org.uk/dragon/ - convert Dragon/Tandy CoCo CAS file to WAV  Copyright 2013-2021 Ciaran Anscomb
         https://colorcomputerarchive.com/repo/Utilities/cas2wav-batch.zip (Seems to be a copy of cas2wave.exe, no source or author but properly adds silence for imporved loading.)
         https://retrocomputing.stackexchange.com/questions/150/what-format-is-used-for-coco-cassette-tapes
@@ -12,6 +12,7 @@
         Currently no options.. Not sure if needed for other hardware?  Currently only supports 9600 bit rate.
     */
         (async function() {
+
             const enc = new TextDecoder("utf-8")
             , Audio = document.getElementById("Audio")
             , fileInput = document.getElementById("file-input")
@@ -135,6 +136,9 @@
                 const arrayBuffer = await f.arrayBuffer()
                 FileCS.innerText = await SHAbuf(arrayBuffer)
        
+                if(f.name.toLowerCase().endsWith(".dsk")){
+                    cocoCasWave = createAudioCoCo(convertDatatoCas(arrayBuffer))
+                }else
                 if(f.name.toLowerCase().endsWith(".p"))
                     cocoCasWave = createAudioZX81(arrayBuffer)
                 else
@@ -199,7 +203,10 @@
             async function selZFilesOnChange() {
                 const arrayBuffer = await zentries[selZFiles.value].arrayBuffer()
                 CasCS.innerText = await SHAbuf(arrayBuffer)
-                
+
+                if(selZFiles.value.toLowerCase().endsWith(".dsk")){
+                    cocoCasWave = createAudioCoCo(convertDatatoCas(arrayBuffer))
+                }else
                 if(selZFiles.value.toLowerCase().endsWith(".p"))
                     cocoCasWave = createAudioZX81(arrayBuffer)
                 else
