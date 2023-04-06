@@ -17,15 +17,19 @@
             , Audio = document.getElementById("Audio")
             , fileInput = document.getElementById("file-input")
             , btnSaveWav = document.getElementById("btnSaveWav")
+            , btnSaveCas = document.getElementById("btnSaveCas")
             , selZFiles = document.getElementById("selZFiles")
+            , selDFiles = document.getElementById("selDFiles")
             , FileCS = document.getElementById("FileCS")
             , CasCS = document.getElementById("CasCS")
             , WavCS = document.getElementById("WavCS")
             btnSaveWav.onclick = Download
+            btnSaveCas.onclick = Download
             fileInput.onchange = readZipFiles //readFile
             selZFiles.ondblclick = selZFilesOnChange
+            selDFiles.ondblclick = selDFilesOnChange
             
-            let zentries, cocoCasWave
+            let zentries, dir, dskbuf, cas, cocoCasWave
         
             function countOnesAndZeros(fb) {
             let z = 0, o= 0
@@ -137,7 +141,8 @@
                 FileCS.innerText = await SHAbuf(arrayBuffer)
        
                 if(f.name.toLowerCase().endsWith(".dsk")){
-                    cocoCasWave = createAudioCoCo(convertDatatoCas(arrayBuffer))
+                    return listDskFiles(arrayBuffer)
+                    //cocoCasWave = createAudioCoCo(convertDatatoCas(arrayBuffer))
                 }else
                 if(f.name.toLowerCase().endsWith(".p"))
                     cocoCasWave = createAudioZX81(arrayBuffer)
@@ -146,24 +151,6 @@
                 
                 Audio.src = URL.createObjectURL(new Blob([cocoCasWave], { type: 'audio/wav' }))
                 WavCS.innerText = await SHAbuf(cocoCasWave)
-            }
-        
-            function Download() {
-                var saveByteArray = (function () {
-                var a = document.createElement("a")
-                a.style = 'display: none'
-                document.body.appendChild(a)
-                return function (data, name) {
-                    var blob = new Blob([data], {type: "application/octet-stream"}),
-                        url = window.URL.createObjectURL(blob)
-                    a.href = url
-                    a.download = name
-                    a.click()
-                    a.remove()
-                    window.URL.revokeObjectURL(url)
-                }
-                }())
-                saveByteArray(cocoCasWave, 'test.wav')
             }
         
             function encStr(s){return new TextEncoder("utf-8").encode(s) } 
@@ -181,14 +168,14 @@
                 FileCS.innerText =  await SHAbuf(arrayBuffer)
                 CasCS.innerText =  ""
                 WavCS.innerText =  ""
+                selZFiles.style.display = "block"
+                selDFiles.style.display = "none"
         
                 if(f.name.toLowerCase().endsWith(".zip")){
                     const {entries} = await unzipit.unzip(f)
-                    // print all entries and their sizes
                     zentries = entries
                     selZFiles.options.length = 0
                     for (const [name, entry] of Object.entries(zentries)) {
-                        //console.log(name, entry.size);
                         var opt = document.createElement('option')
                         opt.value = name
                         opt.innerHTML = `${name} bytes: ${entry.size}`
@@ -201,11 +188,13 @@
             }
         
             async function selZFilesOnChange() {
-                const arrayBuffer = await zentries[selZFiles.value].arrayBuffer()
+                selDFiles.style.display = "none"
+                const arrayBuffer =  new Uint8Array(await zentries[selZFiles.value].arrayBuffer())
                 CasCS.innerText = await SHAbuf(arrayBuffer)
 
                 if(selZFiles.value.toLowerCase().endsWith(".dsk")){
-                    cocoCasWave = createAudioCoCo(convertDatatoCas(arrayBuffer))
+                    return listDskFiles(arrayBuffer)
+                    //cocoCasWave = createAudioCoCo(convertDatatoCas(arrayBuffer))
                 }else
                 if(selZFiles.value.toLowerCase().endsWith(".p"))
                     cocoCasWave = createAudioZX81(arrayBuffer)
@@ -215,5 +204,58 @@
                 Audio.src = URL.createObjectURL(new Blob([cocoCasWave], { type: 'audio/wav' }))
                 WavCS.innerText = await SHAbuf(cocoCasWave)
             }
+
+            async function selDFilesOnChange() {
+                console.log("selDFilesOnChange", selZFiles.value, selDFiles.value)
+
+                console.log("selDFilesOnChange ze:", dir, zentries)
+                const selDFile = dir.find( f => `${f.name}.${f.ext}` === selDFiles.value )
+                const zfbuf =  dskbuf//new Uint8Array(await zentries[selZFiles.value].arrayBuffer())
+                console.log("selDFile:", dir, selDFile)
+                cas = convertDatatoCas(zfbuf, selDFile.i)
+                CasCS.innerText = await SHAbuf(cas)
+
+                cocoCasWave = createAudioCoCo(cas)
+                Audio.src = URL.createObjectURL(new Blob([cocoCasWave], { type: 'audio/wav' }))
+                WavCS.innerText = await SHAbuf(cocoCasWave)
+            }
+
+            function listDskFiles(d){
+                selDFiles.options.length = 0
+                selDFiles.style.display = "block"
+
+                dskbuf = new Uint8Array(d)
+                dir = getDirectory(dskbuf) //new Uint8Array(d))
+                for (const e of dir) {
+                    var opt = document.createElement('option')
+                    opt.value = `${e.name}.${e.ext}` 
+                    opt.innerHTML = `${opt.value} bytes: ${e.size}`
+                    selDFiles.appendChild(opt)
+                }
+            }
+
+
+            function Download(e) {
+                var saveByteArray = (function () {
+                var a = document.createElement("a")
+                a.style = 'display: none'
+                document.body.appendChild(a)
+                return function (data, name) {
+                    var blob = new Blob([data], {type: "application/octet-stream"}),
+                        url = window.URL.createObjectURL(blob)
+                    a.href = url
+                    a.download = name
+                    a.click()
+                    a.remove()
+                    window.URL.revokeObjectURL(url)
+                }
+                }())
+                console.log(e.target.id)
+                if(e.target.id === "btnSaveWav")
+                    saveByteArray(cocoCasWave, 'out.wav')
+                else 
+                    saveByteArray(cas, 'out.cas')
+            }
+
         
         }())

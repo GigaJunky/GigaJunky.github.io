@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>CocoCas2Wav.js v1.4</title>
+        <title>CocoCas2Wav.js v1.5</title>
         <style>
             @import url('https://fonts.cdnfonts.com/css/color-basic');
             
@@ -15,18 +15,20 @@
                 text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px;
                 cursor: pointer; opacity: 0.6; transition: 0.3s;
             }
+            li { font-family: monospace;}
 
             button:hover, input[type="file"]::file-selector-button:hover {opacity: 1}
 
         </style>
     </head>
 <body>
-    <h2>COCOCAS2WAV.JS  V1.4</h2>
+    <h2>COCOCAS2WAV.JS  V1.5</h2>
     <div>By BitJunky</div>
     <div>
         <audio id="Audio" controls=""></audio>
 
-        <select id="selZFiles" size="10" style="width: 600px"></select>
+        <select id="selZFiles" size="10" style="width: 600px; display: none"></select>
+        <select id="selDFiles" size="10" style="width: 600px; display: none"></select>
         <p>CHECKSUMS SHA-1</p>
 
         <div>
@@ -42,22 +44,30 @@
         <span id="WavCS"></span>
         </div>
         <input type="file" accept=".p,.cas,.dsk,.zip" id="file-input">
-        <button id="btnSaveWav">Save as .wav</button>
+        <button id="btnSaveWav">Save .wav</button>
+        <button id="btnSaveCas">Save .cas</button>
         
 
-        <pre>
+        <ul>
+            <li>
             Converts .cas (Cassette) data files to .wav to play into a real Color Computer
             Works well depnding on sound hardware..  Seems to work well on most PCs audio out with sound on very high without distortion..
             If it don't work on one, try anouther.  Does not seem to work on my Samsung Phones/Tablets.. Maybe sound is not loud enough?
             Currently no options or validation to keep it as simple as posible..  only supports 9600 bit rate.
             Not sure other rates would help for other audio hardware? 
-            23-03-15 v1.1 - Added Unzip You can have multiple files in a zip and will list them. Double click to Load.
-            23-03-21 v1.2 - Added Timex/Sinclair ZX81.. .P files..  Yes, my first computer and have one so...
-            23-03-23 v1.3 - Added SHA-1 Checksums.. Can do 256/512 but overkill.. Used to compare files for dups or diffs, wav diffs, debugging.
-            23-03-29 v1.4 - Added Coco .DSK files.. Not perfect and does not work with all dsk formats.  Only simple 1 game .DSKs which seem to be most common.
-                            There is a bug where I can't seem to calculate the last DataBlock Checksum, so it errors at the very end....
-                             but you can still EXEC.  If anyone knows how to calc that let me know!
-        </pre>
+            </li>
+            <li>23-03-15 v1.1 - Added Unzip You can have multiple files in a zip and will list them. Double click to Load.</li>
+            <li>23-03-21 v1.2 - Added Timex/Sinclair ZX81.. .P files..  Yes, my first computer and have one so...</li>
+            <li>23-03-23 v1.3 - Added SHA-1 Checksums.. Can do 256/512 but overkill.. Used to compare files for dups or diffs, wav diffs, debugging.</li> 
+            <li>23-03-29 v1.4 - Added Coco .DSK files.. Does not work with all the other less used dsk formats (DMK, OS9).</li>
+            <li>23-04-06 v1.5 - Enhanced Coco .DSK with 1 or more files for JV1 dsks. You can select the which disk file to convert to .cas.
+                             Added save as .cas</li>
+            <li>
+                Known bug:
+                The last DataBlock Checksum is incorrect, yet all the prior blocks are correct?
+                You will see an IO error at the end when loading cas wav file, but you can still EXEC!  If anyone knows how to calc that let me know!
+            </li>
+        </ul>
         <footer>
             <a href="https://gigajunky.github.io/coco/">gigajunky.github.io/coco/</a>
         </footer>
