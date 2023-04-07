@@ -116,17 +116,13 @@ function convertDatatoCas(d, di){
     for (let x = 0; x <= bc; x++) { //5. One or more Data blocks 
         console.log(x, o, co, f.length -co)
 
-        if(f.length - co < 255){
-            bs = f.length - co;
-            //let ecs = checksum(f.subarray(co, co+bs)) // cs for last gran calc different?
-            //console.log('BS:',bc, x, bs, ecs.toString(16))
-        }else bs = 255
+        if(f.length - co < 255) bs = f.length - co
 
         c.set([0x55, 0x3c, 1, bs], o)
         o+=4
         
         c.set(f.subarray(co, co + bs),o)
-        cs = checksum(f.subarray(co, co+bs))
+        cs = checksum(c.subarray(o-2, o+bs))
         o+=bs
         co+=bs
         c.set([cs, 0x55], o)
