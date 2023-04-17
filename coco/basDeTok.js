@@ -82,7 +82,27 @@ const keyword_token_dictionary = {
     0xca: "DLOAD",
     0xcb: "RENUM",
     0xcc: "FN",
-    0xcd: "USING"
+    0xcd: "USING",
+
+    0xce: "DIR",
+    0xcf: "DRIVE",
+    0xd0: "FIELD",
+    0xd1: "FILES",
+    0xd2: "KILL",
+    0xd3: "LOAD",
+    0xd4: "LSET",
+    0xd5: "MERGE",
+    0xd6: "RENAME",
+    0xd7: "RSET",
+    0xd8: "SAVE",
+    0xd9: "WRITE",
+    0xda: "VERIFY",
+    0xdb: "UNLOAD",
+    0xdc: "DSKINI",
+    0xdd: "BACKUP",
+    0xde: "COPY",
+    0xdf: "DSKI$",
+    0xe0: "DSKO$"
 }
 
 function_token_dictionary = {
@@ -119,7 +139,14 @@ function_token_dictionary = {
     0x9e: "INSTR",
     0x9f: "TIMER",
     0xa0: "PPOINT",
-    0xa1: "STRING$"
+    0xa1: "STRING$",
+
+    0xa2: "CVN",
+    0xa3: "FREE",
+    0xa4: "LOC",
+    0xa5: "LOF",
+    0xa6: "MKN$"
+
 }
 
 function readInt(array) {
@@ -128,6 +155,9 @@ function readInt(array) {
         value = (value * 256) + array[i]
     return value
 }
+function toHexString(byteArray) {
+    return Array.from(byteArray, function(byte) { return ('0' + (byte & 0xFF).toString(16)).slice(-2) }).join(' ')
+}
 
 
 function isAscii(byte){ return byte > 31 && byte < 127 }
@@ -135,7 +165,7 @@ function trans(b){
     if(b === 0) return "\n"
 
     let t = keyword_token_dictionary[b]
-    if(t) return t
+    if(t) return t + " "
 
     return isAscii(b) ? String.fromCharCode(b) : `[${b.toString(16).padStart(2, "0")}]` 
 }
@@ -160,7 +190,7 @@ function basDeTok(f)
         }else {
             if(c === 255){
                 i++
-                btxt += function_token_dictionary[f[i]]
+                btxt += keyword_token_dictionary[f[i]]
             } else
                 btxt += trans(c)
         }
@@ -168,3 +198,36 @@ function basDeTok(f)
     return btxt
 }
 
+function basDeTokL(f)
+{
+    let btxt = ""
+    for (let i = 0; i < f.length; i++) {
+        const c = f[i]
+            if(c === 255){
+                i++
+                btxt += keyword_token_dictionary[f[i]] + " "
+            } else
+                btxt += trans(c)
+    }
+    return btxt
+}
+
+
+function basDeTokX(f)
+{
+    const len = readInt(f.subarray(1,3))
+    btxt = ""
+
+    let a = 0x2600, l = 0, o = 3, p = 0
+    while (o>0 && o < len ){
+        l = readInt(f.subarray(o+2 ,o+4))
+        console.log("o:",  a.toString(16), o, l, keyword_token_dictionary[f[o+4]])
+        a = readInt(f.subarray(o,o+2))
+        p = o
+        o = a + 2 - 0x2600
+        //console.log("dif:", o-p, toHexString( f.subarray(p + 3 , o)))
+        btxt += l + " " + basDeTokL(f.subarray(p+4 , o))
+    }
+
+    return btxt
+}
