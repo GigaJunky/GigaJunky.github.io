@@ -79,7 +79,7 @@ function getDiskData(d, di) {
         , mload = buf.subarray(3, 5)
         , mstart = buf.subarray(buf.length - 2, buf.length)
     console.log(dir)
-    return { name: d0.name, mload, mstart, buf: buf.subarray(5, buf.length - 5) }
+    return { name: d0.name, ext: d0.ext, mload, mstart, buf: buf.subarray(5, buf.length - 5) }
 }
 
 function checksum(ba) {
@@ -98,7 +98,7 @@ function convertDatatoCas(d, di) {
     //2. A Namefile block 
     c.set([0x55, 0x3c, 0, 0x0F,
         ...encStr(dd.name.padEnd(8, " "))
-        , 2, 0, 0,
+        , dd.ext === "BAS" ? 0: 2 , 0, 0,
         ...dd.mstart, ...dd.mload
     ], o)
 
