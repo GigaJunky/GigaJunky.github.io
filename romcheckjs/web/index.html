@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>RomCheck.js</title>
+        <style>
+            @import url('https://fonts.cdnfonts.com/css/color-basic');
+            
+            html { font-family: '!Color Basic', sans-serif; font-size: 16px; background: black; color: black }
+            body { background: #95DB54; padding: 0 20px; width: 90%; margin: 0 auto }
+            audio { width: 90% }
+            button, audio, select, input[type="file"]::file-selector-button {
+                background-color:  black; color: white;
+                border: none; border-radius: 4px; padding: 15px 32px; text-align: center;
+                text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px;
+                cursor: pointer; opacity: 0.6; transition: 0.3s;
+            }
+            li { font-family: monospace;}
+
+            button:hover, input[type="file"]::file-selector-button:hover {opacity: 1}
+
+        </style>
+    </head>
+<body>
+    <h2>RomCheck.JS</h2>
+    <div>By BitJunky</div>
+    <div>
+        <select id="selZFiles" size="10" style="width: 600px; display: none"></select>
+        <select id="selDFiles" size="10" style="width: 600px; display: none"></select>
+        <p>CHECKSUMS SHA-1</p>
+        <div>
+        <label for="FileCS">FILE:</label>
+        <span id="FileCS"></span>
+        </div>
+        <div>
+        <label for="CasCS">CAS:</label>
+        <span id="CasCS"></span>
+        </div>
+        <div>
+        <label for="WavCS">WAV:</label>
+        <span id="WavCS"></span>
+        </div>
+        <div>
+            <label for="files" class="btn">SELECT DATS</label>
+            <input type="file" accept=".dat, .xml" id="datfile-input" multiple>
+        </div>
+        <div>
+            <label for="files" class="btn">SELECT ROMS</label>
+            <input type="file" accept=".zip" id="file-input" multiple>
+        </div>
+
+        <label id="lblCount"></label>
+        <br>
+        <textarea  spellcheck="false" style="width: 100%;" rows="10" cols="40" id="taBas"></textarea>
+
+        <div id="table"></div>
+
+        <ul>
+            <li>
+            Rom Checker
+            </li>
+            <li>25-04-14 v1 - Intial write.</li>
+            
+        </ul>
+        <footer>
+            <a href="https://gigajunky.github.io/">gigajunky.github.io/</a>
+        </footer>
+    </div>
+
+    <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+    <script type="text/javascript" src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
+    <!--
+    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf@latest/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.20/jspdf.plugin.autotable.min.js"></script>
+    -->
+    <script src="https://unpkg.com/unzipit@1.4.0/dist/unzipit.js"></script>
+    <script src="index.js"></script>
+    <script src="xml2json.js"></script>
+
+</body></html>

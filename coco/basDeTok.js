@@ -170,7 +170,7 @@ function trans(b){
     return isAscii(b) ? String.fromCharCode(b) : `[${b.toString(16).padStart(2, "0")}]` 
 }
 
-function basDeTok(f)
+function basDeTokX(f)
 {
     let btxt = ""
     let po = 0
@@ -213,7 +213,7 @@ function basDeTokL(f)
 }
 
 
-function basDeTokX(f)
+function basDeTok(f)
 {
     const len = readInt(f.subarray(1,3))
     btxt = ""
