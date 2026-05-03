@@ -44,24 +44,46 @@
   <br>File Content (Non-Zero Bytes)<br>
   <textarea id="log" rows="20" cols="80" placeholder="Open file to see content"></textarea>
 
-<table>
-            <tr>
-                <td>Gamepad Index</td>
-                <td>Button 1</td>
-                <td>Button Value</td>
-            </tr>
-            <tr>
-                <td id="gamepadIndex">-</td>
-                <td id="buttonIndex">-</td>
-                <td id="buttonValue">-</td>
-            </tr>
-        </table>
+  <table>
+      <tr>
+          <td>Gamepad Index</td>
+          <td>Button 1</td>
+          <td>Button Value</td>
+      </tr>
+      <tr>
+          <td id="gamepadIndex">-</td>
+          <td id="buttonIndex">-</td>
+          <td id="buttonValue">-</td>
+      </tr>
+  </table>
 
-        <br><br>
-        <textarea id="talog" rows="3" cols="50"></textarea>
+  <br><br>
+  <textarea id="jslog" rows="3" cols="50"></textarea>
 
 </body>
   <script>
+
+    /*
+    This is a utilty/debuging to edit the Coco ESP32 configuration file. config.ccc or any *.ccc files.
+    I had problems with configuring the ESP32 Joysticks that Cedric help me fix as he has simulated SNES joy pads
+    So I looked into the exact bytes of the binnary file to figure which values were causing the issue be able
+    to configure my Joysticks vs just copying over the file as it does have other settings for the
+    select .DSK 0-4 drives and WIFI and other settings.
+    To use I would recommend backing up your current config file before making changes.
+    Unless you have the same JS as me, this may not help you without adding your own joystick configurations.
+    when it open the config.ccc file it will display the raw no zero bytes and at the end the 
+    left/right joystick configurations bytes.
+    The first 3 are the Dpad X/Y, the middle 8 are zeros, and the last four ore the A/B buttons.
+    The values are shonw in the F12 Menu when edit the Joysticks with the 4/5 options.  
+    When you have your current settings you will need to edit the cfg object to reflect your desired joystick configurations.
+    Download this html file to a place you can edit it easly.. (can be on the CocoESP32 SD card)
+    Edit the cfg object to match your specific joystick configurations.
+    I have integrated some Web Based Joystick Testing you can see the USBid (Vendor and Product IDs) please add that information if possible.
+    You can posting your findings and share settings with the CoCo ESP32 community.
+    Also you can make special setings with your various joyticks and swap or copy to the L/R, and or different buttons configs.
+    Like AB or XY or AY or XB etc.
+    Hope you find this useful.
+    */
 
     const cfg = {
       ccc: { address: {LJS: 8000, RJS: 8016 } }
@@ -83,10 +105,10 @@
     let fileHandle, byteArray
     const openBtn = document.getElementById('openBtn')
     , saveBtn = document.getElementById('saveBtn')
-    , editor = document.getElementById('editor')
     , RABtn = document.getElementById('RABtn')
     , ddLjs = document.getElementById('ddLjs')
     , ddRjs = document.getElementById('ddRjs')
+    ,   log = document.getElementById('log')
 
     InitDropDowns()
     
@@ -104,7 +126,6 @@
       }
     })
 
-    
     saveBtn.addEventListener('click', async () => {
       if (!fileHandle) return
 
@@ -129,19 +150,18 @@
       for (const js of cfg.joysticks) {
         const opt = document.createElement("option")
         opt.textContent = js.name
-        opt.value = js.esp32
         ddLjs.appendChild(opt)
       }
       for (const js of cfg.joysticks) {
         const opt = document.createElement("option")
         opt.textContent = js.name
-        opt.value = js.esp32
         ddRjs.appendChild(opt)
       }
     }
 
     function CocoESP32Config(byteArray)
-    {            
+    {
+      console.log(byteArray.length)            
         //const str = new TextDecoder().decode(byteArray.subarray(0,65))
         //console.log(str)
         for (let i = 0; i < byteArray.length; i++) {
@@ -160,7 +180,7 @@
     function isAscii(byte){ return byte > 31 && byte < 127 }
 
     /* Joystick Tester */
-    const talog = document.getElementById('talog')
+    const jslog = document.getElementById('jslog')
     
     window.addEventListener("gamepadconnected", (event) => {
       
@@ -168,7 +188,7 @@
 
         , msg = `index ${gp.index}: ${gp.id}. Buttons: ${gp.buttons.length} Axes: ${gp.axes.length}`
 
-        talog.innerText = `${msg}`
+        jslog.innerText = `${msg}`
         console.log(msg)
      
         function updateGamepad() {
@@ -183,12 +203,18 @@
         updateGamepad()
     })
 
+    let priorJS = -1
     function PrintGamePadValues(GamePadIndex, index, value)
     {
+        let cs = index //`${GamePadIndex}:${index}` //:${value.value ? value.value.toFixed(2) : value.toFixed(2)}`
+        if(cs==priorJS) return
+        if(index == 9) return //MS windows bug stuck on 9 Start
+        priorJS = cs
+
         console.log(`Gamepad ${GamePadIndex} Axis ${index} pressed ${value}`)
-        document.getElementById("gamepadIndex").innerText = GamePadIndex;
-        document.getElementById("buttonIndex").innerText = index;
-        document.getElementById("buttonValue").innerText = value.value ? value.value.toFixed(2) : value.toFixed(2);
+        document.getElementById("gamepadIndex").innerText = GamePadIndex
+        document.getElementById("buttonIndex").innerText = index
+        document.getElementById("buttonValue").innerText = value.value ? value.value.toFixed(2) : value.toFixed(2)
     }
 
   </script>
