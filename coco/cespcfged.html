@@ -64,6 +64,7 @@
   <script>
 
     /*
+    Mike Horgan BitJunky@hotmail.com 2026-05-04
     This is a utilty/debuging to edit the Coco ESP32 configuration file. config.ccc or any *.ccc files.
     I had problems with configuring the ESP32 Joysticks that Cedric help me fix as he has simulated SNES joy pads
     So I looked into the exact bytes of the binnary file to figure which values were causing the issue be able
@@ -147,6 +148,9 @@
 
     function InitDropDowns()
     {
+      ddLjs.options.length = 0
+      ddRjs.options.length = 0
+
       for (const js of cfg.joysticks) {
         const opt = document.createElement("option")
         opt.textContent = js.name
