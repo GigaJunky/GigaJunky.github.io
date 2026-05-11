@@ -44,27 +44,30 @@
   <br>File Content (Non-Zero Bytes)<br>
   <textarea id="log" rows="20" cols="80" placeholder="Open file to see content"></textarea>
 
-  <table>
-      <tr>
-          <td>Gamepad Index</td>
-          <td>Button 1</td>
-          <td>Button Value</td>
-      </tr>
-      <tr>
-          <td id="gamepadIndex">-</td>
-          <td id="buttonIndex">-</td>
-          <td id="buttonValue">-</td>
-      </tr>
-  </table>
+<table>
+            <tr>
+                <td>Gamepad Index</td>
+                <td>Button 1</td>
+                <td>Button Value</td>
+            </tr>
+            <tr>
+                <td id="gamepadIndex">-</td>
+                <td id="buttonIndex">-</td>
+                <td id="buttonValue">-</td>
+            </tr>
+        </table>
 
-  <br><br>
-  <textarea id="jslog" rows="3" cols="50"></textarea>
+        <br><br>
+        <textarea id="jslog" rows="3" cols="50"></textarea>
 
 </body>
+<script src="./cespcfg.js"></script>
   <script>
 
-    /*
+     /*
     Mike Horgan BitJunky@hotmail.com 2026-05-04
+    2026-05-09 Seperated cfg and added AliExpress Joystick configs
+    
     This is a utilty/debuging to edit the Coco ESP32 configuration file. config.ccc or any *.ccc files.
     I had problems with configuring the ESP32 Joysticks that Cedric help me fix as he has simulated SNES joy pads
     So I looked into the exact bytes of the binnary file to figure which values were causing the issue be able
@@ -85,31 +88,13 @@
     Like AB or XY or AY or XB etc.
     Hope you find this useful.
     */
-
-    const cfg = {
-      ccc: { address: {LJS: 8000, RJS: 8016 } }
-
-      , joysticks : [
-           { name: 'No Change'}
-         , { name: 'Reset',             esp32: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}
-         , { name: 'Rii SNES Pads AB',  esp32: [9,3,4,0,0,0,0,0,0,0,0,5,32,5,64], usbid : "USB Gamepad (Vendor: 0810 Product: 0001). Buttons: 12 Axes: 6"}
-         , { name: 'Rii SNES Pads BA',  esp32: [9,3,4,0,0,0,0,0,0,0,0,5,64,5,32]}
-         , { name: 'Rii SNES Pads XY',  esp32: [9,3,4,0,0,0,0,0,0,0,0,5,16,5,128]}
-         , { name: 'Rii SNES Pads YB',  esp32: [9,3,4,0,0,0,0,0,0,0,0,5,128,5,64]}
-         , { name: 'CBs SNES Pads',     esp32: [9,3,4,0,0,0,0,0,0,0,0,5,128,5,64], note: "Good copy of Cedrick config that fix my Rii SNES pads"}
-         , { name: 'MHs Bad SNES Pads', esp32: [9,2,3,0,0,0,0,0,0,0,0,5, 32,5,64], note: "Bad saving of Mike Horgan's Rii SNES pads. X don't work.. Should save 9,3,4 vs 9,2,3"}
-         , { name: 'Add Yours Here',    esp32: [9,3,4,0,0,0,0,0,0,0,0,5,128,5,64]}
-      ]
-    }
-
-
     let fileHandle, byteArray
     const openBtn = document.getElementById('openBtn')
     , saveBtn = document.getElementById('saveBtn')
     , RABtn = document.getElementById('RABtn')
     , ddLjs = document.getElementById('ddLjs')
     , ddRjs = document.getElementById('ddRjs')
-    ,   log = document.getElementById('log')
+     ,   log = document.getElementById('log')
 
     InitDropDowns()
     
@@ -126,7 +111,7 @@
         console.error("File selection cancelled or failed:", err)
       }
     })
-
+    
     saveBtn.addEventListener('click', async () => {
       if (!fileHandle) return
 
@@ -164,8 +149,8 @@
     }
 
     function CocoESP32Config(byteArray)
-    {
-      console.log(byteArray.length)            
+    {            
+        console.log(byteArray.length)
         //const str = new TextDecoder().decode(byteArray.subarray(0,65))
         //console.log(str)
         for (let i = 0; i < byteArray.length; i++) {
@@ -184,7 +169,7 @@
     function isAscii(byte){ return byte > 31 && byte < 127 }
 
     /* Joystick Tester */
-    const jslog = document.getElementById('jslog')
+    const talog = document.getElementById('jslog')
     
     window.addEventListener("gamepadconnected", (event) => {
       
@@ -207,10 +192,10 @@
         updateGamepad()
     })
 
-    let priorJS = -1
+     let priorJS = -1
     function PrintGamePadValues(GamePadIndex, index, value)
     {
-        let cs = index //`${GamePadIndex}:${index}` //:${value.value ? value.value.toFixed(2) : value.toFixed(2)}`
+      let cs = index //`${GamePadIndex}:${index}` //:${value.value ? value.value.toFixed(2) : value.toFixed(2)}`
         if(cs==priorJS) return
         if(index == 9) return //MS windows bug stuck on 9 Start
         priorJS = cs
@@ -222,5 +207,4 @@
     }
 
   </script>
-
 </html>
