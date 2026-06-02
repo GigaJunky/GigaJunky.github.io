@@ -18,7 +18,18 @@
             li { font-family: monospace;}
 
             button:hover, input[type="file"]::file-selector-button:hover {opacity: 1}
+            
+            .select-container {
+            display: flex;
+            flex-wrap: wrap; /* Allows the boxes to wrap side-by-side or stack */
+            gap: 15px;       /* Space between the select boxes */
+            }
 
+            .select-container select {
+            flex: 1 1 250px; /* Grow, Shrink, and set preferred starting width (250px) */
+            padding: 10px;
+            width: 100%;     /* Fills the space evenly when side-by-side */
+            }
         </style>
     </head>
 <body>
@@ -26,11 +37,13 @@
     <div>By BitJunky</div>
     <div>
         <audio id="Audio" controls=""></audio>
-
+        <input type="text" id="filterInput" placeholder="Type to filter options...">
+        <div class="select-container">
         <select id="selZFiles" size="10" style="width: 600px; display: none"></select>
         <select id="selDFiles" size="10" style="width: 600px; display: none"></select>
+        <select id="selVDisk" size="10" style="width: 600px; display:block"></select>
+        </div>
         <p>CHECKSUMS SHA-1</p>
-
         <div>
         <label for="FileCS">FILE:</label>
         <span id="FileCS"></span>
@@ -46,10 +59,13 @@
         <input type="file" accept=".p,.cas,.dsk,.zip" id="file-input">
         <button id="btnSaveWav">Save .wav</button>
         <button id="btnSaveCas">Save .cas</button>
+        <button id="btnSaveDsk">Save .dsk</button>
+        <div id="dvDskInfo"></div>
         <br>
         <textarea  spellcheck="false" style="width: 100%;" rows="10" cols="40" id="taBas"></textarea>
         
-
+        <details>
+        <summary>Update History (Click to toggle)</summary>
         <ul>
             <li>
             Converts .cas (Cassette) data files to .wav to play into a real Color Computer
@@ -69,10 +85,12 @@
             <li>23-04-11 v1.6  - Added View for detokenized Basic files... Not 100% yet.
                   Also will view other files, but if binary it will show unprintable charaters. Some other files maybe readable text.</li>
             <li>23-04-19 v1.61 - Fix basic/machine type flag</li>
+             <li>26-06-01 v1.6 - Added MakeDsk</li>
             
         </ul>
+        </details>
         <footer>
-            <a href="https://gigajunky.github.io/coco/">gigajunky.github.io/coco/</a>
+            <a href="https://github.com/GigaJunky/coco">gigajunky.github.io/coco/</a>
         </footer>
     </div>
     <script src="https://unpkg.com/unzipit@1.4.0/dist/unzipit.js"></script>
@@ -80,5 +98,6 @@
     <script src="dsk2cas.js"></script>
     <script src="cas2wav.js"></script>
     <script src="basDeTok.js"></script>
+    <script src="makedsk.js"></script>
 
 </body></html>

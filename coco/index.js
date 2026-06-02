@@ -4,20 +4,43 @@
             , fileInput = document.getElementById("file-input")
             , btnSaveWav = document.getElementById("btnSaveWav")
             , btnSaveCas = document.getElementById("btnSaveCas")
+            , btnSaveDsk = document.getElementById("btnSaveDsk")
             , selZFiles = document.getElementById("selZFiles")
             , selDFiles = document.getElementById("selDFiles")
+            , selVDisk = document.getElementById("selVDisk")
             , FileCS = document.getElementById("FileCS")
             , CasCS = document.getElementById("CasCS")
             , WavCS = document.getElementById("WavCS")
             , taBas = document.getElementById("taBas")
+            , dvDskInfo = document.getElementById("dvDskInfo")
             btnSaveWav.onclick = Download
             btnSaveCas.onclick = Download
+            btnSaveDsk.onclick = Download
             fileInput.onchange = readZipFiles //readFile
             selZFiles.ondblclick = selZFilesOnChange
             selDFiles.ondblclick = selDFilesOnChange
+            selVDisk.ondblclick = selVFilesRemove
             
-            let zentries, dir, dskbuf, cas, cocoCasWave
-        
+            let zentries, dir, dskbuf, cas, cocoCasWave, vDskEntries = []
+
+            document.getElementById('filterInput').addEventListener('input', function (e) {
+                // Convert input text to lowercase for case-insensitive matching
+                const filterValue = e.target.value.toLowerCase()
+                const selectList = selZFiles
+                const options = selectList.options
+
+                // Loop through all options in the dropdown list
+                for (let i = 0; i < options.length; i++) {
+                    const optionText = options[i].text.toLowerCase()
+                    // If the option text includes the filter string, show it; otherwise, hide it
+                    if (optionText.includes(filterValue)) {
+                        options[i].style.display = ""
+                    } else {
+                        options[i].style.display = "none"
+                    }
+                }
+            })
+
             async function readFile(f) {
                 const arrayBuffer = await f.arrayBuffer()
                 FileCS.innerText = await SHAbuf(arrayBuffer)
@@ -49,10 +72,10 @@
                 FileCS.innerText =  await SHAbuf(arrayBuffer)
                 CasCS.innerText =  ""
                 WavCS.innerText =  ""
-                selZFiles.style.display = "block"
                 selDFiles.style.display = "none"
         
                 if(f.name.toLowerCase().endsWith(".zip")){
+                    selZFiles.style.display = "block"
                     const {entries} = await unzipit.unzip(f)
                     zentries = entries
                     selZFiles.options.length = 0
@@ -63,6 +86,7 @@
                         selZFiles.appendChild(opt)
                     }
                 } else{
+                    selZFiles.style.display = "none"
                     selZFiles.options.length = 0
                     await readFile(f)
                 }
@@ -96,6 +120,9 @@
                 //if(ext == "BAS" || ext == "TXT" || ext == "DOC"){
                     //console.log("bas:", selDFiles.value, zfbuf.length, selDFile, ext)
                     const dd = getDskFileData(zfbuf, selDFile)
+                    vDskEntries.push({...selDFile, buf: dd })
+                    listVDskFiles()
+                    console.log("vDskEntries:", vDskEntries)
                     taBas.value = ext === "BAS" ? basDeTok(dd) : decStr(dd)
                 //}
 
@@ -116,13 +143,38 @@
                 dir = getDirectory(dskbuf)
                 for (const e of dir) {
                     var opt = document.createElement('option')
-                    opt.value = `${e.name}.${e.ext}` 
-                    opt.innerHTML = `${opt.value} bytes: ${e.size} ascii: ${e.ascii} type: ${e.type}`
+                    opt.value = `${e.name}.${e.ext}`
+                    opt.innerHTML = `${opt.value} bytes: ${e.size} grans: ${e.grans.length-1} ascii: ${e.ascii} type: ${e.type}`
                     selDFiles.appendChild(opt)
                 }
             }
 
-            function Download(e) {
+            function listVDskFiles(){
+                if(vDskEntries.length === 0){
+                    selVDisk.style.display = "none"
+                    dvDskInfo.innerText = `Granules: 0 Files: 0 Free: ${GRANULES}`
+                    return
+                }
+                selVDisk.options.length = 0
+                selVDisk.style.display = "block"
+                let totalGrans = 0
+                for (const e of vDskEntries) {
+                    var opt = document.createElement('option')
+                    opt.value = `${e.name}.${e.ext}` 
+                    opt.innerHTML = `${opt.value} bytes: ${e.size} grans: ${e.grans.length-1} ascii: ${e.ascii} type: ${e.type}`
+                    selVDisk.appendChild(opt)
+                    totalGrans += e.grans.length -1
+                }
+
+                dvDskInfo.innerText = `Granules: ${totalGrans} Files: ${vDskEntries.length} Free: ${GRANULES - totalGrans}`
+            }
+
+            function selVFilesRemove() {
+                vDskEntries.splice(selVDisk.selectedIndex, 1)
+                listVDskFiles()
+            }
+
+            function Download(e) {               
                 var saveByteArray = (function () {
                 var a = document.createElement("a")
                 a.style = 'display: none'
@@ -140,7 +192,10 @@
                 console.log(e.target.id)
                 if(e.target.id === "btnSaveWav")
                     saveByteArray(cocoCasWave, 'out.wav')
-                else 
+                else if(e.target.id === "btnSaveDsk"){
+                    let disk = makeDsk(vDskEntries)
+                    saveByteArray(disk, 'out.dsk')
+                }else
                     saveByteArray(cas, 'out.cas')
             }
         }())
