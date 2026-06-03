@@ -72,10 +72,10 @@
                 FileCS.innerText =  await SHAbuf(arrayBuffer)
                 CasCS.innerText =  ""
                 WavCS.innerText =  ""
-                selDFiles.style.display = "none"
+                grpDFiles.style.display = "none"
         
                 if(f.name.toLowerCase().endsWith(".zip")){
-                    selZFiles.style.display = "block"
+                    grpZFiles.style.display = "block"
                     const {entries} = await unzipit.unzip(f)
                     zentries = entries
                     selZFiles.options.length = 0
@@ -86,14 +86,14 @@
                         selZFiles.appendChild(opt)
                     }
                 } else{
-                    selZFiles.style.display = "none"
+                    grpZFiles.style.display = "none"
                     selZFiles.options.length = 0
                     await readFile(f)
                 }
             }
         
             async function selZFilesOnChange() {
-                selDFiles.style.display = "none"
+                grpDFiles.style.display = "none"
                 const arrayBuffer =  new Uint8Array(await zentries[selZFiles.value].arrayBuffer())
                 CasCS.innerText = await SHAbuf(arrayBuffer)
 
@@ -137,7 +137,7 @@
 
             function listDskFiles(d){
                 selDFiles.options.length = 0
-                selDFiles.style.display = "block"
+                grpDFiles.style.display = "block"
 
                 dskbuf = new Uint8Array(d)
                 dir = getDirectory(dskbuf)
@@ -151,12 +151,12 @@
 
             function listVDskFiles(){
                 if(vDskEntries.length === 0){
-                    selVDisk.style.display = "none"
+                    grpVDisk.style.display = "none"
                     dvDskInfo.innerText = `Granules: 0 Files: 0 Free: ${GRANULES}`
                     return
                 }
                 selVDisk.options.length = 0
-                selVDisk.style.display = "block"
+                grpVDisk.style.display = "block"
                 let totalGrans = 0
                 for (const e of vDskEntries) {
                     var opt = document.createElement('option')

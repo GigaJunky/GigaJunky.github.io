@@ -18,18 +18,42 @@
             li { font-family: monospace;}
 
             button:hover, input[type="file"]::file-selector-button:hover {opacity: 1}
-            
-            .select-container {
-            display: flex;
-            flex-wrap: wrap; /* Allows the boxes to wrap side-by-side or stack */
-            gap: 15px;       /* Space between the select boxes */
+
+            /* ADD THIS FIRST: Ensures padding doesn't break layout widths */
+            *, *::before, *::after {
+            box-sizing: border-box;
             }
 
-            .select-container select {
-            flex: 1 1 250px; /* Grow, Shrink, and set preferred starting width (250px) */
-            padding: 10px;
-            width: 100%;     /* Fills the space evenly when side-by-side */
+            .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            width: 100%;
+            margin-top: 5px;
             }
+
+            .form-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 250px;
+            display: none;
+            }
+
+            .form-group label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            align-self: flex-start;
+            font-family: monospace;
+            }
+
+            .form-group select {
+            width: 100%;
+            min-width: 500px;
+            padding: 8px;      
+            font-family: monospace;
+            }
+
+
         </style>
     </head>
 <body>
@@ -38,11 +62,20 @@
     <div>
         <audio id="Audio" controls=""></audio>
         <input type="text" id="filterInput" placeholder="Type to filter options...">
-        <div class="select-container">
-        <select id="selZFiles" size="10" style="width: 600px; display: none"></select>
-        <select id="selDFiles" size="10" style="width: 600px; display: none"></select>
-        <select id="selVDisk" size="10" style="width: 600px; display:block"></select>
+        <div class="form-row">
+        <div id="grpZFiles" class="form-group">
+            <label for="selZFiles" class="label-top">Zip Files:</label>
+            <select id="selZFiles" size="10"></select>
         </div>
+        <div id="grpDFiles" class="form-group">
+            <label for="selDFiles" class="label-top">Disk Files:</label>
+        <select id="selDFiles" size="10"></select>
+        </div>
+        <div id="grpVDisk" class="form-group">
+            <label for="selVDisk" class="label-top">Virtual Disk Files:</label>
+            <select id="selVDisk" size="10" display: none"></select>
+        </div>
+    </div>
         <p>CHECKSUMS SHA-1</p>
         <div>
         <label for="FileCS">FILE:</label>
