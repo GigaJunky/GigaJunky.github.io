@@ -21,7 +21,7 @@
             selDFiles.ondblclick = selDFilesOnChange
             selVDisk.ondblclick = selVFilesRemove
             
-            let zentries, dir, dskbuf, cas, cocoCasWave, vDskEntries = []
+            let zentries, dir, dskbuf, cas, cocoCasWave, vDskEntries = [], selZFilesName
 
             document.getElementById('filterInput').addEventListener('input', function (e) {
                 // Convert input text to lowercase for case-insensitive matching
@@ -93,13 +93,17 @@
             }
         
             async function selZFilesOnChange() {
+                console.log("selZFilesOnChange", selZFiles.value)
+                selZFilesName = selZFiles.value
+
                 grpDFiles.style.display = "none"
                 const arrayBuffer =  new Uint8Array(await zentries[selZFiles.value].arrayBuffer())
+                dskbuf = arrayBuffer
+
                 CasCS.innerText = await SHAbuf(arrayBuffer)
 
                 if(selZFiles.value.toLowerCase().endsWith(".dsk")){
                     return listDskFiles(arrayBuffer)
-                    //cocoCasWave = createAudioCoCo(convertDatatoCas(arrayBuffer))
                 }else
                 if(selZFiles.value.toLowerCase().endsWith(".p"))
                     cocoCasWave = createAudioZX81(arrayBuffer)
@@ -193,6 +197,10 @@
                 if(e.target.id === "btnSaveWav")
                     saveByteArray(cocoCasWave, 'out.wav')
                 else if(e.target.id === "btnSaveDsk"){
+                    if(vDskEntries.length === 0){
+                        saveByteArray(dskbuf, selZFilesName)
+                        return
+                    }
                     let disk = makeDsk(vDskEntries)
                     saveByteArray(disk, 'out.dsk')
                 }else
