@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Yahtzee</title>
+    <style>
+        :root {
+            --primary: #1a365d;
+            --bg: #f7fafc;
+            --card-bg: #ffffff;
+            --border: #cbd5e1;
+            --text: #2d3748;
+            --total-bg: #f0f7ff;
+            --grand-bg: #dcfce7;
+            --grand-txt: #15803d;
+        }
+        body.dark {
+            --primary: #93c5fd;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --border: #475569;
+            --text: #f8fafc;
+            --total-bg: #1e293b;
+            --grand-bg: #14532d;
+            --grand-txt: #4ade80;
+        }
+        body {
+            font-family: system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 10px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .hdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .theme-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .box {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px 4px;
+            border: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        td:first-child {
+            text-align: left;
+            font-weight: bold;
+            background-color: rgba(0,0,0,0.02);
+        }
+        .p-input {
+            background: transparent;
+            color: inherit;
+            border: none;
+            border-bottom: 1px dashed dotted;
+            text-align: center;
+            font-weight: bold;
+            width: 50px;
+        }
+        select {
+            width: 90%;
+            padding: 4px;
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        .total { font-weight: bold; background-color: var(--total-bg); }
+        .grand { font-weight: bold; background-color: var(--grand-bg); color: var(--grand-txt); }
+        .reset {
+            width: 100%;
+            padding: 12px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="hdr">
+        <h2>Yahtzee Scorecard</h2>
+        <button class="theme-btn" onclick="toggleTheme()" id="tBtn">Dark Mode</button>
+    </div>
+
+    <div class="box">
+        <table>
+            <thead>
+                <tr>
+                    <th>Upper Section</th>
+                    <th><input type="text" class="p-input" id="n0" value="P1" oninput="save()"></th>
+                    <th><input type="text" class="p-input" id="n1" value="P2" oninput="save()"></th>
+                    <th><input type="text" class="p-input" id="n2" value="P3" oninput="save()"></th>
+                    <th><input type="text" class="p-input" id="n3" value="P4" oninput="save()"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Row template updated dynamically via JavaScript to ensure dropdown compliance -->
+                <tr data-row="1"><td>Aces (1s)</td><td></td><td></td><td></td><td></td></tr>
+                <tr data-row="2"><td>Twos (2s)</td><td></td><td></td><td></td><td></td></tr>
+                <tr data-row="3"><td>Threes (3s)</td><td></td><td></td><td></td><td></td></tr>
+                <tr data-row="4"><td>Fours (4s)</td><td></td><td></td><td></td><td></td></tr>
+                <tr data-row="5"><td>Fives (5s)</td><td></td><td></td><td></td><td></td></tr>
+                <tr data-row="6"><td>Sixes (6s)</td><td></td><td></td><td></td><td></td></tr>
+                <tr class="total"><td>Subtotal</td><td id="sub0">0</td><td id="sub1">0</td><td id="sub2">0</td><td id="sub3">0</td></tr>
+                <tr class="total"><td>Bonus (35)</td><td id="bon0">0</td><td id="bon1">0</td><td id="bon2">0</td><td id="bon3">0</td></tr>
+                <tr class="total"><td>Upper Total</td><td id="ut0">0</td><td id="ut1">0</td><td id="ut2">0</td><td id="ut3">0</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="box">
+        <table>
+            <thead>
+                <tr>
+                    <th>Lower Section</th>
+                    <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr data-row="3k"><td>3 of a Kind</td><td></td><td></td><td></td><td></td></tr>
+                <tr data-row="4k"><td>4 of a Kind</td><td></td><td></td><td></td><td></td></tr>
+                <tr data-row="fh"><td>Full House (25)</td><td></td><td></td><td></td><td></td></tr>
+                <tr data-row="ss"><td>Sm. Straight (30)</td><td></td><td></td><td></td><td></td></tr>
+                <tr data-row="ls"><td>Lg. Straight (40)</td><td></td><td></td><td></td><td></td></tr>
+                <tr data-row="yz"><td>YAHTZEE (50)</td><td></td><td></td><td></td><td></td></tr>
+                <tr data-row="ch"><td>Chance</td><td></td><td></td><td></td><td></td></tr>
+                <tr data-row="yb"><td>Yth. Bonus</td><td></td><td></td><td></td><td></td></tr>
+                <tr class="total"><td>Lower Total</td><td id="lt0">0</td><td id="lt1">0</td><td id="lt2">0</td><td id="lt3">0</td></tr>
+                <tr class="grand"><td>Grand Total</td><td id="gt0">0</td><td id="gt1">0</td><td id="gt2">0</td><td id="gt3">0</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <button class="reset" onclick="clearAll()">Reset Scoreboard</button>
+</div>
+
+<script>
+const scoringOptions = {
+    1: [0,1,2,3,4,5],
+    2: [0,2,4,6,8,10],
+    3: [0,3,6,9,12,15],
+    4: [0,4,8,12,16,20],
+    5: [0,5,10,15,20,25],
+    6: [0,6,12,18,24,30],
+    "3k": [0,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],
+    "4k": [0,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],
+    "fh": [0,25],
+    "ss": [0,30],
+    "ls": [0,40],
+    "yz": [0,50],
+    "ch": [0,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],
+    "yb": [0,100,200,300]
+};
+
+function setupBoard() {
+    document.querySelectorAll("[data-row]").forEach(row => {
+        let rowId = row.getAttribute("data-row");
+        let options = scoringOptions[rowId];
+        let typeClass = (isNaN(rowId)) ? "l" : "u";
+        
+        let cells = row.querySelectorAll("td");
+        for (let p = 0; p < 4; p++) {
+            let select = document.createElement("select");
+            select.className = typeClass + p;
+            select.setAttribute("onchange", "calc(" + p + ")");
+            
+            let blankOpt = document.createElement("option");
+            blankOpt.value = "";
+            select.appendChild(blankOpt);
+            
+            options.forEach(val => {
+                let opt = document.createElement("option");
+                opt.value = val;
+                opt.innerText = val;
+                select.appendChild(opt);
+            });
+            cells[p + 1].appendChild(select);
+        }
+    });
+    load();
+}
+
+function calc(p) {
+    let sub = 0;
+    document.querySelectorAll(".u" + p).forEach(s => sub += Number(s.value) || 0);
+    let bon = sub >= 63 ? 35 : 0;
+    let ut = sub + bon;
+    
+    document.getElementById("sub" + p).innerText = sub;
+    document.getElementById("bon" + p).innerText = bon;
+    document.getElementById("ut" + p).innerText = ut;
+
+    let lt = 0;
+    document.querySelectorAll(".l" + p).forEach(s => lt += Number(s.value) || 0);
+    
+    document.getElementById("lt" + p).innerText = lt;
+    document.getElementById("gt" + p).innerText = ut + lt;
+    save();
+}
+
+function save() {
+    let state = { names: [], scores: [], dark: document.body.classList.contains("dark") };
+    for (let i = 0; i < 4; i++) state.names.push(document.getElementById("n" + i).value);
+    document.querySelectorAll("select").forEach(s => state.scores.push(s.value));
+    localStorage.setItem("yz_save_state", JSON.stringify(state));
+}
+
+function load() {
+    let state = JSON.parse(localStorage.getItem("yz_save_state"));
+    if (state) {
+        if (state.dark) document.body.classList.add("dark");
+        updateThemeBtn();
+        for (let i = 0; i < 4; i++) {
+            if (state.names[i]) document.getElementById("n" + i).value = state.names[i];
+        }
+        let selects = document.querySelectorAll("select");
+        selects.forEach((s, idx) => { if (state.scores && state.scores[idx]) s.value = state.scores[idx]; });
+    }
+    for (let i = 0; i < 4; i++) calc(i);
+}
+
+function toggleTheme() {
+    document.body.classList.toggle("dark");
+    updateThemeBtn();
+    save();
+}
+
+function updateThemeBtn() {
+    let isDark = document.body.classList.contains("dark");
+    document.getElementById("tBtn").innerText = isDark ? "Light Mode" : "Dark Mode";
+}
+
+function clearAll() {
+    if (confirm("Reset score sheet?")) {
+        document.querySelectorAll("select").forEach(s => s.value = "");
+        localStorage.removeItem("yz_save_state");
+        for (let i = 0; i < 4; i++) calc(i);
+    }
+}
+
+setupBoard();
+</script>
+
+</body>
+</html>
