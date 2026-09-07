@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<head>
+    <title>Matrix Digital Rain</title>
+    <style>
+        * { margin: 0;padding: 0;box-sizing: border-box}
+        body { background: #000; overflow: hidden }
+        canvas { display: block }
+    </style>
+</head>
+<body>
+    <canvas id="matrix"></canvas>
+    <script>
+        const canvas = document.getElementById('matrix')
+        const ctx = canvas.getContext('2d')
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+        const characters = 'アカサタナハマヤラワガザダバパイキシチニヒミリヰギジヂビピウクスツヌフムユルグズブヅプエケセテネヘメレヱゲゼデベペオコソトノホモヨロヲゴゾドボポ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        , fontSize = 16, columns = canvas.width / fontSize, drops = [] // Array tracking the y-position of each column
+        for (let i = 0; i < columns; i++) drops[i] = 1  
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'  // Translucent black background creates the fading trail effect
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+            ctx.fillStyle = '#0F0' // Green text
+            ctx.font = `${fontSize}px monospace`
+            for (let i = 0; i < drops.length; i++) {
+                const text = characters.charAt(Math.floor(Math.random() * characters.length))
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize)
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975)drops[i] = 0 // Reset drop to the top randomly after it falls past the screen
+                drops[i]++
+            }
+        }
+        setInterval(draw, 30)
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight })// Resize canvas if window size changes
+    </script>
+</body>
+</html>
