@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Asteroids</title>
+<title>Georoids</title>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#05060d;--fg:#e8f0ff;--dim:#7d8aa8}
 html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
 body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:ui-monospace,Menlo,Consolas,monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
-canvas{background:#000;border:1px solid #223;max-width:100%;max-height:calc(100% - 140px);touch-action:none}
-#hint{color:var(--dim);font-size:12px;margin-top:8px;text-align:center;padding:0 8px}
-#pad{display:none;gap:8px;margin-top:8px;flex-wrap:wrap;justify-content:center}
-#pad button{width:52px;height:48px;font-size:18px;background:#111a2e;color:var(--fg);border:1px solid #334;border-radius:8px;touch-action:none;user-select:none}
+canvas{position:fixed;left:0;top:env(safe-area-inset-top,0px);width:100vw;height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));background:#000;touch-action:none;display:block}
+#hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 6px);color:var(--dim);font-size:12px;text-align:center;padding:0 8px;pointer-events:none;opacity:.6}
+#pad{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);display:none;gap:8px;flex-wrap:wrap;justify-content:center}
+#pad button{width:52px;height:48px;font-size:18px;background:rgba(17,26,46,.65);color:var(--fg);border:1px solid #334;border-radius:8px;touch-action:none;user-select:none}
 @media (pointer:coarse){#pad{display:flex}#hint{display:none}}
 </style>
 </head>
@@ -23,7 +23,15 @@ canvas{background:#000;border:1px solid #223;max-width:100%;max-height:calc(100%
 <button data-k="ArrowUp">▲</button><button data-k="Space">●</button><button data-k="ArrowDown">🛡</button><button data-k="KeyH">🌀</button><button data-k="KeyB">💥</button><button data-k="KeyN">🕳</button>
 </div>
 <script>
-const cv=document.getElementById('c'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W=800,H=600,dpr=1;
+function fit(){
+  const r=cv.getBoundingClientRect();
+  W=Math.max(320,Math.round(r.width));H=Math.max(240,Math.round(r.height));
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
+}
+fit();addEventListener('resize',fit);
 const keys={};
 addEventListener('keydown',e=>{initAudio();if(e.code==='KeyM'&&master){muted=!muted;master.gain.value=muted?0:.4;}keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
   if(state!=='play'){if(e.code==='Enter')start();if(e.code==='Digit1')start(1);if(e.code==='Digit2')start(2);}else if(e.code==='Digit2'&&players.length===1)joinP2();});
@@ -313,12 +321,13 @@ function warpPt(x,y){
 }
 function grid(){
   ctx.lineWidth=1;ctx.strokeStyle='#2233a0';ctx.shadowBlur=0;ctx.globalAlpha=.55;ctx.beginPath();
-  const S=40,st=10;
+  const S=40,st=20;
   for(let x=0;x<=W;x+=S)for(let y=0;y<=H;y+=st){const[p,q]=warpPt(x,y);y?ctx.lineTo(p,q):ctx.moveTo(p,q);}
   for(let y=0;y<=H;y+=S)for(let x=0;x<=W;x+=st){const[p,q]=warpPt(x,y);x?ctx.lineTo(p,q):ctx.moveTo(p,q);}
   ctx.stroke();ctx.globalAlpha=1;
 }
 function draw(){
+  ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.fillStyle='#02030a';ctx.fillRect(0,0,W,H);
   ctx.save();
   if(shake>.3)ctx.translate(R(-shake,shake),R(-shake,shake));
@@ -385,7 +394,7 @@ function draw(){
     text('LEVEL '+level+(mult>1?'   ×'+mult:''),W/2,50,14,'center',mult>1?'#ffe14d':'#c58cff');
   }
   if(state==='title'){
-    text('ASTEROIDS',W/2,H/2-30,56,'center','#7df9ff');
+    text('GEOROIDS',W/2,H/2-30,56,'center','#7df9ff');
     text('1 · one player      2 · two-player co-op  (press 2 in-game to join)',W/2,H/2+20,18,'center','#c58cff');
     text('Enter or tap to start',W/2,H/2+50,14,'center','#7d8aa8');
   }
