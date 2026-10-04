@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Risk Online</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#efe9dc;--fg:#1f2428;--card:#fff;--sea:#cddde6;--line:#7f909b;--cur:#111;--mut:#5b666e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181c;--fg:#e8ecef;--card:#222a30;--sea:#1b2a34;--line:#5d7280;--cur:#fff;--mut:#9aa7b0}}
+:root[data-theme="dark"]{--bg:#14181c;--fg:#e8ecef;--card:#222a30;--sea:#1b2a34;--line:#5d7280;--cur:#fff;--mut:#9aa7b0}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,Segoe UI,sans-serif;display:flex;flex-direction:column;touch-action:manipulation;user-select:none}
+#hud{display:flex;gap:6px;padding:8px;flex-wrap:wrap;align-items:center}
+.chip{padding:4px 10px;border-radius:99px;background:var(--card);border:2px solid transparent;font-size:13px;display:flex;gap:6px;align-items:center}
+.chip.on{border-color:var(--cur)}.chip.dead{opacity:.4;text-decoration:line-through}
+.dot{width:12px;height:12px;border-radius:50%}
+#status{padding:0 10px 4px;font-weight:600}
+#map{flex:1;min-height:0;margin:0 8px;background:var(--sea);border-radius:12px;touch-action:none}
+#map svg{width:100%;height:100%;display:block}
+#bar{display:flex;gap:8px;padding:8px;flex-wrap:wrap}
+button{font:inherit;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;min-height:44px}
+button.p{background:#2f6fd6;color:#fff;border-color:#2f6fd6}button:disabled{opacity:.4}
+#log{padding:0 10px 6px;color:var(--mut);font-size:12px;max-height:3.4em;overflow:hidden}
+#ov,#cv{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+#ov .box,#cv .box{background:var(--card);border-radius:16px;padding:20px;max-width:380px;width:100%}
+input{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);width:100%;box-sizing:border-box;margin:4px 0 10px;background:var(--bg);color:var(--fg)}
+h1{margin:0 0 6px;font-size:22px}.sm{color:var(--mut);font-size:13px}
+</style></head><body>
+<div id="hud"></div><div id="status"></div>
+<div id="map"></div>
+<div id="log"></div>
+<div id="bar"></div>
+<div id="cv" style="display:none"><div class="box" id="cvb"></div></div>
+<div id="ov"><div class="box" id="ovb"></div></div>
+<script>
+const T=[[85,75],[150,70],[335,45],[240,95],[145,120],[205,140],[190,190],[235,240],[275,285],[225,305],[240,380],[430,58],[380,90],[435,98],[405,135],[462,135],[485,88],[410,185],[468,185],[440,258],[485,245],[448,325],[545,70],[615,50],[690,55],[748,90],[655,100],[625,150],[535,150],[585,195],[655,200],[655,320],[680,365],[722,342]];
+const CO=[0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,4,4,4,4,4,4,4,4,4,5,5,5],BON=[4,2,3,3,5,2],CC=["#c9822b","#c0506b","#4a7fd0","#b79a2e","#3f9a5a","#8e6bbf"];
+const NM="Alaska,N. Canada,Greenland,Quebec,West US,East US,Central America,Venezuela,Brazil,Peru,Argentina,Scandinavia,Britain,N. Europe,W. Europe,S. Europe,Ukraine,N. Africa,Egypt,Congo,E. Africa,S. Africa,Ural,Siberia,Yakutsk,Kamchatka,Mongolia,China,Middle East,India,Siam,Indonesia,W. Australia,E. Australia".split(","),LAND=[["50,70 55,55 75,42 100,38 120,30 150,25 185,28 215,32 250,40 270,52 285,70 280,88 262,95 255,110 248,125 252,138 240,150 228,160 222,172 232,182 218,190 205,200 195,212 183,208 178,196 168,186 160,172 148,160 132,150 112,142 98,132 88,118 70,110 58,98 62,86 50,80",0],["300,28 330,18 365,16 385,25 380,45 365,62 345,78 325,80 312,65 305,48",0],["200,225 220,218 245,222 265,230 290,248 310,262 312,280 298,298 285,315 270,335 258,355 252,380 245,405 238,425 228,440 220,435 222,410 218,385 212,350 208,320 198,295 190,270 192,248",1],["395,125 398,110 415,105 420,92 410,78 418,60 428,45 445,38 462,42 470,55 490,50 505,58 508,80 505,100 495,120 485,135 470,145 455,150 440,142 425,150 410,148 396,140",2],["368,75 385,70 392,85 388,102 372,104 366,92",2],["395,40 410,35 420,42 410,50",2],["380,168 405,160 430,162 455,165 480,168 500,178 510,200 525,225 510,245 495,262 480,285 478,310 470,335 452,355 435,350 425,325 418,300 415,275 405,255 390,235 375,215 368,195 372,178",3],["520,290 530,285 535,310 525,325 518,310",3],["505,58 520,45 545,38 580,30 620,25 660,28 700,35 735,45 765,60 780,85 770,105 750,120 740,135 725,150 715,170 700,185 688,205 676,225 662,235 648,228 640,215 632,205 622,212 610,225 598,240 588,225 580,205 565,192 548,185 530,180 515,172 508,152 498,138 505,120 508,100 506,80",4],["738,125 748,118 752,135 745,150 736,140",4],["630,310 650,305 675,308 685,318 665,330 640,328",5],["660,345 685,335 710,328 735,330 752,345 755,365 745,385 725,395 700,392 682,385 665,378 655,362",5],["775,390 785,385 788,405 778,412",5]],
+BAYS=["205,52 225,48 238,62 232,82 215,86 205,72","396,150 430,142 470,146 500,153 495,163 452,161 410,159","470,112 490,108 500,118 485,126 472,122","528,108 540,105 543,125 532,128"],
+CN=["NORTH AMERICA","SOUTH AMERICA","EUROPE","AFRICA","ASIA","AUSTRALIA"],LP=[[78,178],[125,322],[352,150],[330,262],[742,210],[705,418]];
+const COL=["#d94f4f","#3b7dd8","#e0b030","#3fa564"],PH={reinforce:"Reinforce",attack:"Attack",fortify:"Fortify"};
+const ADJ=T.map(()=>[]);
+[[0,1],[0,4],[1,2],[1,3],[1,4],[2,3],[3,5],[4,5],[4,6],[5,6],[6,7],[2,11],[7,8],[7,9],[8,9],[9,10],[8,10],[8,17],[11,12],[11,13],[11,16],[12,13],[12,14],[13,14],[13,15],[13,16],[14,15],[15,16],[14,17],[15,17],[15,18],[15,28],[16,28],[16,22],[17,18],[18,20],[17,20],[17,19],[19,20],[19,21],[20,21],[18,28],[20,28],[22,23],[22,27],[22,28],[23,24],[23,26],[23,27],[24,25],[24,26],[25,26],[26,27],[27,29],[27,30],[28,29],[28,27],[29,30],[30,31],[31,32],[31,33],[32,33],[0,25]].forEach(([i,j])=>{ADJ[i].push(j);ADJ[j].push(i)});
+let solo=false,S=null,uid=null,ref=null,joined=false,src=-1,cur=0,myName="Player";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let force=false;const canAct=()=>S&&S.players&&S.phase in PH&&S.players[S.turn]&&(force||S.players[S.turn].id===uid);
+const myIdx=()=>S&&S.players?S.players.findIndex(p=>p.id===uid):-1;
+function save(){if(ref){try{ref.set(JSON.parse(JSON.stringify(S))).catch(()=>{})}catch(e){}}render()}
+function say(m){S.log=(S.log||[]).concat(m).slice(-6)}
+function pool(p){const o=S.terr.map(t=>t.o);let n=o.filter(x=>x===p).length,b=Math.max(3,n/3|0);for(let c=0;c<BON.length;c++)if(o.every((x,i)=>CO[i]!==c||x===p))b+=BON[c];return b}
+function start(){const n=S.players.length;if(n<2)return;const ids=[...T.keys()].sort(()=>Math.random()-.5);S.terr=Array(T.length);ids.forEach((t,i)=>S.terr[t]={o:i%n,a:1});
+ for(let p=0;p<n;p++){const mine=S.terr.filter(t=>t.o===p);for(let k=mine.length;k<[0,0,50,40,35][n];k++)mine[Math.random()*mine.length|0].a++}
+ S.players.forEach(q=>q.cards=[]);S.deck=shuf([...Array(T.length+2).keys()]);S.sets=0;S.earned=false;S.turn=0;S.phase="reinforce";S.pool=pool(0);S.log=["Game started!"];save()}
+function act(i){if(!canAct())return;const t=S.terr[i],p=S.turn;
+ if(S.phase==="reinforce"){if((S.players[p].cards||[]).length>=5){cOpen=true;render();return}if(t.o===p&&S.pool>0){t.a++;S.pool--;save()}return}
+ if(S.phase==="attack"){if(t.o===p&&t.a>1)src=src===i?-1:i;else if(src>=0&&t.o!==p&&ADJ[src].includes(i))return attack(src,i,false);else src=-1;render();return}
+ if(S.phase==="fortify"){if(t.o!==p){src=-1}else if(src>=0&&src!==i&&ADJ[src].includes(i)){S.terr[src].a--;t.a++;if(S.terr[src].a<2)src=-1;save();return}else src=t.a>1?i:-1;render()}}
+function attack(s,d,blitz){if(!canAct()||S.phase!=="attack")return;if(s<0)return;const A=S.terr[s],D=S.terr[d];if(D.o===S.turn||A.a<2)return;
+ const r=n=>Array.from({length:n},()=>1+Math.random()*6|0).sort((x,y)=>y-x);let rounds=blitz?99:1,al=0,dl=0;
+ while(rounds--&&A.a>1&&D.a>0){const x=r(Math.min(3,A.a-1)),y=r(Math.min(2,D.a));for(let k=0;k<Math.min(x.length,y.length);k++)if(x[k]>y[k]){D.a--;dl++}else{A.a--;al++}}
+ const nm=S.players[S.turn].name;
+ if(D.a<=0){const prev=D.o,mv=blitz?A.a-1:Math.min(3,A.a-1);D.o=S.turn;A.a-=mv;D.a=mv;src=-1;S.earned=true;say(nm+" conquered "+NM[d]+" (lost "+al+", killed "+dl+")");
+  if(!S.terr.some(t=>t.o===prev)){S.players[prev].dead=true;S.players[S.turn].cards=(S.players[S.turn].cards||[]).concat(S.players[prev].cards||[]);S.players[prev].cards=[];say(S.players[prev].name+" eliminated!")}
+  if(!S.terr.some(t=>t.o!==S.turn)){S.phase="over";S.winner=S.turn}}
+ else{say(nm+" "+NM[s]+"→"+NM[d]+": lost "+al+", killed "+dl);if(A.a<2)src=-1}
+ save()}
+function next(){if(!canAct())return;src=-1;
+ if(S.phase==="reinforce"){if(S.pool>0)return;S.phase="attack"}
+ else if(S.phase==="attack")S.phase="fortify";
+ else{if(S.earned&&(S.deck||[]).length){const c=S.deck.pop(),q=S.players[S.turn];q.cards=(q.cards||[]).concat(c);say(q.name+" drew a card")}S.earned=false;let n=S.turn;do n=(n+1)%S.players.length;while(S.players[n].dead);S.turn=n;S.phase="reinforce";S.pool=pool(n);say(S.players[n].name+"'s turn")}
+ save()}
+function autoPlace(){if(!canAct()||S.phase!=="reinforce")return;if(S.pool===0)return next();if((S.players[S.turn].cards||[]).length>=5){cOpen=true;render();return}const m=S.terr.filter(t=>t.o===S.turn);while(S.pool>0){m[Math.random()*m.length|0].a++;S.pool--}S.phase="attack";save()}
+function move(dx,dy){let best=-1,bs=1e9;T.forEach((p,j)=>{if(j===cur)return;const vx=p[0]-T[cur][0],vy=p[1]-T[cur][1],d=Math.hypot(vx,vy),c=(vx*dx+vy*dy)/d;if(c>.45){const s=d*(1+(1-c)*3);if(s<bs){bs=s;best=j}}});if(best>=0){cur=best;render()}}
+function render(){
+ const ps=(S&&S.players)||[];
+ $("hud").innerHTML=ps.map((p,i)=>`<div class="chip ${S.turn===i&&S.phase in PH?"on":""} ${p.dead?"dead":""}"><span class="dot" style="background:${COL[i]}"></span>${p.ai?"🤖 ":""}${esc(p.name)}${p.id===uid?" (you)":gone(p)?" (away – bot)":""}${S.terr?" · "+S.terr.filter(t=>t.o===i).length+" · 🃏"+(p.cards||[]).length:""}</div>`).join("");
+ const ov=$("ov");
+ if(!joined){ov.style.display="flex";return}
+ if(!S||S.phase==="lobby"){ov.style.display="flex";const host=ps[0]&&ps[0].id===uid;
+  $("ovb").innerHTML=`<h1>Lobby</h1><div class="sm">Share this page's link — everyone enters the same room code.<br>Room: <b>${esc(window._room)}</b></div><p>${ps.map((p,i)=>`<span class="dot" style="display:inline-block;background:${COL[i]}"></span> ${p.ai?"🤖 ":""}${esc(p.name)}`).join("<br>")||"Joining…"}</p><button class="p" id="st" ${ps.length<2?"disabled":""}>Start game (${ps.length}/4)</button> <button id="ai" ${ps.length>=4?"disabled":""}>+ Computer player</button><div class="sm" style="margin-top:8px">Anyone who leaves or disconnects mid-game is replaced by a bot until they return.</div>`;
+  $("st").onclick=start;$("ai").onclick=addAI;return}
+ ov.style.display="none";
+ if(S.phase==="over"){ov.style.display="flex";$("ovb").innerHTML=`<h1>🏆 ${esc(ps[S.winner].name)} wins!</h1><div class="sm">World conquered.</div>${solo?`<p><button class="p" id="again">Play again</button></p>`:""}`;const ag=$("again");if(ag)ag.onclick=()=>{last=null;if(ws)ws.close();ws=null;S=null;joined=false;solo=false;showJoin();render()}}
+ const mine=canAct();
+ $("status").textContent=S.phase==="over"?"Game over":(mine?"Your turn — ":esc2(ps[S.turn].name)+"'s turn — ")+PH[S.phase]+(S.phase==="reinforce"?` (${S.pool} armies left)`:"")+" · "+NM[cur]+(S.terr[cur]?" ("+S.terr[cur].a+")":"");
+ $("log").textContent=(S.log||[]).slice(-2).join("  •  ");
+ const tg=new Set(src>=0&&S.phase==="attack"?ADJ[src].filter(j=>S.terr[j].o!==S.turn):[]);
+ let h=`<svg viewBox="0 0 800 480" preserveAspectRatio="xMidYMid meet">`;
+ LAND.forEach(([pts,c])=>h+=`<polygon points="${pts}" fill="${CC[c]}" fill-opacity=".42" stroke="${CC[c]}" stroke-width="2" stroke-linejoin="round"/>`);
+ BAYS.forEach(pts=>h+=`<polygon points="${pts}" fill="var(--sea)"/>`);
+ LP.forEach(([x,y],c)=>h+=`<text x="${x}" y="${y}" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="1.5" fill="var(--fg)" opacity=".6" pointer-events="none">${CN[c]} +${BON[c]}</text>`);
+ T.forEach((p,i)=>ADJ[i].forEach(j=>{if(i<j){const q=T[j],w=Math.abs(p[0]-q[0])>500,ln=(a,b,c,d)=>`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="var(--line)" stroke-width="2" stroke-dasharray="${CO[i]===CO[j]?"":"5 4"}"/>`;
+ h+=w?ln(Math.min(p[0],q[0])===p[0]?p[0]:q[0],p[1],0,Math.min(p[0],q[0])===p[0]?p[1]:q[1])+ln(Math.max(p[0],q[0]),Math.max(p[0],q[0])===p[0]?p[1]:q[1],800,Math.max(p[0],q[0])===p[0]?p[1]:q[1]):ln(p[0],p[1],q[0],q[1])}}));
+ T.forEach((p,i)=>{const t=S.terr[i];const st=i===src?`stroke="var(--cur)" stroke-width="5" stroke-dasharray="6 3"`:tg.has(i)?`stroke="#ff3b30" stroke-width="5"`:i===cur?`stroke="var(--cur)" stroke-width="4"`:`stroke="var(--card)" stroke-width="2"`;
+  h+=`<g data-i="${i}" style="cursor:pointer"><circle cx="${p[0]}" cy="${p[1]}" r="27" fill="transparent"/><circle cx="${p[0]}" cy="${p[1]}" r="17" fill="${COL[t.o]}" ${st}/><text x="${p[0]}" y="${p[1]+5}" text-anchor="middle" font-size="14" font-weight="700" fill="#fff" stroke="rgba(0,0,0,.35)" stroke-width="3" paint-order="stroke" pointer-events="none">${t.a}</text></g>`});
+ $("map").innerHTML=h+"</svg>";
+ const lbl={reinforce:"Auto-place",attack:"Fortify →",fortify:"End turn"}[S.phase]||"";
+ $("bar").innerHTML=S.phase==="over"?"":`<button id="b1" class="p" ${mine?"":"disabled"}>${S.phase==="reinforce"?(S.pool?"Auto-place":"Start attack →"):lbl}</button>`+(S.phase==="attack"?`<button id="b2" ${mine&&src>=0&&tg.size?"":"disabled"}>Blitz ⚡</button>`:"")+`${myIdx()>=0?`<button id="cb">🃏 Cards (${(ps[myIdx()].cards||[]).length})</button>`:""}<span class="sm" style="align-self:center">Tap/click · arrows+Enter · gamepad</span>`;
+ const b1=$("b1"),b2=$("b2");
+ if(b1)b1.onclick=()=>S.phase==="reinforce"?autoPlace():next();
+ if(b2)b2.onclick=()=>blitzSel();
+ const cb=$("cb");if(cb)cb.onclick=()=>{cOpen=true;csel=[];renderCards()};
+ if(!force&&S.players[S.turn].id===uid&&S.phase==="reinforce"&&(S.players[S.turn].cards||[]).length>=5)cOpen=true;
+ renderCards();
+}
+function esc2(s){return esc(s)}
+function blitzSel(){if(src>=0){const t=[...ADJ[src]].filter(j=>S.terr[j].o!==S.turn);if(t.length){const d=t.includes(cur)?cur:t[0];attack(src,d,true)}}}
+$("map").addEventListener("pointerdown",e=>{const g=e.target.closest("[data-i]");if(g&&S&&S.terr){cur=+g.dataset.i;act(cur)}});
+addEventListener("keydown",e=>{if(!S||!S.terr)return;const k=e.key;
+ const m={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1],a:[-1,0],d:[1,0],w:[0,-1],s:[0,1]}[k];
+ if(m){move(...m);e.preventDefault()}
+ else if(k==="Enter"||k===" "){act(cur);e.preventDefault()}
+ else if(k==="b"||k==="B")blitzSel();
+ else if(k==="n"||k==="N"||k==="Tab"){e.preventDefault();S.phase==="reinforce"?autoPlace():next()}
+ else if(k==="Escape"){src=-1;cOpen=false;render()}
+ else if(k==="c"||k==="C"){if(myIdx()>=0){cOpen=!cOpen;csel=[];renderCards()}}
+ else if(k==="t"||k==="T"){if(canAct()&&S.phase==="reinforce"&&trade(findSet(S.players[S.turn].cards||[])))save()}});
+let gpPrev={},gpT=0;
+function poll(){const gp=(navigator.getGamepads?[...navigator.getGamepads()]:[]).find(Boolean);
+ if(gp&&S&&S.terr){const now=performance.now(),ax=gp.axes[0]||0,ay=gp.axes[1]||0,b=i=>gp.buttons[i]&&gp.buttons[i].pressed;
+  let dx=b(15)-b(14),dy=b(13)-b(12);if(!dx&&!dy&&Math.hypot(ax,ay)>.5){dx=ax;dy=ay}
+  if((dx||dy)&&now-gpT>220){gpT=now;move(dx,dy)}
+  const pr=(i,f)=>{if(b(i)&&!gpPrev[i])f();gpPrev[i]=b(i)};
+  pr(0,()=>act(cur));pr(1,()=>{src=-1;render()});pr(2,blitzSel);pr(3,()=>S.phase==="reinforce"?autoPlace():next());pr(4,()=>{if(myIdx()>=0){cOpen=!cOpen;csel=[];renderCards()}});pr(5,()=>{if(canAct()&&S.phase==="reinforce"&&trade(findSet(S.players[S.turn].cards||[])))save()});pr(9,()=>S.phase==="reinforce"?autoPlace():next())}
+ requestAnimationFrame(poll)}
+poll();
+const SY=["🪖","🐴","💣"],shuf=a=>a.sort(()=>Math.random()-.5),isW=c=>c>=T.length,cname=c=>isW(c)?"Wild":NM[c],csym=c=>isW(c)?"⭐":SY[c%3];
+const tval=n=>n<6?[4,6,8,10,12,15][n]:15+5*(n-5);
+function okSet(x){if(x.some(isW))return true;const t=new Set(x.map(c=>c%3));return t.size===1||t.size===3}
+function findSet(cs){for(let a=0;a<cs.length;a++)for(let b=a+1;b<cs.length;b++)for(let c=b+1;c<cs.length;c++)if(okSet([cs[a],cs[b],cs[c]]))return[a,b,c];return null}
+function trade(idx){const pl=S.players[S.turn],cs=(idx||[]).map(i=>pl.cards[i]);if(cs.length!==3||!okSet(cs))return false;
+ const v=tval(S.sets||0);S.sets=(S.sets||0)+1;S.pool+=v;const bon=cs.find(c=>!isW(c)&&S.terr[c].o===S.turn);if(bon!==undefined)S.terr[bon].a+=2;
+ pl.cards=pl.cards.filter((_,i)=>!idx.includes(i));S.deck=shuf((S.deck||[]).concat(cs));say(pl.name+" traded a set: +"+v+" armies"+(bon!==undefined?" (+2 on "+NM[bon]+")":""));return true}
+let csel=[],cOpen=false;
+function renderCards(){const cv=$("cv"),i=myIdx();if(!cOpen||!S||!S.terr||i<0||!(S.phase in PH)){cv.style.display="none";return}
+ const cs=S.players[i].cards||[],can=canAct()&&S.phase==="reinforce"&&S.players[S.turn].id===uid,forced=can&&cs.length>=5,ok=csel.length===3&&okSet(csel.map(k=>cs[k]));
+ cv.style.display="flex";
+ $("cvb").innerHTML=`<h1>🃏 Your cards (${cs.length})</h1><div class="sm">Next set is worth <b>${tval(S.sets||0)}</b> armies. ${forced?"<b>You must trade (5+ cards).</b>":"You earn a card at the end of any turn where you conquered a territory. Trade during Reinforce."}</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0">${cs.map((c,k)=>`<button data-k="${k}" style="min-width:92px;border-width:3px;border-color:${csel.includes(k)?"var(--cur)":isW(c)?"#999":CC[CO[c]]}"><div style="font-size:24px">${csym(c)}</div><div class="sm">${cname(c)}</div></button>`).join("")||"<span class='sm'>No cards yet.</span>"}</div><button class="p" id="tr" ${ok&&can?"":"disabled"}>Trade selected</button> <button id="at" ${can&&findSet(cs)?"":"disabled"}>Auto-trade</button> <button id="cx" ${forced?"disabled":""}>Close</button><div class="sm" style="margin-top:8px">Set = 3 of one symbol, one of each, or any 3 including a ⭐ wild. Trading a card for a territory you own gives +2 armies there.</div>`;
+ $("cvb").querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{const k=+b.dataset.k;csel=csel.includes(k)?csel.filter(x=>x!==k):csel.length<3?csel.concat(k):csel;renderCards()});
+ $("tr").onclick=()=>{if(trade(csel)){csel=[];save()}};$("at").onclick=()=>{if(trade(findSet(cs))){csel=[];save()}};$("cx").onclick=()=>{cOpen=false;csel=[];renderCards()}}
+const hb={};let fortN=0,lastPh="";
+const fresh=u=>u===uid||(hb[u]&&Date.now()-hb[u]<25000);
+const gone=p=>!!p.away&&!!S&&S.phase in PH;
+const driver=()=>{const h=S.players.find(p=>!p.ai&&fresh(p.id));return !!h&&h.id===uid};
+function addAI(){if(!S||S.players.length>=4)return;S.players.push({id:"ai"+Math.random().toString(36).slice(2,7),name:"Bot "+(S.players.filter(p=>p.ai).length+1),ai:true});save()}
+const enemyAdj=i=>ADJ[i].filter(j=>S.terr[j].o!==S.terr[i].o);
+function aiStep(){
+ if(!S||!(S.phase in PH)||!driver())return;const pl=S.players[S.turn];if(!(pl.ai||gone(pl)))return;
+ force=true;
+ try{const me=S.turn,own=[...T.keys()].filter(i=>S.terr[i].o===me);
+  if(S.phase!==lastPh){lastPh=S.phase;fortN=0}
+  if(S.phase==="reinforce"){
+   {const pc=S.players[me];while((pc.cards||[]).length>=3){const st=findSet(pc.cards);if(!st)break;trade(st)}}
+   while(S.pool>0){let b=own[0],bs=-1e9;own.forEach(i=>{const e=enemyAdj(i),s=e.length?e.reduce((a,j)=>a+S.terr[j].a,0)-S.terr[i].a+5:-S.terr[i].a-20;if(s>bs){bs=s;b=i}});S.terr[b].a++;S.pool--}
+   S.phase="attack";save()}
+  else if(S.phase==="attack"){
+   let bs=1,bm=null;own.forEach(i=>{const a=S.terr[i].a;if(a<2)return;enemyAdj(i).forEach(j=>{const s=a-S.terr[j].a+Math.random()*.5;if(s>=2&&s>bs){bs=s;bm=[i,j]}})});
+   if(bm)attack(bm[0],bm[1],true);else next()}
+  else{
+   const dist={},q=own.filter(i=>enemyAdj(i).length);q.forEach(i=>dist[i]=0);
+   for(let k=0;k<q.length;k++){const i=q[k];ADJ[i].forEach(j=>{if(S.terr[j].o===me&&dist[j]===undefined){dist[j]=dist[i]+1;q.push(j)}})}
+   let mv=null;own.forEach(i=>{if(S.terr[i].a>1&&dist[i]>0)ADJ[i].forEach(j=>{if(!mv&&S.terr[j].o===me&&dist[j]<dist[i])mv=[i,j]})});
+   if(mv&&fortN++<8){S.terr[mv[1]].a+=S.terr[mv[0]].a-1;S.terr[mv[0]].a=1;save()}else next()}
+ }finally{force=false}}
+setInterval(()=>{if(joined)render()},4000);
+function showJoin(msg){$("ovb").innerHTML=`<h1>⚔️ Risk Online</h1><div class="sm">2–4 players. Conquer all 34 territories.${msg?`<br><b>${msg}</b>`:""}</div><label class="sm">Your name</label><input id="nm" maxlength="14" placeholder="Player"><label class="sm">Room code (share with friends)</label><input id="rm" maxlength="12" value="RISK"><button class="p" id="go">Join room</button><hr style="border:0;border-top:1px solid var(--line);margin:14px 0"><label class="sm">Or play alone against</label><select id="nb" style="font:inherit;padding:10px;border-radius:8px;width:100%;margin:4px 0 10px;background:var(--bg);color:var(--fg);border:1px solid var(--line)"><option value="1">1 computer player</option><option value="2" selected>2 computer players</option><option value="3">3 computer players</option></select><button id="solo">Play solo vs bots</button>`;$("go").onclick=()=>join();$("solo").onclick=()=>soloStart()}
+function soloStart(){const n=+$("nb").value;myName=($("nm").value.trim()||"You").slice(0,14);ref=null;solo=true;window._room="solo";
+ S={players:[{id:uid,name:myName}],phase:"lobby",log:[]};for(let i=1;i<=n;i++)S.players.push({id:"ai"+i,name:"Bot "+i,ai:true});
+ joined=true;src=-1;start()}
+async function join(){const db=window._db;if(!db){showJoin("Online rooms need claude.ai while signed in — solo play still works.");return}
+ myName=($("nm").value.trim()||"Player").slice(0,14);const code=($("rm").value||"RISK").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,12)||"RISK";window._room=code;
+ ref=db.doc("risk/"+code);
+ try{const s=await ref.get();let d=s.exists?s.data():{players:[],phase:"lobby",log:[]};d.players=d.players||[];
+  if(!d.players.some(p=>p.id===uid)&&d.phase==="lobby"&&d.players.length<4){d.players.push({id:uid,name:myName});await ref.set(d)}
+  joined=true;
+  const hbc=ref.collection("hb"),beat=()=>hbc.doc(uid).set({t:Date.now()}).catch(()=>{});beat();setInterval(beat,5000);
+  hbc.onSnapshot(qs=>{qs.docs.forEach(d=>{const x=d.data();if(x)hb[d.id]=x.t});render()},()=>{});
+  addEventListener("pagehide",()=>{try{hbc.doc(uid).set({t:0})}catch(e){}});
+  ref.onSnapshot(sn=>{S=sn.exists?sn.data():null;
+   if(S&&S.phase==="lobby"&&myIdx()<0&&S.players.length<4)setTimeout(()=>{if(S&&S.phase==="lobby"&&myIdx()<0&&S.players.length<4){S.players.push({id:uid,name:myName});save()}},200+Math.random()*500);
+   if(S&&S.terr&&S.phase in PH&&!S.players[S.turn].dead===false)cur=cur;
+   render()},()=>{});
+  render()}catch(e){showJoin("Could not join: "+(e.message||e.code))}}
+
+/* ===== network layer: server-authoritative (see server.js) ===== */
+let ws=null,last=null;
+const send=o=>{if(ws&&ws.readyState===1)ws.send(JSON.stringify(o))};
+save=function(){render()};
+act=function(i){if(!canAct())return;const t=S.terr[i],p=S.turn;
+ if(S.phase==="reinforce"){if((S.players[p].cards||[]).length>=5){cOpen=true;render();return}send({t:"place",i});return}
+ if(S.phase==="attack"){if(t.o===p&&t.a>1)src=src===i?-1:i;else if(src>=0&&t.o!==p&&ADJ[src].includes(i))send({t:"attack",s:src,d:i});else src=-1;render();return}
+ if(S.phase==="fortify"){if(t.o!==p)src=-1;else if(src>=0&&src!==i&&ADJ[src].includes(i)){send({t:"fort",s:src,d:i});return}else src=t.a>1?i:-1;render()}};
+attack=function(s,d,blitz){send({t:"attack",s,d,blitz:!!blitz})};
+next=function(){send({t:"next"})};
+autoPlace=function(){if(!canAct()||S.phase!=="reinforce")return;if(S.pool===0)return send({t:"next"});if((S.players[S.turn].cards||[]).length>=5){cOpen=true;render();return}send({t:"auto"})};
+trade=function(idx){if(!idx||idx.length!==3)return false;const cs=idx.map(i=>S.players[S.turn].cards[i]);if(!okSet(cs))return false;send({t:"trade",idx});return true};
+start=function(){send({t:"start"})};
+addAI=function(){send({t:"bot"})};
+function connect(o){last=o;window._room=o.room;
+ ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws");
+ ws.onopen=()=>send({t:"join",room:o.room,name:o.name,uid,solo:o.solo||0});
+ ws.onmessage=e=>{const m=JSON.parse(e.data);
+  if(m.t==="state"){S=m.S;joined=true;
+   if(src>=0&&(!S.terr||S.terr[src].a<2||S.players[S.turn].id!==uid||!(S.phase==="attack"||S.phase==="fortify")))src=-1;
+   render()}
+  else if(m.t==="err"){if(joined)$("log").textContent=m.msg;else showJoin(m.msg)}};
+ ws.onclose=()=>{if(last===o){if(joined)$("status").textContent="Reconnecting…";setTimeout(()=>{if(last===o)connect(o)},1500)}}}
+join=function(){const code=($("rm").value||"RISK").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,12)||"RISK";
+ connect({room:code,name:($("nm").value.trim()||"Player").slice(0,14)})};
+soloStart=function(){const n=+$("nb").value;solo=true;
+ connect({room:"S"+Math.random().toString(36).slice(2,8).toUpperCase(),name:($("nm").value.trim()||"You").slice(0,14),solo:n})};
+(()=>{try{uid=localStorage.getItem("rk")}catch(e){}
+ if(!uid||uid.length<8){uid=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,"0")).join("");try{localStorage.setItem("rk",uid)}catch(e){}}
+ showJoin()})();
+</script></body></html>
