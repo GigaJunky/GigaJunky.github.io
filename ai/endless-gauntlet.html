@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Endless Gauntlet P2P</title>
+<style>
+html,body{margin:0;height:100%;background:#0b0b12;color:#e8e8f0;font:13px system-ui,sans-serif;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+#hud{position:fixed;left:8px;top:calc(8px + env(safe-area-inset-top,0px));background:#000a;padding:6px 10px;border-radius:6px;max-width:300px}
+details{margin-top:6px}textarea{width:280px;height:70px;background:#111;color:#cfc;border:1px solid #444;font-size:10px}
+button{background:#3a2a6a;color:#fff;border:0;padding:5px 8px;margin:2px 2px 0 0;border-radius:4px;cursor:pointer}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="hud"><b>ENDLESS GAUNTLET</b> · WASD/arrows move, SPACE fire<br>
+<span id="st"></span>
+<details><summary>Connect peers (remote)</summary>
+Same browser: just open more tabs, they auto-link.<br>
+Remote: A clicks Invite, sends the text to B. B pastes it, clicks Accept, sends the reply back. A pastes the reply, clicks Accept. Peers relay for each other, so the mesh grows without any server.<br>
+<textarea id="box"></textarea><br>
+<button id="inv">Invite</button><button id="acc">Accept</button></details></div>
+<script>
+const T=32,C=7,cv=document.getElementById('c'),g=cv.getContext('2d');
+function rs(){cv.width=innerWidth;cv.height=innerHeight}rs();onresize=rs;
+// ---- deterministic infinite world: every peer computes identical dungeon from coordinates ----
+function H(a,b,c){let h=(Math.imul(a,374761393)+Math.imul(b,668265263)+Math.imul(c,2147483647)+1337)|0;h=Math.imul(h^h>>>13,1274126177);h^=h>>>16;return(h>>>0)/4294967296}
+function wall(x,y){const cx=Math.floor(x/C),cy=Math.floor(y/C),lx=x-cx*C,ly=y-cy*C,near=cx<=1&&cy<=1&&cx>=0&&cy>=0;
+ if(lx==0&&ly==0)return true;
+ if(lx==0)return !((ly==3||ly==4)&&(H(cx,cy,1)<.85||near));
+ if(ly==0)return !((lx==3||lx==4)&&(H(cx,cy,2)<.85||near));
+ if((lx==2||lx==5)&&(ly==2||ly==5))return H(x,y,3)<.5;
+ return false}
+const gone=new Set(),genHP={};
+function cellItems(cx,cy){const o=[],b=cx*C,d=cy*C,k=cx+','+cy;
+ if((cx||cy)&&H(cx,cy,4)<.3&&!gone.has(k+'g'))o.push({t:'g',x:b+3.5,y:d+3.5,k:k+'g'});
+ if(H(cx,cy,5)<.25&&!gone.has(k+'f'))o.push({t:'f',x:b+5.5,y:d+2.5,k:k+'f'});
+ if(H(cx,cy,6)<.45&&!gone.has(k+'t'))o.push({t:'t',x:b+2.5,y:d+5.5,k:k+'t'});return o}
+// ---- state ----
+const id=Math.random().toString(36).slice(2,8),hue=Math.floor(Math.random()*360);
+const me={x:3.5,y:3.5,hp:100,sc:0,fx:1,fy:0};
+const players=new Map(),mons=new Map(),shots=[];let mc=0,genT={};
+const keys={};onkeydown=e=>{keys[e.key.toLowerCase()]=1;if(e.key==' ')e.preventDefault()};onkeyup=e=>keys[e.key.toLowerCase()]=0;
+// ---- networking: BroadcastChannel (tabs) + WebRTC data channels, flooded gossip ----
+let links=[],n=0,seen=new Set();const bc=new BroadcastChannel('endless-gauntlet');
+function send(m){m.n=id+(n++);seen.add(m.n);try{bc.postMessage(m)}catch(e){}const s=JSON.stringify(m);links.forEach(l=>{try{l.send(s)}catch(e){}})}
+function recv(m,from){if(seen.has(m.n))return;seen.add(m.n);if(seen.size>8000){seen.clear()}
+ handle(m);if(from){const s=JSON.stringify(m);links.forEach(l=>{if(l!==from){try{l.send(s)}catch(e){}}})}}
+bc.onmessage=e=>recv(e.data,null);
+function handle(m){const now=performance.now();
+ if(m.t=='p'){players.set(m.id,{x:m.x,y:m.y,hp:m.hp,sc:m.sc,h:m.h,seen:now})}
+ else if(m.t=='m'){m.l.forEach(a=>{if(!mons.get(a[0])?.own)mons.set(a[0],{x:a[1],y:a[2],hp:a[3],own:false,seen:now})})}
+ else if(m.t=='s'){shots.push({x:m.x,y:m.y,vx:m.vx,vy:m.vy,life:1.2,own:false})}
+ else if(m.t=='h'){const q=mons.get(m.mid);if(q&&q.own&&--q.hp<=0)mons.delete(m.mid)}
+ else if(m.t=='k'){gone.add(m.k)}}
+setInterval(()=>{const now=performance.now();
+ send({t:'p',id,x:me.x,y:me.y,hp:me.hp,sc:me.sc,h:hue});
+ const l=[];mons.forEach((q,k)=>{if(q.own)l.push([k,+q.x.toFixed(2),+q.y.toFixed(2),q.hp])});if(l.length)send({t:'m',l});
+ players.forEach((p,k)=>{if(now-p.seen>3000)players.delete(k)});
+ mons.forEach((q,k)=>{if(!q.own&&now-q.seen>1000)mons.delete(k)});
+ document.getElementById('st').textContent=`you: ${me.hp|0} hp · ${me.sc} pts · players: ${players.size+1} · direct links: ${links.length}`},100);
+const ice={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+function wire(ch){ch.onopen=()=>links.push(ch);ch.onclose=()=>{links=links.filter(l=>l!==ch)};ch.onmessage=e=>recv(JSON.parse(e.data),ch)}
+function gathered(pc){return new Promise(r=>{if(pc.iceGatheringState=='complete')r();pc.onicegatheringstatechange=()=>pc.iceGatheringState=='complete'&&r();setTimeout(r,4000)})}
+let pend;const box=document.getElementById('box');
+document.getElementById('inv').onclick=async()=>{pend=new RTCPeerConnection(ice);wire(pend.createDataChannel('g'));
+ await pend.setLocalDescription(await pend.createOffer());await gathered(pend);box.value=JSON.stringify(pend.localDescription)};
+document.getElementById('acc').onclick=async()=>{try{const d=JSON.parse(box.value);
+ if(d.type=='offer'){const pc=new RTCPeerConnection(ice);pc.ondatachannel=e=>wire(e.channel);await pc.setRemoteDescription(d);
+  await pc.setLocalDescription(await pc.createAnswer());await gathered(pc);box.value=JSON.stringify(pc.localDescription)}
+ else if(pend){await pend.setRemoteDescription(d);box.value='connecting...'}}catch(e){box.value='error: '+e.message}};
+// ---- simulation ----
+function free(x,y,r){return!(wall(Math.floor(x-r),Math.floor(y-r))||wall(Math.floor(x+r),Math.floor(y-r))||wall(Math.floor(x-r),Math.floor(y+r))||wall(Math.floor(x+r),Math.floor(y+r)))}
+function step(o,dx,dy,r){if(free(o.x+dx,o.y,r))o.x+=dx;if(free(o.x,o.y+dy,r))o.y+=dy}
+let cool=0,last=performance.now();
+function ownerOf(gx,gy){let best=id;players.forEach((p,k)=>{if(Math.hypot(p.x-gx,p.y-gy)<20&&k<best)best=k});return best==id}
+function tick(){const now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;
+ let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+ if(dx||dy){const l=Math.hypot(dx,dy);dx/=l;dy/=l;me.fx=dx;me.fy=dy;step(me,dx*5*dt,dy*5*dt,.3)}
+ cool-=dt;if(keys[' ']&&cool<=0){cool=.25;const s={x:me.x,y:me.y,vx:me.fx*12,vy:me.fy*12,life:1.2,own:true};shots.push(s);send({t:'s',x:s.x,y:s.y,vx:s.vx,vy:s.vy})}
+ me.hp-=dt*1.2; // gauntlet-style: life drains constantly
+ const ccx=Math.floor(me.x/C),ccy=Math.floor(me.y/C);
+ for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++)cellItems(ccx+a,ccy+b).forEach(it=>{
+  if(it.t=='g'){const k=it.k;
+   if(ownerOf(it.x,it.y)){genT[k]=(genT[k]||0)-dt;let c=0;mons.forEach(q=>{if(q.own&&q.g==k)c++});
+    if(genT[k]<=0&&c<4&&Math.hypot(it.x-me.x,it.y-me.y)<14){genT[k]=2;mons.set(id+(mc++),{x:it.x+(Math.random()-.5),y:it.y+(Math.random()-.5),hp:2,own:true,g:k,seen:now})}}}
+  else if(Math.hypot(it.x-me.x,it.y-me.y)<.7){gone.add(it.k);send({t:'k',k:it.k});if(it.t=='f')me.hp=Math.min(100,me.hp+40);else me.sc+=100}});
+ const all=[me,...players.values()];
+ mons.forEach((q,k)=>{if(q.own){let t=null,bd=10;all.forEach(p=>{const d=Math.hypot(p.x-q.x,p.y-q.y);if(d<bd){bd=d;t=p}});
+   if(t)step(q,(t.x-q.x)/bd*1.8*dt,(t.y-q.y)/bd*1.8*dt,.3);else if(Math.hypot(q.x-me.x,q.y-me.y)>40)mons.delete(k)}
+  if(Math.hypot(q.x-me.x,q.y-me.y)<.6)me.hp-=15*dt});
+ for(let i=shots.length-1;i>=0;i--){const s=shots[i];s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;let dead=s.life<=0||wall(Math.floor(s.x),Math.floor(s.y));
+  if(!dead&&s.own){
+   for(const[k,q]of mons)if(Math.hypot(q.x-s.x,q.y-s.y)<.5){dead=true;me.sc+=10;if(q.own){if(--q.hp<=0)mons.delete(k)}else{send({t:'h',mid:k});q.hp--}break}
+   if(!dead){const cx=Math.floor(s.x/C),cy=Math.floor(s.y/C);cellItems(cx,cy).forEach(it=>{if(it.t=='g'&&Math.hypot(it.x-s.x,it.y-s.y)<.6){dead=true;
+     if((genHP[it.k]=(genHP[it.k]||0)+1)>=5){gone.add(it.k);send({t:'k',k:it.k});me.sc+=50}}})}}
+  if(dead)shots.splice(i,1)}
+ if(me.hp<=0){me.hp=100;me.sc=0;me.x=me.y=3.5}
+ draw()}
+function draw(){const W=cv.width,Hh=cv.height,ox=W/2-me.x*T,oy=Hh/2-me.y*T;g.fillStyle='#0b0b12';g.fillRect(0,0,W,Hh);
+ const x0=Math.floor(-ox/T),y0=Math.floor(-oy/T),x1=x0+Math.ceil(W/T)+1,y1=y0+Math.ceil(Hh/T)+1;
+ for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const w=wall(x,y);g.fillStyle=w?'#5a4a7a':((x+y)&1?'#1c1c2a':'#20202f');g.fillRect(x*T+ox,y*T+oy,T,T);
+  if(w){g.fillStyle='#463a63';g.fillRect(x*T+ox+2,y*T+oy+2,T-4,T-4)}}
+ for(let cy=Math.floor(y0/C)-1;cy<=Math.floor(y1/C)+1;cy++)for(let cx=Math.floor(x0/C)-1;cx<=Math.floor(x1/C)+1;cx++)cellItems(cx,cy).forEach(it=>{
+  const px=it.x*T+ox,py=it.y*T+oy;
+  if(it.t=='g'){g.fillStyle='#a2c';g.fillRect(px-14,py-14,28,28);g.fillStyle='#fff';g.fillRect(px-14,py+14,28*(1-(genHP[it.k]||0)/5),3)}
+  else{g.fillStyle=it.t=='f'?'#4c4':'#fc3';g.beginPath();g.arc(px,py,8,0,7);g.fill()}});
+ mons.forEach(q=>{g.fillStyle='#e44';g.beginPath();g.arc(q.x*T+ox,q.y*T+oy,10,0,7);g.fill();g.fillStyle='#fff';g.fillRect(q.x*T+ox-5,q.y*T+oy-3,3,3);g.fillRect(q.x*T+ox+2,q.y*T+oy-3,3,3)});
+ g.fillStyle='#ff8';shots.forEach(s=>{g.beginPath();g.arc(s.x*T+ox,s.y*T+oy,3,0,7);g.fill()});
+ const pl=(p,h,lab)=>{g.fillStyle=`hsl(${h},80%,55%)`;g.beginPath();g.arc(p.x*T+ox,p.y*T+oy,11,0,7);g.fill();g.fillStyle='#fff';g.font='10px sans-serif';g.textAlign='center';g.fillText(lab+' '+(p.hp|0),p.x*T+ox,p.y*T+oy-16)};
+ players.forEach((p,k)=>pl(p,p.h,k.slice(0,3)));pl(me,hue,'you')}
+setInterval(tick,16);
+</script></body></html>
