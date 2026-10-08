@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>P2P Hub</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f7f9;--fg:#1b1f24;--card:#fff;--ac:#4f46e5;--mu:#6b7280;--bd:#d9dde3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1115;--fg:#e6e8eb;--card:#181b21;--ac:#818cf8;--mu:#9aa1ab;--bd:#2a2f38}}
+:root[data-theme="dark"]{--bg:#0f1115;--fg:#e6e8eb;--card:#181b21;--ac:#818cf8;--mu:#9aa1ab;--bd:#2a2f38}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:var(--mu);margin:0 0 12px}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+button,input,textarea{font:inherit;color:inherit}
+button{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 12px;cursor:pointer}
+button.on,button.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+input,textarea{width:100%;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px}
+input,textarea{font-size:16px;-webkit-user-select:text;user-select:text;pointer-events:auto}
+.row input{min-width:0;flex:1}
+#log{position:relative;z-index:0}.row{position:relative;z-index:1}
+textarea{min-height:90px;font:12px monospace}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;margin-top:8px}
+.tab{display:none}.tab.on{display:block}
+#log{height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.m{background:var(--bg);border-radius:8px;padding:6px 10px;max-width:85%}
+.m.me{align-self:flex-end;background:var(--ac);color:#fff}
+.m small{display:block;opacity:.7;font-size:11px}
+.sys{color:var(--mu);font-size:12px;text-align:center}
+#board{display:grid;grid-template-columns:repeat(3,90px);gap:6px;justify-content:center;margin:12px 0}
+#board button{height:90px;font-size:36px;font-weight:700}
+.post{border-top:1px solid var(--bd);padding:10px 0}
+.post:first-child{border:0}
+.post small,.mu{color:var(--mu)}
+a{color:var(--ac)}
+</style></head><body><main>
+<h1>P2P Hub</h1>
+<p class="sub">Serverless chat, files, game and forum over WebRTC. <span id="st">0 peers connected</span></p>
+<nav id="nav"></nav>
+
+<section class="tab card" id="t-connect">
+<b>Your name</b><input id="name" maxlength="20" placeholder="anon">
+<p class="mu">No server means you trade invite codes manually (paste them in any messenger). Repeat for each extra peer.</p>
+<div class="row"><button class="pri" id="mk">1. Create invite</button><button id="jn">2. I have an invite</button></div>
+<p class="mu" id="hint"></p>
+<textarea id="out" placeholder="Your code appears here — send it to your peer" readonly></textarea>
+<div class="row"><button id="cp">Copy</button></div>
+<textarea id="inp" placeholder="Paste the code you received here" style="margin-top:8px"></textarea>
+<div class="row"><button class="pri" id="go">Submit code</button></div>
+</section>
+
+<section class="tab card" id="t-chat">
+<div id="log"></div>
+<div class="row"><input id="msg" placeholder="Message everyone…"><button class="pri" id="send">Send</button></div>
+</section>
+
+<section class="tab card" id="t-files">
+<input type="file" id="file" multiple>
+<div class="row"><button class="pri" id="sf">Send to all peers</button></div>
+<div id="fl" style="margin-top:10px"></div>
+</section>
+
+<section class="tab card" id="t-game">
+<b>Tic-tac-toe</b> <span class="mu" id="gs"></span>
+<div id="board"></div>
+<button id="rs">Reset</button>
+</section>
+
+<section class="tab card" id="t-forum">
+<input id="ft" placeholder="Thread title" maxlength="80">
+<textarea id="fb" placeholder="Post body" style="margin-top:8px;font:inherit"></textarea>
+<div class="row"><button class="pri" id="fp">Post</button></div>
+<div id="posts" style="margin-top:12px"></div>
+</section>
+
+<script>
+const $=id=>document.getElementById(id);
+const peers=[];let pending=null;
+const tabs=['connect','chat','files','game','forum'];
+tabs.forEach(t=>{const b=document.createElement('button');b.textContent=t[0].toUpperCase()+t.slice(1);b.onclick=()=>show(t);b.id='b-'+t;$('nav').appendChild(b)});
+function show(t){tabs.forEach(x=>{$('t-'+x).classList.toggle('on',x===t);$('b-'+x).classList.toggle('on',x===t)});
+  if(t==='chat')setTimeout(()=>{try{$('msg').focus()}catch(e){}},50)}
+show('connect');
+const me=()=>$('name').value.trim()||'anon';
+try{$('name').value=localStorage.getItem('p2p-name')||''}catch(e){}
+$('name').onchange=()=>{try{localStorage.setItem('p2p-name',me())}catch(e){}};
+
+/* ---------- signaling (manual copy/paste) ---------- */
+const enc=d=>btoa(unescape(encodeURIComponent(JSON.stringify(d))));
+const dec=s=>JSON.parse(decodeURIComponent(escape(atob(s.trim()))));
+function newPC(){
+  const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+  const p={pc,dc:null,files:{}};
+  pc.onconnectionstatechange=()=>{if(['failed','closed','disconnected'].includes(pc.connectionState)){const i=peers.indexOf(p);if(i>-1){peers.splice(i,1);upd();sys('A peer left')}}};
+  return p;
+}
+function gathered(pc){return new Promise(r=>{if(pc.iceGatheringState==='complete')return r();pc.onicegatheringstatechange=()=>pc.iceGatheringState==='complete'&&r();setTimeout(r,4000)})}
+$('mk').onclick=async()=>{
+  $('hint').textContent='Generating invite…';$('out').value='';
+  try{
+    if(typeof RTCPeerConnection==='undefined')throw new Error('WebRTC is not available in this browser/frame. Try opening the page in its own tab or download the file and open it locally.');
+    const p=newPC();pending=p;wire(p,p.pc.createDataChannel('hub'));
+    await p.pc.setLocalDescription(await p.pc.createOffer());await gathered(p.pc);
+    $('out').value=enc({type:p.pc.localDescription.type,sdp:p.pc.localDescription.sdp});
+    $('hint').textContent='Send this code, then paste their reply below and press Submit.';
+  }catch(e){$('hint').textContent='Error: '+(e&&e.message||e)}
+};
+$('jn').onclick=()=>{$('hint').textContent='Paste their invite below and press Submit. Then send them the reply code that appears.'};
+$('go').onclick=async()=>{
+  let d;try{d=dec($('inp').value)}catch(e){return alert('Invalid code')}
+  if(d.type==='answer'){if(!pending)return alert('Create an invite first');await pending.pc.setRemoteDescription(d);pending=null;$('inp').value='';return}
+  try{
+    $('hint').textContent='Generating reply…';
+    const p=newPC();p.pc.ondatachannel=e=>wire(p,e.channel);
+    await p.pc.setRemoteDescription(d);await p.pc.setLocalDescription(await p.pc.createAnswer());await gathered(p.pc);
+    $('out').value=enc({type:p.pc.localDescription.type,sdp:p.pc.localDescription.sdp});$('hint').textContent='Send this reply code back to your peer.';$('inp').value='';
+  }catch(e){$('hint').textContent='Error: '+(e&&e.message||e)}
+};
+$('cp').onclick=()=>{$('out').select();try{navigator.clipboard.writeText($('out').value)}catch(e){document.execCommand('copy')}};
+
+function wire(p,dc){
+  p.dc=dc;dc.onopen=()=>{peers.push(p);upd();sys('Peer connected');show('chat');
+    dc.send(JSON.stringify({t:'forum',posts}));dc.send(JSON.stringify({t:'game',g}))};
+  dc.onmessage=e=>onMsg(p,JSON.parse(e.data));
+}
+function upd(){$('st').textContent=peers.length+' peer'+(peers.length===1?'':'s')+' connected'}
+function bc(o,except){const s=JSON.stringify(o);peers.forEach(p=>{if(p!==except&&p.dc.readyState==='open')p.dc.send(s)})}
+
+/* ---------- auto-link tabs of the same browser ---------- */
+const tabId=Math.random().toString(36).slice(2),otherTabs=new Set();let bch=null,lp=null;
+try{
+  bch=new BroadcastChannel('p2p-hub');
+  lp={files:{},dc:{readyState:'open',bufferedAmount:0,send:s=>bch.postMessage({from:tabId,d:s})}};
+  bch.onmessage=e=>{const m=e.data;if(!m||m.from===tabId)return;
+    if(m.hello){const isNew=!otherTabs.has(m.from);otherTabs.add(m.from);
+      if(isNew){if(!peers.includes(lp)){peers.push(lp);upd();sys('Linked to another tab in this browser')}
+        bch.postMessage({from:tabId,hello:1});
+        lp.dc.send(JSON.stringify({t:'forum',posts}));lp.dc.send(JSON.stringify({t:'game',g}))}}
+    else if(m.bye){otherTabs.delete(m.from);if(!otherTabs.size){const i=peers.indexOf(lp);if(i>-1)peers.splice(i,1);upd()}}
+    else if(m.d)onMsg(lp,JSON.parse(m.d))};
+  bch.postMessage({from:tabId,hello:1});
+  addEventListener('pagehide',()=>bch.postMessage({from:tabId,bye:1}));
+}catch(e){}
+
+function onMsg(p,m){
+  if(m.t==='chat'){chat(m.n,m.x,false);bc(m,p)}
+  else if(m.t==='game'){g=m.g;drawG()}
+  else if(m.t==='forum'){mergePosts(m.posts)}
+  else if(m.t==='fm'){p.files[m.id]={name:m.name,size:m.size,parts:[],got:0};}
+  else if(m.t==='fc'){const f=p.files[m.id];if(f){const b=atob(m.d),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);f.parts.push(u);f.got+=u.length}}
+  else if(m.t==='fe'){const f=p.files[m.id];if(!f)return;const url=URL.createObjectURL(new Blob(f.parts));
+    const d=document.createElement('div');d.className='post';
+    const a=document.createElement('a');a.href=url;a.download=f.name;a.textContent='⬇ '+f.name+' ('+Math.round(f.size/1024)+' KB)';d.appendChild(a);$('fl').prepend(d);sys('Received '+f.name);delete p.files[m.id]}
+}
+
+/* ---------- chat ---------- */
+function chat(n,x,mine){const d=document.createElement('div');d.className='m'+(mine?' me':'');
+  const s=document.createElement('small');s.textContent=n;d.appendChild(s);d.appendChild(document.createTextNode(x));$('log').appendChild(d);$('log').scrollTop=1e9}
+function sys(x){const d=document.createElement('div');d.className='sys';d.textContent=x;$('log').appendChild(d)}
+function sendChat(){const x=$('msg').value.trim();if(!x)return;chat(me(),x,true);bc({t:'chat',n:me(),x});$('msg').value=''}
+$('send').onclick=sendChat;$('msg').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendChat()}});
+
+/* ---------- files ---------- */
+$('sf').onclick=async()=>{
+  const fs=[...$('file').files];if(!fs.length||!peers.length)return alert('Pick files and connect to a peer first');
+  for(const f of fs){
+    const id=Math.random().toString(36).slice(2);bc({t:'fm',id,name:f.name,size:f.size});
+    for(let o=0;o<f.size;o+=12288){
+      const u=new Uint8Array(await f.slice(o,o+12288).arrayBuffer());let s='';u.forEach(c=>s+=String.fromCharCode(c));
+      while(peers.some(p=>p.dc.bufferedAmount>1e6))await new Promise(r=>setTimeout(r,50));
+      bc({t:'fc',id,d:btoa(s)});
+    }
+    bc({t:'fe',id});sys('Sent '+f.name);
+  }
+};
+
+/* ---------- game ---------- */
+let g={b:Array(9).fill(''),turn:'X'};
+const W=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function drawG(){
+  $('board').innerHTML='';
+  g.b.forEach((v,i)=>{const b=document.createElement('button');b.textContent=v;b.onclick=()=>{if(g.b[i]||win())return;g.b[i]=g.turn;g.turn=g.turn==='X'?'O':'X';drawG();bc({t:'game',g})};$('board').appendChild(b)});
+  const w=win();$('gs').textContent=w?(w+' wins!'):g.b.every(Boolean)?'Draw':'Turn: '+g.turn;
+}
+const win=()=>{for(const [a,b,c] of W)if(g.b[a]&&g.b[a]===g.b[b]&&g.b[a]===g.b[c])return g.b[a];return ''};
+$('rs').onclick=()=>{g={b:Array(9).fill(''),turn:'X'};drawG();bc({t:'game',g})};
+drawG();
+
+/* ---------- forum (merged by id, persisted locally) ---------- */
+let posts=[];try{posts=JSON.parse(localStorage.getItem('p2p-posts')||'[]')}catch(e){}
+function mergePosts(inc){let ch=false;const ids=new Set(posts.map(p=>p.id));
+  (inc||[]).forEach(p=>{if(!ids.has(p.id)){posts.push(p);ch=true}});
+  if(ch){posts.sort((a,b)=>b.ts-a.ts);try{localStorage.setItem('p2p-posts',JSON.stringify(posts))}catch(e){}drawP();bc({t:'forum',posts})}}
+function drawP(){$('posts').innerHTML='';
+  if(!posts.length){$('posts').innerHTML='<p class="mu">No posts yet.</p>';return}
+  posts.forEach(p=>{const d=document.createElement('div');d.className='post';
+    const t=document.createElement('b');t.textContent=p.title;
+    const s=document.createElement('small');s.textContent=' — '+p.n+', '+new Date(p.ts).toLocaleString();
+    const b=document.createElement('div');b.textContent=p.body;b.style.whiteSpace='pre-wrap';
+    d.append(t,s,b);$('posts').appendChild(d)})}
+$('fp').onclick=()=>{const title=$('ft').value.trim(),body=$('fb').value.trim();if(!title)return;
+  mergePosts([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title,body,n:me(),ts:Date.now()}]);$('ft').value=$('fb').value=''};
+drawP();
+</script></main></body></html>
