@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>P2P Hub</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f7f9;--fg:#1b1f24;--card:#fff;--ac:#4f46e5;--mu:#6b7280;--bd:#d9dde3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1115;--fg:#e6e8eb;--card:#181b21;--ac:#818cf8;--mu:#9aa1ab;--bd:#2a2f38}}
+:root[data-theme="dark"]{--bg:#0f1115;--fg:#e6e8eb;--card:#181b21;--ac:#818cf8;--mu:#9aa1ab;--bd:#2a2f38}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:var(--mu);margin:0 0 12px}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+button,input,textarea{font:inherit;color:inherit}
+button{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 12px;cursor:pointer}
+button.on,button.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+input,textarea{width:100%;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px}
+input,textarea{font-size:16px;-webkit-user-select:text;user-select:text;pointer-events:auto}
+.row input{min-width:0;flex:1}
+#log{position:relative;z-index:0}.row{position:relative;z-index:1}
+textarea{min-height:90px;font:12px monospace}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;margin-top:8px}
+.tab{display:none}.tab.on{display:block}
+#log{height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.m{background:var(--bg);border-radius:8px;padding:6px 10px;max-width:85%}
+.m.me{align-self:flex-end;background:var(--ac);color:#fff}
+.m small{display:block;opacity:.7;font-size:11px}
+.sys{color:var(--mu);font-size:12px;text-align:center}
+#board{display:grid;grid-template-columns:repeat(8,1fr);width:min(100%,440px);aspect-ratio:1;margin:12px auto;border:2px solid var(--bd)}
+#board .sq{padding:0;border:0;border-radius:0;display:flex;align-items:center;justify-content:center;background:#e9d9b8}
+#board .dk{background:#7a5a3a}
+#board .sel{outline:3px solid #facc15;outline-offset:-3px}
+#board .tg{box-shadow:inset 0 0 0 4px #4ade80}
+.pc{width:76%;height:76%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#facc15;box-shadow:0 2px 3px rgba(0,0,0,.5)}
+.pr{background:#dc2626}.pb{background:#1f2937;border:2px solid #6b7280}
+.peer{border-top:1px solid var(--bd);padding:8px 0;font-size:13px}
+.fp{font-family:monospace;word-break:break-all}
+.post{border-top:1px solid var(--bd);padding:10px 0}
+.post:first-child{border:0}
+.post small,.mu{color:var(--mu)}
+a{color:var(--ac)}
+</style></head><body><main>
+<h1>P2P Hub</h1>
+<p class="sub">Serverless chat, files, game and forum over WebRTC. <span id="st">0 peers connected</span></p>
+<nav id="nav"></nav>
+
+<section class="tab card" id="t-connect">
+<b>Your name</b><input id="name" maxlength="20" placeholder="anon">
+<p class="mu">No server means you trade invite codes manually (paste them in any messenger). Repeat for each extra peer.</p>
+<div class="row"><button class="pri" id="mk">1. Create invite</button><button id="jn">2. I have an invite</button></div>
+<p class="mu" id="hint"></p>
+<textarea id="out" placeholder="Your code appears here — send it to your peer" readonly></textarea>
+<div class="row"><button id="cp">Copy</button></div>
+<textarea id="inp" placeholder="Paste the code you received here" style="margin-top:8px"></textarea>
+<div class="row"><button class="pri" id="go">Submit code</button></div>
+<hr style="border:0;border-top:1px solid var(--bd);margin:14px 0">
+<b>Identity check</b>
+<p class="mu">Your fingerprint. Read it to your peer by voice or in person; they should see exactly this next to your name.</p>
+<div class="fp" id="myfp">generating…</div>
+<div id="peerlist"></div>
+</section>
+
+<section class="tab card" id="t-chat">
+<div id="log"></div>
+<div class="row"><input id="msg" placeholder="Message everyone…"><button class="pri" id="send">Send</button></div>
+</section>
+
+<section class="tab card" id="t-files">
+<input type="file" id="file" multiple>
+<div class="row"><button class="pri" id="sf">Send to all peers</button></div>
+<div id="fl" style="margin-top:10px"></div>
+</section>
+
+<section class="tab card" id="t-game">
+<b>Checkers</b> <span class="mu" id="gs"></span>
+<div class="row"><button id="pr">Play Red</button><button id="pb2">Play Black</button><button id="rs">New game</button></div>
+<div id="board"></div>
+<p class="mu">Captures are mandatory, multi-jumps continue, kings move both ways. Red moves first.</p>
+</section>
+
+<section class="tab card" id="t-forum">
+<input id="ft" placeholder="Thread title" maxlength="80">
+<textarea id="fb" placeholder="Post body" style="margin-top:8px;font:inherit"></textarea>
+<div class="row"><button class="pri" id="fp">Post</button></div>
+<div id="posts" style="margin-top:12px"></div>
+</section>
+
+<script>
+const $=id=>document.getElementById(id);
+const peers=[];let pending=null;
+let cert=null,myFp='';
+const EM=Array.from('🐙🌲🚀🎸🍕🦊🌋🧊🐢🍄🎲🔥🌙🍒🦉🎈🪐🧲🔑🐝🌵🍩🦄🛸🎯🐳🧩🍋🦀🌈');
+const tagOf=fp=>fp.split(':').slice(0,6).map(x=>EM[parseInt(x,16)%EM.length]).join('');
+const shortFp=fp=>fp.split(':').slice(0,8).join(':');
+const getFp=sdp=>{const m=/a=fingerprint:(\S+) (\S+)/.exec(sdp||'');return m?m[2].toUpperCase():''};
+async function loadCert(){
+  const gen=()=>RTCPeerConnection.generateCertificate({name:'ECDSA',namedCurve:'P-256'});
+  try{
+    const db=await new Promise((res,rej)=>{const r=indexedDB.open('p2p-hub',1);r.onupgradeneeded=()=>r.result.createObjectStore('k');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+    const got=await new Promise(res=>{const q=db.transaction('k').objectStore('k').get('cert');q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)});
+    if(got&&got.expires>Date.now()+864e5)cert=got;
+    else{cert=await gen();try{db.transaction('k','readwrite').objectStore('k').put(cert,'cert')}catch(e){}}
+  }catch(e){try{cert=await gen()}catch(e2){cert=null}}
+}
+const certP=loadCert().then(()=>{try{const f=cert.getFingerprints();myFp=(f.find(x=>x.algorithm==='sha-256')||f[0]).value.toUpperCase();$('myfp').textContent=tagOf(myFp)+'  '+shortFp(myFp)}catch(e){$('myfp').textContent='unavailable'}});
+function renderPeers(){
+  const el=$('peerlist');if(!el)return;el.innerHTML='';
+  if(!peers.length){el.innerHTML='<p class="mu">No peers connected.</p>';return}
+  let ver={};try{ver=JSON.parse(localStorage.getItem('p2p-ver')||'{}')}catch(e){}
+  peers.forEach(p=>{const d=document.createElement('div');d.className='peer';
+    const h=document.createElement('b');h.textContent=(p.name||'(no name yet)')+' (name is self-claimed)';
+    const f=document.createElement('div');f.className='fp';f.textContent=p.fp?p.tag+'  '+shortFp(p.fp):'Same browser (local tab)';
+    d.append(h,f);
+    if(p.fp){const l=document.createElement('label');const c=document.createElement('input');c.type='checkbox';c.style.width='auto';c.checked=!!ver[p.fp];
+      c.onchange=()=>{ver[p.fp]=c.checked;try{localStorage.setItem('p2p-ver',JSON.stringify(ver))}catch(e){}};
+      l.append(c,' I verified this fingerprint with them');d.append(l)}
+    el.appendChild(d)})}
+const tabs=['connect','chat','files','game','forum'];
+tabs.forEach(t=>{const b=document.createElement('button');b.textContent=t[0].toUpperCase()+t.slice(1);b.onclick=()=>show(t);b.id='b-'+t;$('nav').appendChild(b)});
+function show(t){tabs.forEach(x=>{$('t-'+x).classList.toggle('on',x===t);$('b-'+x).classList.toggle('on',x===t)});
+  if(t==='chat')setTimeout(()=>{try{$('msg').focus()}catch(e){}},50)}
+show('connect');
+const me=()=>$('name').value.trim()||'anon';
+try{$('name').value=localStorage.getItem('p2p-name')||''}catch(e){}
+$('name').onchange=()=>{try{localStorage.setItem('p2p-name',me())}catch(e){}};
+
+/* ---------- signaling (manual copy/paste) ---------- */
+const enc=d=>btoa(unescape(encodeURIComponent(JSON.stringify(d))));
+const dec=s=>JSON.parse(decodeURIComponent(escape(atob(s.trim()))));
+function newPC(){
+  const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}],certificates:cert?[cert]:undefined});
+  const p={pc,dc:null,files:{}};
+  pc.onconnectionstatechange=()=>{if(['failed','closed','disconnected'].includes(pc.connectionState)){const i=peers.indexOf(p);if(i>-1){peers.splice(i,1);upd();sys('A peer left')}}};
+  return p;
+}
+function gathered(pc){return new Promise(r=>{if(pc.iceGatheringState==='complete')return r();pc.onicegatheringstatechange=()=>pc.iceGatheringState==='complete'&&r();setTimeout(r,4000)})}
+$('mk').onclick=async()=>{
+  $('hint').textContent='Generating invite…';$('out').value='';
+  try{
+    if(typeof RTCPeerConnection==='undefined')throw new Error('WebRTC is not available in this browser/frame. Try opening the page in its own tab or download the file and open it locally.');
+    await certP;const p=newPC();pending=p;wire(p,p.pc.createDataChannel('hub'));
+    await p.pc.setLocalDescription(await p.pc.createOffer());await gathered(p.pc);
+    $('out').value=enc({type:p.pc.localDescription.type,sdp:p.pc.localDescription.sdp});
+    $('hint').textContent='Send this code, then paste their reply below and press Submit.';
+  }catch(e){$('hint').textContent='Error: '+(e&&e.message||e)}
+};
+$('jn').onclick=()=>{$('hint').textContent='Paste their invite below and press Submit. Then send them the reply code that appears.'};
+$('go').onclick=async()=>{
+  let d;try{d=dec($('inp').value)}catch(e){return alert('Invalid code')}
+  if(d.type==='answer'){if(!pending)return alert('Create an invite first');await pending.pc.setRemoteDescription(d);pending=null;$('inp').value='';return}
+  try{
+    $('hint').textContent='Generating reply…';
+    await certP;const p=newPC();p.pc.ondatachannel=e=>wire(p,e.channel);
+    await p.pc.setRemoteDescription(d);await p.pc.setLocalDescription(await p.pc.createAnswer());await gathered(p.pc);
+    $('out').value=enc({type:p.pc.localDescription.type,sdp:p.pc.localDescription.sdp});$('hint').textContent='Send this reply code back to your peer.';$('inp').value='';
+  }catch(e){$('hint').textContent='Error: '+(e&&e.message||e)}
+};
+$('cp').onclick=()=>{$('out').select();try{navigator.clipboard.writeText($('out').value)}catch(e){document.execCommand('copy')}};
+
+function wire(p,dc){
+  p.dc=dc;dc.onopen=()=>{try{p.fp=getFp(p.pc.remoteDescription.sdp);p.tag=tagOf(p.fp)}catch(e){}peers.push(p);upd();sys('Peer connected'+(p.tag?' '+p.tag:''));show('chat');dc.send(JSON.stringify({t:'hi',n:me()}));
+    dc.send(JSON.stringify({t:'forum',posts}));dc.send(JSON.stringify({t:'game',g}))};
+  dc.onmessage=e=>onMsg(p,JSON.parse(e.data));
+}
+function upd(){$('st').textContent=peers.length+' peer'+(peers.length===1?'':'s')+' connected';renderPeers()}
+function bc(o,except){const s=JSON.stringify(o);peers.forEach(p=>{if(p!==except&&p.dc.readyState==='open')p.dc.send(s)})}
+
+/* ---------- auto-link tabs of the same browser ---------- */
+const tabId=Math.random().toString(36).slice(2),otherTabs=new Set();let bch=null,lp=null;
+try{
+  bch=new BroadcastChannel('p2p-hub');
+  lp={files:{},tag:'local tab',dc:{readyState:'open',bufferedAmount:0,send:s=>bch.postMessage({from:tabId,d:s})}};
+  bch.onmessage=e=>{const m=e.data;if(!m||m.from===tabId)return;
+    if(m.hello){const isNew=!otherTabs.has(m.from);otherTabs.add(m.from);
+      if(isNew){if(!peers.includes(lp)){peers.push(lp);upd();sys('Linked to another tab in this browser')}
+        bch.postMessage({from:tabId,hello:1});
+        lp.dc.send(JSON.stringify({t:'forum',posts}));lp.dc.send(JSON.stringify({t:'game',g}))}}
+    else if(m.bye){otherTabs.delete(m.from);if(!otherTabs.size){const i=peers.indexOf(lp);if(i>-1)peers.splice(i,1);upd()}}
+    else if(m.d)onMsg(lp,JSON.parse(m.d))};
+  bch.postMessage({from:tabId,hello:1});
+  addEventListener('pagehide',()=>bch.postMessage({from:tabId,bye:1}));
+}catch(e){}
+
+function onMsg(p,m){
+  if(m.t==='hi'){p.name=m.n;renderPeers()}
+  else if(m.t==='chat'){chat(m.n+' (via '+(p.tag||'?')+')',m.x,false);bc(m,p)}
+  else if(m.t==='game'){if(m.g&&m.g.n>g.n){g=m.g;sel=null;drawG()}}
+  else if(m.t==='forum'){mergePosts(m.posts)}
+  else if(m.t==='fm'){p.files[m.id]={name:m.name,size:m.size,parts:[],got:0};}
+  else if(m.t==='fc'){const f=p.files[m.id];if(f){const b=atob(m.d),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);f.parts.push(u);f.got+=u.length}}
+  else if(m.t==='fe'){const f=p.files[m.id];if(!f)return;const url=URL.createObjectURL(new Blob(f.parts));
+    const d=document.createElement('div');d.className='post';
+    const a=document.createElement('a');a.href=url;a.download=f.name;a.textContent='⬇ '+f.name+' ('+Math.round(f.size/1024)+' KB)';d.appendChild(a);$('fl').prepend(d);sys('Received '+f.name);delete p.files[m.id]}
+}
+
+/* ---------- chat ---------- */
+function chat(n,x,mine){const d=document.createElement('div');d.className='m'+(mine?' me':'');
+  const s=document.createElement('small');s.textContent=n;d.appendChild(s);d.appendChild(document.createTextNode(x));$('log').appendChild(d);$('log').scrollTop=1e9}
+function sys(x){const d=document.createElement('div');d.className='sys';d.textContent=x;$('log').appendChild(d)}
+function sendChat(){const x=$('msg').value.trim();if(!x)return;chat(me(),x,true);bc({t:'chat',n:me(),x});$('msg').value=''}
+$('send').onclick=sendChat;$('msg').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendChat()}});
+
+/* ---------- files ---------- */
+$('sf').onclick=async()=>{
+  const fs=[...$('file').files];if(!fs.length||!peers.length)return alert('Pick files and connect to a peer first');
+  for(const f of fs){
+    const id=Math.random().toString(36).slice(2);bc({t:'fm',id,name:f.name,size:f.size});
+    for(let o=0;o<f.size;o+=12288){
+      const u=new Uint8Array(await f.slice(o,o+12288).arrayBuffer());let s='';u.forEach(c=>s+=String.fromCharCode(c));
+      while(peers.some(p=>p.dc.bufferedAmount>1e6))await new Promise(r=>setTimeout(r,50));
+      bc({t:'fc',id,d:btoa(s)});
+    }
+    bc({t:'fe',id});sys('Sent '+f.name);
+  }
+};
+
+/* ---------- game: checkers ---------- */
+const initB=()=>{const b=Array(64).fill('');for(let i=0;i<64;i++){const r=i>>3,c=i&7;if((r+c)%2){if(r<3)b[i]='b';else if(r>4)b[i]='r'}}return b};
+let g={b:initB(),turn:'r',lock:null,n:0},myC='',sel=null;
+const own=p=>p?p.toLowerCase():'';
+const dirs=p=>p==='R'||p==='B'?[[-1,-1],[-1,1],[1,-1],[1,1]]:p==='r'?[[-1,-1],[-1,1]]:[[1,-1],[1,1]];
+function mvs(i){const p=g.b[i],r=i>>3,c=i&7,o=[];
+  for(const [dr,dc] of dirs(p)){const r1=r+dr,c1=c+dc;if(r1<0||r1>7||c1<0||c1>7)continue;const j=r1*8+c1;
+    if(!g.b[j])o.push({to:j});
+    else if(own(g.b[j])!==own(p)){const r2=r1+dr,c2=c1+dc;if(r2>=0&&r2<8&&c2>=0&&c2<8&&!g.b[r2*8+c2])o.push({to:r2*8+c2,cap:j})}}
+  return o}
+function legal(col){const m={};let cap=false;
+  for(let i=0;i<64;i++){if(own(g.b[i])!==col||(g.lock!==null&&i!==g.lock))continue;const a=mvs(i);if(a.length){m[i]=a;if(a.some(x=>x.cap!==undefined))cap=true}}
+  if(cap)for(const i in m){m[i]=m[i].filter(x=>x.cap!==undefined);if(!m[i].length)delete m[i]}
+  return m}
+function move(from,to){const mv=(legal(g.turn)[from]||[]).find(x=>x.to===to);if(!mv)return;
+  const p=g.b[from];g.b[from]='';g.b[to]=p;if(mv.cap!==undefined)g.b[mv.cap]='';
+  const r=to>>3;let king=false;
+  if(p==='r'&&r===0){g.b[to]='R';king=true}if(p==='b'&&r===7){g.b[to]='B';king=true}
+  if(mv.cap!==undefined&&!king&&mvs(to).some(x=>x.cap!==undefined)){g.lock=to;sel=to}
+  else{g.lock=null;sel=null;g.turn=g.turn==='r'?'b':'r'}
+  g.n++;drawG();bc({t:'game',g})}
+function drawG(){const B=$('board');B.innerHTML='';const L=legal(g.turn);
+  const idx=[...Array(64).keys()];if(myC==='b')idx.reverse();
+  idx.forEach(i=>{const r=i>>3,c=i&7,b=document.createElement('button');b.className='sq'+((r+c)%2?' dk':'');
+    if(i===sel)b.classList.add('sel');
+    if(sel!==null&&L[sel]&&L[sel].some(x=>x.to===i))b.classList.add('tg');
+    const p=g.b[i];if(p){const d=document.createElement('div');d.className='pc '+(own(p)==='r'?'pr':'pb');if(p===p.toUpperCase())d.textContent='♛';b.appendChild(d)}
+    b.onclick=()=>clickSq(i);B.appendChild(b)});
+  const any=Object.keys(L).length;
+  $('gs').textContent=(any?(g.turn==='r'?'Red':'Black')+' to move':(g.turn==='r'?'Black':'Red')+' wins!')+(myC?' · you are '+(myC==='r'?'Red':'Black'):' · pick a side to play')}
+function clickSq(i){if(myC!==g.turn)return;const L=legal(g.turn);
+  if(sel!==null&&L[sel]&&L[sel].some(x=>x.to===i))return move(sel,i);
+  if(L[i])sel=i;else if(g.lock===null)sel=null;
+  drawG()}
+$('pr').onclick=()=>{myC='r';sel=null;drawG()};
+$('pb2').onclick=()=>{myC='b';sel=null;drawG()};
+$('rs').onclick=()=>{g={b:initB(),turn:'r',lock:null,n:g.n+1};sel=null;drawG();bc({t:'game',g})};
+drawG();
+
+/* ---------- forum (merged by id, persisted locally) ---------- */
+let posts=[];try{posts=JSON.parse(localStorage.getItem('p2p-posts')||'[]')}catch(e){}
+function mergePosts(inc){let ch=false;const ids=new Set(posts.map(p=>p.id));
+  (inc||[]).forEach(p=>{if(!ids.has(p.id)){posts.push(p);ch=true}});
+  if(ch){posts.sort((a,b)=>b.ts-a.ts);try{localStorage.setItem('p2p-posts',JSON.stringify(posts))}catch(e){}drawP();bc({t:'forum',posts})}}
+function drawP(){$('posts').innerHTML='';
+  if(!posts.length){$('posts').innerHTML='<p class="mu">No posts yet.</p>';return}
+  posts.forEach(p=>{const d=document.createElement('div');d.className='post';
+    const t=document.createElement('b');t.textContent=p.title;
+    const s=document.createElement('small');s.textContent=' — '+p.n+', '+new Date(p.ts).toLocaleString();
+    const b=document.createElement('div');b.textContent=p.body;b.style.whiteSpace='pre-wrap';
+    d.append(t,s,b);$('posts').appendChild(d)})}
+$('fp').onclick=()=>{const title=$('ft').value.trim(),body=$('fb').value.trim();if(!title)return;
+  mergePosts([{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title,body,n:me(),ts:Date.now()}]);$('ft').value=$('fb').value=''};
+drawP();
+</script></main></body></html>

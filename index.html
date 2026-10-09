@@ -50,6 +50,8 @@ input,textarea{background:#03040c;border:1px solid var(--line);color:var(--text)
 input:focus,textarea:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 12px rgba(39,240,255,.4)}
 label{color:var(--dim);font-size:.85rem;display:grid;gap:4px}
 footer{padding:50px 22px 40px;color:var(--dim);font-size:.85rem}
+html.ship,html.ship *{cursor:none!important}
+html.ship body{user-select:none;-webkit-user-select:none}
 @media (prefers-reduced-motion:reduce){.card{transition:none}html{scroll-behavior:auto}}
 </style>
 </head>
@@ -78,43 +80,9 @@ footer{padding:50px 22px 40px;color:var(--dim);font-size:.85rem}
 </main>
 <footer id="foot"></footer>
 
+<script src="config.js"></script>
 <script>
-/* ===== EDIT THIS SECTION =====
-   GUESTBOOK SETUP (one time, ~3 minutes):
-   1. In your site repo: Settings > General > Features > tick "Discussions".
-   2. In Discussions, create a category named "Guestbook" (format: Announcement,
-      so only you can start threads, and visitors comment under them).
-   3. Install the giscus app on that repo: https://github.com/apps/giscus
-   4. Go to https://giscus.app, enter your repo, pick the "Guestbook" category,
-      and copy the data-repo-id and data-category-id values it shows you.
-   5. Paste them below. Make sure the repo is public.
-   6. Create one Discussion titled exactly "Guestbook" in that category
-      (giscus will also create it automatically on the first comment).
-*/
-const CONFIG = {
-  giscus: {
-    repo: "GigaJunky/GigaJunky.github.io",
-    repoId: "MDEwOlJlcG9zaXRvcnkxNzY0MTY4MDU=", // e.g. "R_kgDOAbCdEf"
-    category: "Announcements",
-    categoryId: "DIC_kwDOCoPoJc4DHOAe"          // e.g. "DIC_kwDOAbCdEf4Cxyz1"
-  },
-  github: "GigaJunky",          // your GitHub username
-  email:  "BitJunky@hotmail.com",        // where the message form sends mail
-  tagline: "Tinkering with bits, bytes and blinking lights. Here's what I'm building.",
-  projects: [
-    {name:"COCOCAS2WAV",   desc:"Converts .cas (Cassette) data files to .wav to play into a real Color Computer.", tags:["JavaScript","Web"],  status:"live",   url:"https://gigajunky.github.io/coco/index.html"},
-    {name:"AI Games",   desc:"Some Games I had AI make.", tags:["JavaScript","Web"],  status:"live",   url:"https://gigajunky.github.io/index2.html"},
-    {name:"Project Three", desc:"A work in progress that's not ready for the world yet.", tags:["Rust","Embedded"],   status:"in progress", url:"https://github.com/your-username/project-three"}
-  ],
-  updates: [
-    {date:"2026-10-06", title:"Site launched", text:"BitJunky's is online. Projects and news will land here."},
-    {date:"2026-10-01", title:"Project Three started", text:"Sketched the first prototype this weekend."}
-  ],
-  messages: [
-    {from:"BitJunky", text:"Welcome! Drop a message below or open an issue on any project."}
-  ]
-};
-/* ============================= */
+/* Settings live in config.js */
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -156,84 +124,375 @@ $('msgs').innerHTML = CONFIG.messages.map(m => `<div class="msg"><b>${esc(m.from
 /* ===== Warping grid (spring-mass lattice, Geometry Wars style) ===== */
 (function(){
   const cv = $('grid'), ctx = cv.getContext('2d');
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let W,H,cols,rows,pts,gap=34,mx=-9999,my=-9999,pmx=-9999,pmy=-9999,dpr=1;
+  const MODES = ['full','gentle','off'];
+  let mode; try{ mode = localStorage.getItem('bj-grid'); }catch(e){}
+  if(!MODES.includes(mode)) mode = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'gentle' : 'full';
+  const amp = () => mode==='full' ? 1 : mode==='gentle' ? .35 : 0;
+
+  // on/off/gentle toggle
+  const btn = document.createElement('button');
+  btn.className = 'btn';
+  btn.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:5;font-size:.78rem;padding:5px 12px;background:rgba(5,6,15,.85)';
+  document.body.appendChild(btn);
+  const label = () => btn.textContent = 'Grid: ' + mode;
+  btn.onclick = () => {
+    mode = MODES[(MODES.indexOf(mode)+1) % 3];
+    try{ localStorage.setItem('bj-grid', mode); }catch(e){}
+    label(); bullets.length=0; sparks.length=0; trail.length=0; init(); setCursorClass(); if(mode!=='off' && !running) start();
+  };
+
+  // overlay canvas for the ship + bullets (above page content)
+  const fx = document.createElement('canvas');
+  fx.setAttribute('aria-hidden','true');
+  fx.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:4;pointer-events:none';
+  document.body.appendChild(fx);
+  const fctx = fx.getContext('2d');
+
+  const STEP = 1/120;                       // fixed physics step: same feel at any refresh rate
+  const COLORS = [0,1,2,3,4,5].map(b => {
+    const k = b/5;
+    return `rgba(${Math.round(30+225*k)},${Math.round(80+130*(1-k*.4)+40*k)},255,${(.28+.62*k).toFixed(2)})`;
+  });
+  let W,H,cols,rows,pts,gap,dpr,quality=1,running=false;
+  let mx=-9999,my=-9999,pmx=-9999,pmy=-9999,tx=null,ty=null;
+
   function init(){
     dpr = Math.min(devicePixelRatio||1,2);
     W = innerWidth; H = innerHeight;
     cv.width = W*dpr; cv.height = H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
-    gap = W<600 ? 28 : 34;
+    fx.width = W*dpr; fx.height = H*dpr; fctx.setTransform(dpr,0,0,dpr,0,0);
+    gap = (W<600 ? 28 : 34) * quality;
     cols = Math.ceil(W/gap)+2; rows = Math.ceil(H/gap)+2;
     pts = [];
     for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
       const x=c*gap-gap/2, y=r*gap-gap/2;
-      pts.push({ox:x,oy:y,x,y,vx:0,vy:0});
+      pts.push({ox:x,oy:y,x,y,vx:0,vy:0,b:0});
     }
+    if(mode==='off'){ draw(); }
   }
-  function push(x,y,radius,force){
-    for(const p of pts){
-      const dx=p.x-x, dy=p.y-y, d2=dx*dx+dy*dy;
-      if(d2<radius*radius && d2>1){
-        const d=Math.sqrt(d2), f=(1-d/radius)*force;
+  function push(x,y,rad,force){
+    force *= amp(); if(!force) return;
+    const c0=Math.max(0,Math.floor((x-rad)/gap+.5)), c1=Math.min(cols-1,Math.ceil((x+rad)/gap+.5));
+    const r0=Math.max(0,Math.floor((y-rad)/gap+.5)), r1=Math.min(rows-1,Math.ceil((y+rad)/gap+.5));
+    for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){
+      const p = pts[r*cols+c], dx=p.x-x, dy=p.y-y, d2=dx*dx+dy*dy;
+      if(d2<rad*rad && d2>1){
+        const d=Math.sqrt(d2), f=(1-d/rad)*force;
         p.vx += dx/d*f; p.vy += dy/d*f;
       }
     }
   }
-  function pull(x,y,radius,force){ push(x,y,radius,-force); }
+  const pull = (x,y,rad,f) => push(x,y,rad,-f);
+
+  // mouse
   addEventListener('pointermove',e=>{
-    pmx = mx; pmy = my; mx = e.clientX; my = e.clientY;
+    if(e.pointerType==='touch') return;
+    pmx=mx; pmy=my; mx=e.clientX; my=e.clientY;
     if(pmx>-999){
-      const speed = Math.hypot(mx-pmx,my-pmy);
-      pull(mx,my,140,Math.min(speed*.12,5));
+      const ddx=mx-pmx, ddy=my-pmy;
+      pull(mx,my,140,Math.min(Math.hypot(ddx,ddy)*.12,5));
+      if(ddx*ddx+ddy*ddy>9){   // ship turns toward its direction of travel
+        const d=((Math.atan2(ddy,ddx)-ang+Math.PI*3)%(Math.PI*2))-Math.PI;
+        ang += d*.3;
+      }
     }
+    haveMouse = true; setCursorClass();
   });
-  addEventListener('pointerdown',e=>push(e.clientX,e.clientY,260,28));
-  addEventListener('pointerleave',()=>{mx=my=pmx=pmy=-9999});
+  // hold the mouse button to fire
+  addEventListener('pointerdown',e=>{ if(e.pointerType!=='touch' && e.button===0) firing=true; });
+  addEventListener('pointerup',()=>{firing=false});
+  addEventListener('pointercancel',()=>{firing=false});
+  addEventListener('blur',()=>{firing=false});
+  document.documentElement.addEventListener('mouseleave',()=>{
+    mx=my=pmx=pmy=-9999; haveMouse=false; firing=false; setCursorClass();
+  });
+  // touch (passive, so page scrolling still works)
+  addEventListener('touchstart',e=>{
+    const t=e.touches[0]; tx=t.clientX; ty=t.clientY; push(tx,ty,260,28);
+  },{passive:true});
+  addEventListener('touchmove',e=>{
+    const t=e.touches[0];
+    if(tx!==null) pull(t.clientX,t.clientY,140,Math.min(Math.hypot(t.clientX-tx,t.clientY-ty)*.12,5));
+    tx=t.clientX; ty=t.clientY;
+  },{passive:true});
+  addEventListener('touchend',()=>{tx=ty=null},{passive:true});
   addEventListener('resize',init);
 
-  // occasional ambient ripple so the grid is alive without the mouse
-  let t=0;
-  function ambient(){
-    t++;
-    if(t%240===0) push(Math.random()*W,Math.random()*H,200,10);
-  }
-  function step(){
+  function physics(){
     for(const p of pts){
       p.vx += (p.ox-p.x)*0.045; p.vy += (p.oy-p.y)*0.045;
       p.vx *= 0.9; p.vy *= 0.9;
       p.x += p.vx; p.y += p.vy;
+      const k = Math.min(Math.hypot(p.x-p.ox,p.y-p.oy)/22,1);
+      p.b = Math.min(5,Math.floor(k*6));
     }
   }
-  function col(p){
-    const d = Math.hypot(p.x-p.ox,p.y-p.oy);
-    const k = Math.min(d/22,1);
-    // blue at rest -> cyan -> white-pink when stretched
-    const r = Math.round(30+225*k), g = Math.round(80+130*(1-k*.4)+40*k), b = 255;
-    return `rgba(${r},${g},${b},${.28+.62*k})`;
-  }
+  // batched drawing: 6 paths (one per colour) instead of thousands of strokes
   function draw(){
     ctx.clearRect(0,0,W,H);
     ctx.lineWidth = 1.2;
-    for(let r=0;r<rows;r++){
-      for(let c=0;c<cols;c++){
-        const p = pts[r*cols+c];
-        if(c<cols-1){ const q=pts[r*cols+c+1]; ctx.strokeStyle=col(p); ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); }
-        if(r<rows-1){ const q=pts[(r+1)*cols+c]; ctx.strokeStyle=col(p); ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); }
-      }
+    const paths = COLORS.map(()=>new Path2D());
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const p = pts[r*cols+c];
+      if(c<cols-1){ const q=pts[r*cols+c+1], P=paths[Math.max(p.b,q.b)]; P.moveTo(p.x,p.y); P.lineTo(q.x,q.y); }
+      if(r<rows-1){ const q=pts[(r+1)*cols+c], P=paths[Math.max(p.b,q.b)]; P.moveTo(p.x,p.y); P.lineTo(q.x,q.y); }
     }
-    // cursor glow
-    if(mx>-999){
+    for(let i=0;i<6;i++){ ctx.strokeStyle=COLORS[i]; ctx.stroke(paths[i]); }
+    if(mx>-999 && mode!=='off'){
       const g = ctx.createRadialGradient(mx,my,0,mx,my,110);
       g.addColorStop(0,'rgba(39,240,255,.22)'); g.addColorStop(1,'rgba(39,240,255,0)');
       ctx.fillStyle=g; ctx.fillRect(mx-110,my-110,220,220);
     }
   }
-  function loop(){
-    ambient(); step(); step(); draw();
-    requestAnimationFrame(loop);
+
+  // ===== ship, thrust, trail, enemies, mini game =====
+  let ang=-Math.PI/2, haveMouse=false, firing=false, fireT=0;
+  const bullets=[], sparks=[], enemies=[], trail=[];
+  let gt=0, spd=0, lx=null, ly=0, hintT=7;
+  let score=0, best=0, lives=3, level=1, inv=0, spawnT=1.5, overT=0, state='play';
+  try{ best = +localStorage.getItem('bj-best') || 0; }catch(e){}
+
+  let gameOn = (()=>{
+    let v; try{ v = localStorage.getItem('bj-game'); }catch(e){}
+    if(v==='on') return true; if(v==='off') return false;
+    return !matchMedia('(prefers-reduced-motion: reduce)').matches && !(typeof CONFIG!=='undefined' && CONFIG.game===false);
+  })();
+  const gbtn = document.createElement('button');
+  gbtn.className = 'btn';
+  gbtn.style.cssText = 'position:fixed;right:14px;bottom:50px;z-index:5;font-size:.78rem;padding:5px 12px;background:rgba(5,6,15,.85)';
+  document.body.appendChild(gbtn);
+  const glabel = () => gbtn.textContent = 'Game: ' + (gameOn ? 'on' : 'off');
+  gbtn.onclick = () => {
+    gameOn = !gameOn;
+    try{ localStorage.setItem('bj-game', gameOn ? 'on' : 'off'); }catch(e){}
+    resetGame(); glabel();
+  };
+
+  const shipOn = () => haveMouse && mode!=='off';
+  function setCursorClass(){ document.documentElement.classList.toggle('ship', shipOn()); }
+  function resetGame(){ score=0; lives=3; level=1; inv=2; spawnT=1.5; overT=0; state='play'; enemies.length=0; }
+  function burst(x,y,n,c){
+    if(sparks.length>220) return;
+    for(let i=0;i<n;i++){
+      const a=Math.random()*6.283, v=80+Math.random()*220, life=.35+Math.random()*.35;
+      sparks.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life,m:life,c});
+    }
   }
-  init();
-  if(reduce){ draw(); } else { loop(); }
+  function shoot(){
+    const nx=-Math.sin(ang), ny=Math.cos(ang), sp=950;
+    for(const off of [-7,7]){
+      const a = ang + (Math.random()-.5)*.05;
+      bullets.push({x:mx+Math.cos(ang)*14+nx*off, y:my+Math.sin(ang)*14+ny*off,
+                    vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:.75});
+    }
+  }
+  function explode(b){
+    const x=Math.max(0,Math.min(W,b.x)), y=Math.max(0,Math.min(H,b.y));
+    push(x,y,150,16); burst(x,y,6,'#ffe94a');
+  }
+  function spawnEnemy(){
+    for(let t=0;t<8;t++){
+      const edge=Math.random()*4|0; let x,y;
+      if(edge<2){ x=Math.random()*W; y=edge?H-24:24; } else { x=edge===2?24:W-24; y=Math.random()*H; }
+      if(Math.hypot(x-mx,y-my)>320 || t===7){
+        const drift = Math.random() < Math.min(.2+level*.05,.45);
+        const a=Math.random()*6.283, s=70+level*8;
+        enemies.push(drift
+          ? {k:'d',x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:13,rot:0,pts:50,c:'#ff2d95',sp:.8}
+          : {k:'s',x,y,vx:0,vy:0,r:11,rot:0,pts:100,c:'#5aa0ff',sp:.8});
+        return;
+      }
+    }
+  }
+  function kill(j){
+    const e=enemies[j];
+    score+=e.pts; level=1+Math.floor(score/1500);
+    push(e.x,e.y,200,22); burst(e.x,e.y,14,e.c);
+    enemies.splice(j,1);
+  }
+  function hitShip(){
+    burst(mx,my,32,'#27f0ff'); push(mx,my,320,34);
+    for(let i=enemies.length-1;i>=0;i--){
+      const e=enemies[i];
+      if(Math.hypot(e.x-mx,e.y-my)<240){ burst(e.x,e.y,8,e.c); enemies.splice(i,1); }
+    }
+    lives--; inv=2.2;
+    if(lives<=0){
+      for(const e of enemies){ burst(e.x,e.y,8,e.c); push(e.x,e.y,180,16); }
+      enemies.length=0; state='over'; overT=3.5;
+      if(score>best){ best=score; try{ localStorage.setItem('bj-best',best); }catch(e){} }
+    }
+  }
+  function drawEnemy(e){
+    fctx.save(); fctx.translate(e.x,e.y);
+    let a=1;
+    if(e.sp>0){ a=.25+.5*Math.abs(Math.sin(e.sp*18)); fctx.scale(1+e.sp*.8,1+e.sp*.8); }
+    fctx.globalAlpha=a; fctx.strokeStyle=e.c; fctx.shadowColor=e.c; fctx.shadowBlur=10; fctx.lineWidth=2;
+    fctx.beginPath();
+    if(e.k==='s'){
+      fctx.rotate(Math.atan2(e.vy,e.vx)+Math.PI/2);
+      const r=e.r;
+      fctx.moveTo(0,-r); fctx.lineTo(r*.75,0); fctx.lineTo(0,r); fctx.lineTo(-r*.75,0); fctx.closePath();
+      fctx.moveTo(0,-r*.45); fctx.lineTo(r*.3,0); fctx.lineTo(0,r*.45); fctx.lineTo(-r*.3,0); fctx.closePath();
+    } else {
+      fctx.rotate(e.rot); const r=e.r*.8;
+      fctx.rect(-r,-r,r*2,r*2);
+      fctx.rotate(Math.PI/4); fctx.rect(-r*.55,-r*.55,r*1.1,r*1.1);
+    }
+    fctx.stroke(); fctx.restore();
+  }
+  function drawFx(dt){
+    fctx.clearRect(0,0,W,H);
+    if(!shipOn()){ lx=null; trail.length=0; return; }
+    gt += dt; if(hintT>0) hintT-=dt;
+    if(firing){ fireT-=dt; while(fireT<=0){ shoot(); fireT+=.085; } } else fireT=0;
+
+    // speed + trail
+    if(lx===null){ lx=mx; ly=my; }
+    spd += (Math.min(Math.hypot(mx-lx,my-ly)/Math.max(dt,.001),3000)-spd)*.25; lx=mx; ly=my;
+    trail.push({x:mx,y:my,t:gt});
+    while(trail.length && gt-trail[0].t>.4) trail.shift();
+    fctx.globalCompositeOperation='lighter'; fctx.lineCap='round';
+    for(let pass=0;pass<2;pass++){
+      for(let i=1;i<trail.length;i++){
+        const a=trail[i-1], b=trail[i];
+        if(Math.abs(a.x-b.x)+Math.abs(a.y-b.y)<.5) continue;
+        const k=1-(gt-b.t)/.4; if(k<=0) continue;
+        fctx.strokeStyle = pass ? `rgba(190,255,255,${k*.9})` : `rgba(39,160,255,${k*.2})`;
+        fctx.lineWidth = pass ? 1+k*3 : 2+k*13;
+        fctx.beginPath(); fctx.moveTo(a.x,a.y); fctx.lineTo(b.x,b.y); fctx.stroke();
+      }
+    }
+    fctx.globalCompositeOperation='source-over';
+    if(spd>500 && Math.random()<.6){
+      sparks.push({x:mx-Math.cos(ang)*8,y:my-Math.sin(ang)*8,
+        vx:-Math.cos(ang)*140+(Math.random()-.5)*80, vy:-Math.sin(ang)*140+(Math.random()-.5)*80,
+        life:.25,m:.25,c:'#ffb347'});
+    }
+
+    // game logic
+    if(gameOn){
+      if(state==='play'){
+        inv=Math.max(0,inv-dt);
+        spawnT-=dt;
+        if(spawnT<=0 && enemies.length<8+level*2){ spawnEnemy(); if(level>3 && Math.random()<.4) spawnEnemy(); spawnT=Math.max(.5,1.7-level*.12); }
+        let crashed=false;
+        for(const e of enemies){
+          if(e.sp>0){ e.sp-=dt; continue; }
+          if(e.k==='s'){
+            const dx=mx-e.x, dy=my-e.y, d=Math.hypot(dx,dy)||1, s=Math.min(110+level*16,250), f=Math.min(1,2.2*dt);
+            e.vx+=(dx/d*s-e.vx)*f; e.vy+=(dy/d*s-e.vy)*f;
+          } else {
+            if((e.x<e.r&&e.vx<0)||(e.x>W-e.r&&e.vx>0)) e.vx*=-1;
+            if((e.y<e.r&&e.vy<0)||(e.y>H-e.r&&e.vy>0)) e.vy*=-1;
+          }
+          e.x+=e.vx*dt; e.y+=e.vy*dt; e.rot+=dt*3;
+          push(e.x,e.y,45,.7);                                  // enemies warp the grid
+          if(inv<=0 && Math.hypot(e.x-mx,e.y-my)<e.r+9) crashed=true;
+        }
+        if(crashed) hitShip();
+      } else {
+        overT-=dt; if(overT<=0) resetGame();
+      }
+    }
+
+    // bullets (and hits)
+    fctx.lineCap='round';
+    fctx.strokeStyle='#ffe94a'; fctx.lineWidth=2.5; fctx.shadowColor='#ffe94a'; fctx.shadowBlur=8;
+    fctx.beginPath();
+    for(let i=bullets.length-1;i>=0;i--){
+      const b=bullets[i];
+      b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt;
+      push(b.x,b.y,55,1.2);
+      let hit=false;
+      for(let j=enemies.length-1;j>=0;j--){
+        const e=enemies[j];
+        if(e.sp<=0 && Math.hypot(b.x-e.x,b.y-e.y)<e.r+5){ kill(j); hit=true; break; }
+      }
+      if(hit){ bullets.splice(i,1); continue; }
+      if(b.life<=0||b.x<0||b.x>W||b.y<0||b.y>H){ explode(b); bullets.splice(i,1); continue; }
+      fctx.moveTo(b.x,b.y); fctx.lineTo(b.x-b.vx*.018,b.y-b.vy*.018);
+    }
+    fctx.stroke();
+    fctx.shadowBlur=0;
+
+    for(const e of enemies) drawEnemy(e);
+
+    // sparks
+    fctx.lineWidth=1.6;
+    for(let i=sparks.length-1;i>=0;i--){
+      const p=sparks[i];
+      p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt;
+      if(p.life<=0){ sparks.splice(i,1); continue; }
+      fctx.globalAlpha=p.life/p.m; fctx.strokeStyle=p.c;
+      fctx.beginPath(); fctx.moveTo(p.x,p.y); fctx.lineTo(p.x-p.vx*.03,p.y-p.vy*.03); fctx.stroke();
+    }
+    fctx.globalAlpha=1;
+
+    // ship + thrust flame
+    fctx.save(); fctx.translate(mx,my); fctx.rotate(ang);
+    if(inv>0 && Math.floor(gt*12)%2) fctx.globalAlpha=.3;
+    const L = spd>80 ? Math.min(6+spd/45,30)*(.8+Math.random()*.4) : 0;
+    if(L>0){
+      fctx.shadowColor='#ff8a2a'; fctx.shadowBlur=14;
+      fctx.fillStyle='rgba(255,110,40,.9)';
+      fctx.beginPath(); fctx.moveTo(-5,-5); fctx.lineTo(-5-L,0); fctx.lineTo(-5,5); fctx.closePath(); fctx.fill();
+      fctx.fillStyle='rgba(255,240,150,.95)';
+      fctx.beginPath(); fctx.moveTo(-5,-2.5); fctx.lineTo(-5-L*.55,0); fctx.lineTo(-5,2.5); fctx.closePath(); fctx.fill();
+    }
+    fctx.shadowColor='#27f0ff'; fctx.shadowBlur=14;
+    fctx.strokeStyle='#bfffff'; fctx.fillStyle='rgba(39,240,255,.2)'; fctx.lineWidth=2; fctx.lineJoin='round';
+    fctx.beginPath();
+    fctx.moveTo(15,0); fctx.lineTo(-11,-10); fctx.lineTo(-4,0); fctx.lineTo(-11,10); fctx.closePath();
+    fctx.fill(); fctx.stroke();
+    fctx.restore();
+    fctx.shadowBlur=0; fctx.globalAlpha=1;
+
+    // HUD
+    if(gameOn){
+      fctx.shadowColor='#27f0ff'; fctx.shadowBlur=6; fctx.fillStyle='#cfd8ff';
+      fctx.font='16px "Share Tech Mono",monospace'; fctx.textAlign='right';
+      fctx.fillText('SCORE '+String(score).padStart(6,'0')+'   BEST '+String(best).padStart(6,'0')+'   LV '+level+'   '+'▲'.repeat(Math.max(lives,0)), W-16, 28);
+      fctx.textAlign='center';
+      if(state==='over'){
+        fctx.fillStyle='#ff2d95'; fctx.shadowColor='#ff2d95'; fctx.shadowBlur=18;
+        fctx.font='900 44px Orbitron,sans-serif'; fctx.fillText('GAME OVER',W/2,H/2-6);
+        fctx.fillStyle='#cfd8ff'; fctx.font='18px "Share Tech Mono",monospace';
+        fctx.fillText('SCORE '+score+(score>0&&score>=best?'  ·  NEW BEST!':''),W/2,H/2+28);
+      } else if(hintT>0){
+        fctx.globalAlpha=Math.min(1,hintT);
+        fctx.fillText('MOVE TO FLY  ·  HOLD CLICK TO FIRE  ·  DODGE THE ENEMIES',W/2,H-24);
+        fctx.globalAlpha=1;
+      }
+      fctx.textAlign='left'; fctx.shadowBlur=0;
+    }
+  }
+  glabel(); resetGame();
+
+  let last=0,acc=0,ambT=0,frames=0,work=0;
+  function frame(t){
+    if(mode==='off'){ running=false; return; }
+    const w0 = performance.now();
+    const dt = Math.min((t-last)/1000,.1); last=t;
+    acc += dt; ambT += dt;
+    if(ambT>4){ ambT=0; push(Math.random()*W,Math.random()*H,200,10); }
+    let n=0;
+    while(acc>=STEP && n<6){ physics(); acc-=STEP; n++; }
+    if(n===6) acc=0;
+    draw();
+    drawFx(dt);
+    // adaptive quality: if our own work per frame is too slow, use a coarser grid
+    work += performance.now()-w0;
+    if(++frames===90){
+      if(work/90 > 10 && quality < 2){ quality += .4; init(); }
+      frames=0; work=0;
+    }
+    requestAnimationFrame(frame);
+  }
+  function start(){ running=true; last=performance.now(); requestAnimationFrame(frame); }
+
+  label(); init();
+  if(mode!=='off') start();
 })();
 </script>
 </body>
