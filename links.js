@@ -3,11 +3,12 @@
 const LINKS = [
   { group: "My Stuff", items: [
     { title: "GitHub",        url: "https://github.com/GigaJunky",          desc: "All my repos and experiments.", icon: "🐙" },
-    { title: "Project One",   url: "https://github.com/your-username/project-one", desc: "Short note about this project.", icon: "🕹️" }
+    { title: "CocoCas2Wav",   url: "https://gigajunky.github.io/coco/", desc: "Converts Color Computer programs to wav files for loading via the cassette input.", icon: "🕹️" }
   ]},
   { group: "Favorites", items: [
     { title: "Hackaday",      url: "https://hackaday.com",                      desc: "Hacks, builds and tinkering.", icon: "🔧" },
-    { title: "Hacker News",   url: "https://news.ycombinator.com",              desc: "Tech news and discussion.",    icon: "📰" }
+    { title: "Hacker News",   url: "https://news.ycombinator.com",              desc: "Tech news and discussion.",    icon: "📰" },
+    { title: "CoCo Archive",  url: "https://colorcomputerarchive.com/",         desc: "TRS-80 Color Computer Retro computing and gaming.", icon: "🖥️" }
   ]},
   { group: "Tools", items: [
     { title: "MDN Web Docs",  url: "https://developer.mozilla.org",             desc: "Web development reference.",   icon: "📚" }
