@@ -20,7 +20,7 @@ const LINKS = [
    It works with no settings. Uncomment to customize.
    Tip: in any page's <head>, add <meta name="description" content="..."> for the
    description, <meta name="icon" content="🎮"> for the icon, or
-   <meta name="links" content="hide"> to keep that page off the list. */
+   <meta name="links" content=" hide"> to keep that page off the list. */
 
 const AUTO_LINKS = {
   enabled: true,
