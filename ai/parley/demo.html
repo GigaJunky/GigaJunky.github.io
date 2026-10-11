@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Parley Demo · Paddles</title>
+<style>
+/* A small two-player game showing every Parley feature: codes, invite links, lobby, chat, state sync. */
+:root{--bg:#10131a;--panel:#181c26;--line:#2a3142;--ink:#e8ecf4;--dim:#8d97ab;--a:#5ad1ff;--b:#ff6fae;--gold:#ffcc66;--err:#ff8b7a;
+  --f:'Segoe UI',system-ui,-apple-system,sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--f)}
+main{max-width:1100px;margin:0 auto;padding:20px 16px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+h1{font-size:20px;margin:0 0 4px;letter-spacing:.02em}
+h2{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin:0}
+p{margin:0}
+.note{color:var(--dim);font-size:13px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:600 14px var(--f);color:var(--ink);background:#232a3a;border:1px solid var(--line);border-radius:6px;padding:8px 12px;cursor:pointer}
+button:hover{border-color:var(--a)} button:disabled{opacity:.45;cursor:default}
+button.primary{background:var(--a);color:#05202c;border-color:transparent}
+input,textarea{font:14px var(--f);color:var(--ink);background:#0c0f15;border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0}
+textarea{font:12px/1.4 var(--mono);width:100%;resize:vertical;word-break:break-all}
+input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--a);outline-offset:1px}
+.tabs{display:flex;gap:4px} .tabs button{flex:1;border-radius:6px 6px 0 0}
+.tabs button[aria-selected="true"]{background:var(--line);border-color:var(--a)}
+.code{font:700 34px var(--mono);letter-spacing:.3em;color:var(--gold)}
+.status{font-size:13px;color:var(--dim);min-height:1.2em} .status.err{color:var(--err)}
+canvas{width:100%;aspect-ratio:16/10;background:#06080c;border:1px solid var(--line);border-radius:8px;display:block}
+.hud{display:flex;justify-content:space-between;font:600 13px var(--mono);color:var(--dim)}
+.players{display:flex;flex-direction:column;gap:6px}
+.p{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+.p .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.p .s{font-size:12px;color:var(--dim)} .p.me{border-color:var(--a)}
+.chatlog{height:150px;overflow-y:auto;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:13px;display:flex;flex-direction:column;gap:3px;overflow-wrap:anywhere}
+.chatlog b{margin-right:6px}
+.invite{border:1px solid var(--gold);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:8px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <section class="stack">
+    <div><h1>Paddles</h1><p class="note">A tiny two-player game built on Parley. Move with ↑/↓ or W/S, or the mouse. First to 7.</p></div>
+    <canvas id="cv" width="800" height="500" aria-label="Game"></canvas>
+    <div class="hud"><span id="hudL">You: —</span><span id="hudPing"></span><span id="hudR">Them: —</span></div>
+    <div class="panel">
+      <h2>Match chat</h2>
+      <div class="chatlog" id="mchat"><span class="note">Chat appears here once you're connected.</span></div>
+      <form class="row" id="mchatForm"><input id="mchatIn" maxlength="200" placeholder="Say something" style="flex:1" disabled><button disabled id="mchatBtn">Send</button></form>
+    </div>
+  </section>
+
+  <section class="stack">
+    <div class="panel">
+      <label for="name"><h2>Your name</h2></label>
+      <input id="name" maxlength="16">
+      <div class="status" id="status">Not connected.</div>
+      <button id="leaveBtn" hidden>Leave match</button>
+    </div>
+    <div class="panel">
+      <div class="tabs" role="tablist">
+        <button role="tab" data-tab="code" aria-selected="true">Code</button>
+        <button role="tab" data-tab="invite" aria-selected="false">Invite link</button>
+        <button role="tab" data-tab="lobby" aria-selected="false">Lobby</button>
+      </div>
+
+      <div data-pane="code" class="stack" style="gap:10px">
+        <button class="primary" id="hostBtn">Host a game</button>
+        <div class="code" id="hostCode" hidden></div>
+        <div class="row"><input id="joinCode" maxlength="4" placeholder="CODE" style="flex:1;text-transform:uppercase"><button id="joinBtn">Join</button></div>
+      </div>
+
+      <div data-pane="invite" class="stack" style="gap:10px" hidden>
+        <p class="note">No matchmaking service at all: the link carries the connection details.</p>
+        <button class="primary" id="invBtn">Create invite</button>
+        <label class="note" for="invOut" id="invOutL">Send this to your friend</label>
+        <textarea id="invOut" rows="4" readonly></textarea>
+        <label class="note" for="invIn" id="invInL">Paste the invite or reply you received</label>
+        <textarea id="invIn" rows="4"></textarea>
+        <button id="invGo">Use it</button>
+      </div>
+
+      <div data-pane="lobby" class="stack" style="gap:10px" hidden>
+        <div class="row"><button class="primary" id="lobbyNew">Open a lobby</button><input id="lobbyCode" maxlength="6" placeholder="LOBBY" style="flex:1;text-transform:uppercase"><button id="lobbyJoin">Join</button></div>
+        <div id="lobbyBox" class="stack" style="gap:10px" hidden>
+          <div class="row"><span class="code" id="lobbyCodeOut" style="font-size:20px"></span><button id="lobbyLink">Copy link</button><button id="lobbyLeave">Leave</button></div>
+          <button id="quickBtn">Quick match</button>
+          <div class="invite" id="chBox" hidden><p id="chText"></p><div class="row"><button class="primary" id="chYes">Accept</button><button id="chNo">Decline</button></div></div>
+          <div class="players" id="players"></div>
+          <div class="chatlog" id="lchat"></div>
+          <form class="row" id="lchatForm"><input id="lchatIn" maxlength="200" placeholder="Chat with the lobby" style="flex:1"><button>Send</button></form>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="parley.js"></script>
+<script>
+'use strict';
+// ------------------------------------------------------------ setup
+const $ = id => document.getElementById(id);
+let savedName = ''; try { savedName = localStorage.getItem('paddles-name') || ''; } catch (e) {}
+const net = Parley.create({ app: 'paddles', broker: window.PARLEY_BROKER, name: savedName || 'Player ' + Math.floor(100 + Math.random() * 900) });
+$('name').value = net.name;
+$('name').addEventListener('change', () => { $('name').value = net.setName($('name').value); try { localStorage.setItem('paddles-name', net.name); } catch (e) {} });
+const status = (t, bad) => { $('status').textContent = t; $('status').classList.toggle('err', !!bad); };
+document.querySelectorAll('[role=tab]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('[role=tab]').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+  document.querySelectorAll('[data-pane]').forEach(p => p.hidden = p.dataset.pane !== b.dataset.tab);
+});
+const showTab = t => document.querySelector(`[data-tab="${t}"]`).click();
+
+// ------------------------------------------------------------ the game (host simulates, guest sends its paddle)
+const G = { conn: null, host: false, ball: [400, 250], vel: [0, 0], pad: [250, 250], score: [0, 0], keys: new Set(), mouseY: null, last: 0 };
+addEventListener('keydown', e => { if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') G.keys.add(e.code); });
+addEventListener('keyup', e => G.keys.delete(e.code));
+$('cv').addEventListener('mousemove', e => { const r = $('cv').getBoundingClientRect(); G.mouseY = (e.clientY - r.top) / r.height * 500; });
+
+function serve(dir) { G.ball = [400, 250]; const a = (Math.random() - .5) * .9; G.vel = [Math.cos(a) * 320 * dir, Math.sin(a) * 320]; }
+
+// Every Parley Connection works the same way, however it was made (code, invite, lobby).
+function startMatch(conn, amHost) {
+  if (G.conn) G.conn.close();
+  G.conn = conn; G.host = amHost; G.score = [0, 0]; G.pad = [250, 250];
+  status((amHost ? 'Hosting · ' : 'Joined · ') + 'playing against ' + conn.name);
+  $('leaveBtn').hidden = false; $('mchatIn').disabled = $('mchatBtn').disabled = false; $('mchat').textContent = '';
+  if (amHost) serve(Math.random() < .5 ? 1 : -1);
+  if (lobby) lobby.set({ status: 'playing', vs: conn.name });
+  conn.on('state', s => { if (G.host && typeof s.y === 'number') G.pad[1] = Math.max(40, Math.min(460, s.y)); });         // guest paddle
+  conn.handle('snap', d => { if (!G.host && d) { G.ball = d.b; G.pad = [d.p[1], d.p[0]]; G.score = [d.s[1], d.s[0]]; } }); // host world, mirrored
+  conn.on('chat', t => chatLine($('mchat'), conn.name, t, 'var(--b)'));
+  conn.on('close', reason => {
+    if (G.conn !== conn) return;
+    G.conn = null; status(reason === 'left' ? conn.name + ' left the match.' : 'Connection closed.');
+    $('leaveBtn').hidden = true; $('mchatIn').disabled = $('mchatBtn').disabled = true;
+    if (lobby) lobby.set({ status: 'idle', vs: null });
+  });
+}
+$('leaveBtn').onclick = () => { if (G.conn) G.conn.close(); };
+
+function step(dt) {
+  // my paddle
+  let y = G.pad[0];
+  if (G.keys.has('ArrowUp') || G.keys.has('KeyW')) y -= 420 * dt;
+  if (G.keys.has('ArrowDown') || G.keys.has('KeyS')) y += 420 * dt;
+  if (G.mouseY != null && !G.keys.size) y += (G.mouseY - y) * Math.min(1, dt * 12);
+  G.pad[0] = Math.max(40, Math.min(460, y));
+  if (!G.conn) { G.pad[1] += (G.ball[1] - G.pad[1]) * Math.min(1, dt * 3); }
+  if (G.conn && !G.host) { G.conn.state({ y: G.pad[0] }); return; } // guest: just send our paddle
+  // host or solo: simulate the ball
+  const b = G.ball, v = G.vel; b[0] += v[0] * dt; b[1] += v[1] * dt;
+  if (b[1] < 8 || b[1] > 492) { v[1] = -v[1]; b[1] = Math.max(8, Math.min(492, b[1])); }
+  for (const [side, x] of [[0, 30], [1, 770]]) {
+    const py = G.pad[side];
+    if (Math.abs(b[0] - x) < 12 && Math.abs(b[1] - py) < 48 && Math.sign(v[0]) === (side ? 1 : -1)) { v[0] = -v[0] * 1.05; v[1] += (b[1] - py) * 6; }
+  }
+  if (b[0] < -20 || b[0] > 820) { const won = b[0] < 0 ? 1 : 0; if (G.conn) G.score[won]++; if (G.score[won] >= 7) { G.score = [0, 0]; } serve(won ? -1 : 1); }
+  if (G.conn) G.conn.sendFast('snap', { b: [Math.round(b[0]), Math.round(b[1])], p: [Math.round(G.pad[0]), Math.round(G.pad[1])], s: G.score });
+}
+function draw() {
+  const c = $('cv').getContext('2d'); c.fillStyle = '#06080c'; c.fillRect(0, 0, 800, 500);
+  c.fillStyle = '#1e2433'; for (let y = 10; y < 500; y += 30) c.fillRect(398, y, 4, 16);
+  c.fillStyle = getComputedStyle(document.body).getPropertyValue('--a'); c.fillRect(22, G.pad[0] - 40, 12, 80);
+  c.fillStyle = getComputedStyle(document.body).getPropertyValue('--b'); c.fillRect(766, G.pad[1] - 40, 12, 80);
+  c.fillStyle = '#fff'; c.beginPath(); c.arc(G.ball[0], G.ball[1], 8, 0, 7); c.fill();
+  c.font = '700 40px ui-monospace,monospace'; c.textAlign = 'center'; c.fillStyle = '#3a4357';
+  c.fillText(G.score[0], 340, 60); c.fillText(G.score[1], 460, 60);
+  if (!G.conn) { c.font = '600 16px system-ui,sans-serif'; c.fillStyle = '#8d97ab'; c.fillText('Practice: connect with a code, invite or lobby to play a friend', 400, 470); }
+  $('hudL').textContent = 'You: ' + net.name; $('hudR').textContent = 'Them: ' + (G.conn ? G.conn.name : 'computer');
+  $('hudPing').textContent = G.conn && G.conn.rtt != null ? 'ping ' + G.conn.rtt + ' ms' : '';
+}
+serve(1);
+(function loop(t) { const dt = Math.min(.05, (t - (G.last || t)) / 1000); G.last = t; step(dt); draw(); requestAnimationFrame(loop); })(performance.now());
+
+function chatLine(box, who, text, color) {
+  if (box.querySelector('.note')) box.textContent = '';
+  const d = document.createElement('div'), b = document.createElement('b');
+  b.textContent = who; b.style.color = color || 'var(--gold)'; d.append(b, document.createTextNode(text)); box.append(d); box.scrollTop = box.scrollHeight;
+}
+$('mchatForm').onsubmit = e => { e.preventDefault(); if (!G.conn) return; const t = G.conn.chat($('mchatIn').value); if (t) chatLine($('mchat'), net.name, t, 'var(--a)'); $('mchatIn').value = ''; };
+const fail = e => status(e.message || String(e), true);
+
+// ------------------------------------------------------------ 1. codes
+let hosted = null;
+$('hostBtn').onclick = async () => {
+  try {
+    status('Opening a game…'); if (hosted) hosted.close();
+    hosted = await net.host({ meta: { game: 'paddles' } });
+    $('hostCode').hidden = false; $('hostCode').textContent = hosted.code;
+    status('Share the code. Keep practicing until your friend joins.');
+    hosted.on('join', conn => { startMatch(conn, conn.isHost); hosted.close(); $('hostCode').hidden = true; });
+  } catch (e) { fail(e); }
+};
+$('joinBtn').onclick = async () => {
+  try { status('Joining…'); const conn = await net.join($('joinCode').value); startMatch(conn, conn.isHost); } catch (e) { fail(e); }
+};
+
+// ------------------------------------------------------------ 2. invite links
+let invite = null;
+$('invBtn').onclick = async () => {
+  try {
+    if (invite) invite.cancel();
+    invite = await net.invite();
+    $('invOut').value = invite.link || invite.code;
+    status('Invite ready. Send it, then paste their reply below (or open their reply link in this browser).');
+    invite.on('connect', conn => startMatch(conn, conn.isHost));
+  } catch (e) { fail(e); }
+};
+$('invGo').onclick = async () => {
+  const text = $('invIn').value;
+  try {
+    if (await Parley.inspect(text) === 'reply') { if (!invite) throw new Error('Create an invite first, then paste the reply to it.'); status('Connecting…'); await invite.accept(text); return; }
+    const reply = await net.answer(text);
+    $('invOut').value = reply.link || reply.code; $('invOutL').textContent = 'Send this reply back to ' + reply.from;
+    status('Reply ready. The match starts when ' + reply.from + ' uses it.');
+    reply.connection.then(conn => startMatch(conn, conn.isHost), fail);
+  } catch (e) { fail(e); }
+};
+
+// ------------------------------------------------------------ 3. lobby
+let lobby = null, pending = null;
+async function openLobby(code) {
+  try {
+    status('Connecting to the lobby…');
+    lobby = await net.lobby(code, { state: { status: 'idle' } });
+    $('lobbyBox').hidden = false; $('lobbyCodeOut').textContent = lobby.code; $('lchat').textContent = '';
+    status(lobby.isHolder ? 'You opened lobby ' + lobby.code + '.' : 'In lobby ' + lobby.code + '.');
+    lobby.on('players', renderPlayers);
+    lobby.on('join', p => chatLine($('lchat'), '·', p.name + ' joined', 'var(--dim)'));
+    lobby.on('leave', p => chatLine($('lchat'), '·', p.name + ' left', 'var(--dim)'));
+    lobby.on('chat', m => chatLine($('lchat'), m.from.name + (m.me ? ' (you)' : ''), m.text));
+    lobby.on('challenge', ch => {
+      if (G.conn || pending) { ch.decline(); return; }
+      pending = ch; $('chBox').hidden = false; $('chText').textContent = ch.from.name + ' challenges you.';
+      ch.on('cancelled', () => { if (pending === ch) { pending = null; $('chBox').hidden = true; } });
+    });
+    lobby.on('match', conn => { $('quickBtn').textContent = 'Quick match'; startMatch(conn, conn.isHost); });
+    lobby.on('status', s => { if (s === 'reconnecting') status('Reconnecting to the lobby…'); else if (s === 'holding') status('You now hold lobby ' + lobby.code + '.'); else if (s === 'connected') status('In lobby ' + lobby.code + '.'); });
+    renderPlayers(lobby.players);
+    try { history.replaceState(null, '', '#lobby=' + lobby.code); } catch (e) {}
+  } catch (e) { fail(e); }
+}
+function renderPlayers(list) {
+  const box = $('players'); box.textContent = '';
+  for (const p of list) {
+    const row = document.createElement('div'); row.className = 'p' + (p.me ? ' me' : '');
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = p.name + (p.me ? ' (you)' : '');
+    const s = document.createElement('span'); s.className = 's'; s.textContent = p.status === 'playing' ? 'vs ' + (p.state.vs || '?') : p.seeking ? 'searching' : 'ready';
+    row.append(n, s);
+    if (!p.me) {
+      const b = document.createElement('button'); b.textContent = 'Challenge'; b.disabled = p.status === 'playing' || !!G.conn;
+      b.onclick = async () => {
+        status('Challenge sent to ' + p.name + '…');
+        try { await lobby.challenge(p.id, { game: 'paddles' }); } catch (e) { fail(e); } // the 'match' event starts the game
+      };
+      row.append(b);
+    }
+    box.append(row);
+  }
+}
+$('chYes').onclick = async () => { const ch = pending; pending = null; $('chBox').hidden = true; try { await ch.accept(); } catch (e) { fail(e); } };
+$('chNo').onclick = () => { const ch = pending; pending = null; $('chBox').hidden = true; ch.decline(); };
+$('lobbyNew').onclick = () => openLobby();
+$('lobbyJoin').onclick = () => openLobby($('lobbyCode').value);
+$('lobbyLeave').onclick = () => { lobby.leave(); lobby = null; $('lobbyBox').hidden = true; status('Left the lobby.'); };
+$('lobbyLink').onclick = () => { const t = lobby.link || lobby.code; navigator.clipboard.writeText(t).then(() => status('Copied ' + (lobby.link ? 'link' : 'code') + '.'), () => status(t)); };
+$('quickBtn').onclick = () => { if (lobby.seeking) { lobby.cancelQuickMatch(); $('quickBtn').textContent = 'Quick match'; } else { lobby.quickMatch('paddles'); $('quickBtn').textContent = 'Searching… (cancel)'; } };
+$('lchatForm').onsubmit = e => { e.preventDefault(); if (lobby) lobby.chat($('lchatIn').value); $('lchatIn').value = ''; };
+
+// ------------------------------------------------------------ arriving by link
+(async () => {
+  const link = Parley.readLink(); if (!link) return;
+  Parley.clearLink();
+  if (link.kind === 'lobby') { showTab('lobby'); openLobby(link.value); }
+  else if (link.kind === 'invite') { showTab('invite'); $('invIn').value = link.value; $('invGo').click(); }
+  else if (link.kind === 'reply') {
+    if (await Parley.deliverReply('paddles', link.value)) status('Reply handed to your other Paddles tab. Switch back to it.');
+    else { showTab('invite'); $('invIn').value = link.value; status('Paste this reply into the tab that made the invite.', true); }
+  }
+})();
+</script>
+</body>
+</html>

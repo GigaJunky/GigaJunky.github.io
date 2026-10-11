@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07080c">
+<title>Super Off Road Remix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07080c;--panel:rgba(12,14,20,.84);--line:rgba(255,255,255,.12);--ink:#f3efe6;--dim:#a49c8c;--accent:#ff8a1f;--gold:#ffcf3a;--good:#2ecc71;--bad:#ff5a4a;
+  --f:'Rajdhani',system-ui,sans-serif;--d:'Bungee',Impact,'Arial Black',sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:600 18px/1.3 var(--f);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+canvas#game{position:fixed;inset:0;width:100%;height:100%;display:block}
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;background:radial-gradient(ellipse at center,rgba(5,6,10,.35),rgba(5,6,10,.82))}
+.screen[hidden],[hidden]{display:none!important}
+.panel{background:var(--panel);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:18px;padding:22px;width:100%;max-width:720px;box-shadow:0 30px 80px rgba(0,0,0,.55);margin:auto}
+.panel.wide{max-width:1100px}
+h2{font:400 26px/1 var(--d);margin:0 0 14px;letter-spacing:.02em;color:var(--gold)}
+h3{font:700 20px var(--f);margin:0 0 6px;letter-spacing:.04em;text-transform:uppercase}
+p{margin:0 0 10px} .hint{color:var(--dim);font-size:15px;text-align:center;margin:12px 0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;margin-top:14px} .row.between{justify-content:space-between;margin-top:0}
+.btn{font:700 18px var(--f);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:linear-gradient(180deg,#2a2f3c,#1b1f29);border:1px solid var(--line);border-radius:10px;padding:10px 18px;cursor:pointer;transition:transform .08s,border-color .15s,box-shadow .15s}
+.btn:hover{border-color:rgba(255,138,31,.6)} .btn:active{transform:scale(.97)}
+.btn:focus-visible,.btn.navf{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,207,58,.35),0 0 24px rgba(255,138,31,.35)}
+.btn.primary{background:linear-gradient(180deg,#ffb04a,#ff7a12 60%,#d4560a);color:#2a1202;border-color:transparent;text-shadow:0 1px 0 rgba(255,255,255,.3)}
+.btn.big{font-size:22px;padding:14px 26px} .btn.small{font-size:14px;padding:6px 10px}
+.btn:disabled{opacity:.4;cursor:default}
+input{font:700 18px var(--f);color:var(--ink);background:#0b0d13;border:1px solid var(--line);border-radius:8px;padding:9px 12px;min-width:0;width:100%}
+input:focus{outline:2px solid var(--accent)}
+label{display:block;color:var(--dim);font-size:15px;margin-bottom:10px}
+/* title */
+.title-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin:auto}
+.logo{font:400 clamp(46px,10vw,118px)/.86 var(--d);text-align:center;background:linear-gradient(180deg,#fff1a6 8%,#ffb43d 45%,#ff6a00 70%,#b83a05);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 5px 0 #3b1606) drop-shadow(0 16px 40px rgba(255,110,0,.45));transform:skew(-7deg) rotate(-2deg)}
+.logo-sub{font:700 clamp(14px,2.4vw,22px) var(--f);letter-spacing:.42em;color:#ffe9c2;text-transform:uppercase;margin:6px 0 18px;text-shadow:0 2px 12px rgba(0,0,0,.8)}
+.menu{display:flex;flex-direction:column;gap:10px;min-width:min(320px,80vw)}
+/* join */
+.slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.slots{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.slot{border:1px solid var(--line);border-radius:14px;padding:14px;min-height:170px;display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,.03);position:relative;overflow:hidden}
+.slot::before{content:'';position:absolute;inset:0 0 auto 0;height:5px;background:var(--c)}
+.slot.on{background:linear-gradient(180deg,color-mix(in srgb,var(--c) 22%,transparent),rgba(255,255,255,.02));border-color:color-mix(in srgb,var(--c) 60%,transparent)}
+.slot .pn{font:400 22px var(--d);color:var(--c)} .slot .dev{font-size:14px;color:var(--dim)} .slot .tag{font-size:13px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
+.slot canvas{width:72px;height:48px;align-self:center;margin:2px 0;filter:drop-shadow(2px 4px 4px rgba(0,0,0,.6))}
+.slot .join-opts{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.slot .pulse{animation:pulse 1.4s ease-in-out infinite;color:var(--ink);font-weight:700}
+@keyframes pulse{50%{opacity:.35}}
+.opts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+@media (max-width:820px){.opts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cyc{font-size:15px;padding:10px 8px} .cyc b{color:var(--gold)}
+.netbox{font:700 16px var(--f);color:var(--dim);display:flex;gap:10px;align-items:center} .netbox b{font:400 30px var(--d);color:var(--gold);letter-spacing:.18em}
+/* online */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px} @media (max-width:640px){.two{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;background:rgba(255,255,255,.03)}
+.card p{color:var(--dim);font-size:15px}
+#netCodeIn{font:400 28px var(--d);letter-spacing:.3em;text-transform:uppercase;text-align:center}
+.status{min-height:1.4em;color:var(--dim);margin-top:12px} .status.err{color:var(--bad)}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:18px} th{font-size:13px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;text-align:left;padding:6px 8px;font-weight:700}
+td{padding:8px;border-top:1px solid var(--line)} td.num,th.num{text-align:right}
+.place{font:400 22px var(--d)} .dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;vertical-align:middle;box-shadow:0 0 10px currentColor}
+.cols{display:grid;grid-template-columns:3fr 2fr;gap:20px} @media (max-width:760px){.cols{grid-template-columns:1fr}}
+/* shop */
+.shop{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.shopcard{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.03);border-top:5px solid var(--c)}
+.shopcard.ro{opacity:.6} .shopcard.ready{box-shadow:inset 0 0 0 2px var(--good)}
+.shopcard .hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.shopcard .nm{font:400 18px var(--d);color:var(--c)} .shopcard .cash{font:700 22px var(--f);color:var(--gold)}
+.item{display:flex;align-items:center;gap:8px;width:100%;text-align:left;margin:5px 0;padding:8px 10px;font-size:16px;text-transform:none;letter-spacing:.02em}
+.item .lbl{flex:1} .item .cost{color:var(--gold);font-size:15px}
+.item.cur{border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,207,58,.35)}
+.pips{display:flex;gap:3px} .pip{width:9px;height:14px;border-radius:2px;background:#333a48} .pip.on{background:linear-gradient(180deg,#9ff,#2f7bff)}
+.item.done{justify-content:center;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.shopcard.ready .item.done{background:var(--good);color:#06240f}
+/* champion */
+.champ{text-align:center} .champ .who{font:400 clamp(30px,6vw,60px) var(--d);margin:6px 0 4px}
+/* toast */
+#toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:rgba(10,12,18,.92);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:16px;z-index:50;transition:opacity .3s;pointer-events:none;max-width:90vw;text-align:center}
+#toast.hide{opacity:0}
+/* touch controls */
+#touch{opacity:.78;position:fixed;inset:auto 0 0 0;height:min(42vh,240px);display:flex;justify-content:space-between;align-items:flex-end;padding:0 max(14px,env(safe-area-inset-left)) max(14px,env(safe-area-inset-bottom));pointer-events:none;z-index:20}
+.t-steer{pointer-events:auto;width:min(46vw,260px);height:100%;position:relative;display:flex;align-items:center;justify-content:center;touch-action:none}
+.t-track{position:absolute;left:10%;right:10%;height:14px;border-radius:7px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2)}
+.t-knob{width:78px;height:78px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.55),rgba(255,255,255,.12));border:2px solid rgba(255,255,255,.45);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.t-steer span{position:absolute;bottom:4px;font-size:12px;color:rgba(255,255,255,.5);letter-spacing:.2em}
+.t-btns{display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;gap:12px;pointer-events:auto;align-items:end}
+.t-btns button{font:700 15px var(--f);letter-spacing:.1em;color:#fff;border-radius:50%;border:2px solid rgba(255,255,255,.4);touch-action:none;-webkit-user-select:none;user-select:none}
+.t-gas{grid-row:1/3;grid-column:2;width:112px;height:112px;background:radial-gradient(circle at 35% 30%,rgba(120,255,160,.6),rgba(30,140,70,.5))}
+.t-nitro{width:76px;height:76px;background:radial-gradient(circle at 35% 30%,rgba(140,190,255,.7),rgba(30,80,200,.55))}
+.t-brake{width:64px;height:64px;background:radial-gradient(circle at 35% 30%,rgba(255,150,140,.55),rgba(160,40,30,.5))}
+.t-btns button.down{filter:brightness(1.6);transform:scale(.94)}
+/* corner buttons */
+#corner{position:fixed;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:15;margin-top:58px}
+#corner .btn{padding:4px 10px;font-size:13px;opacity:.75}
+.kbd{display:inline-block;font:700 13px var(--f);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 6px;margin:0 2px;background:#1b1f29;color:var(--ink)}
+.help td{font-size:15px;vertical-align:top} .help td:first-child{color:var(--dim);white-space:nowrap}
+input[type=range]{padding:0;height:6px;accent-color:var(--accent)}
+.optrow{display:grid;grid-template-columns:160px 1fr;gap:14px;align-items:center;margin:12px 0}
+@media (max-width:520px){.optrow{grid-template-columns:1fr}}
+.loading{font:400 30px var(--d);color:var(--gold);animation:pulse 1s infinite}
+</style>
+</head>
+<body>
+<canvas id="game" aria-label="Super Off Road Remix race view"></canvas>
+
+<section class="screen" id="scr-title">
+  <div class="title-wrap">
+    <div class="logo">SUPER<br>OFF ROAD</div>
+    <div class="logo-sub">Remix · Stadium Truck Racing</div>
+    <div class="menu">
+      <button class="btn big primary" data-nav data-act="race">Race</button>
+      <button class="btn big" data-nav data-act="online">Online</button>
+      <button class="btn" data-nav data-act="options">Options</button>
+      <button class="btn" data-nav data-act="help">How to play</button>
+    </div>
+    <p class="hint">Keyboard · Mouse wheel-spinner · Gamepads · Touch · up to 4 drivers</p>
+  </div>
+</section>
+
+<section class="screen" id="scr-join" hidden>
+  <div class="panel wide">
+    <div class="row between"><h2 id="joinTitle">Drivers</h2>
+      <div class="netbox" id="netBox" hidden>CODE <b id="netCode">----</b><button class="btn small" data-nav data-act="copylink">Copy link</button></div></div>
+    <div class="slots" id="slots"></div>
+    <div class="opts" id="joinOpts">
+      <button class="btn cyc" data-nav data-opt="track"></button>
+      <button class="btn cyc" data-nav data-opt="races"></button>
+      <button class="btn cyc" data-nav data-opt="laps"></button>
+      <button class="btn cyc" data-nav data-opt="diff"></button>
+    </div>
+    <p class="hint" id="joinHint"></p>
+    <div class="row"><button class="btn" data-nav data-act="back">Back</button><button class="btn primary big" data-nav data-act="start" id="startBtn">Start ▸</button></div>
+  </div>
+</section>
+
+<section class="screen" id="scr-online" hidden>
+  <div class="panel">
+    <h2>Online</h2>
+    <label>Your name <input id="netName" maxlength="16" autocomplete="off"></label>
+    <div class="two">
+      <div class="card"><h3>Host</h3><p>Get a 4-letter code to share. Up to 3 friends join over the internet; empty seats are CPU. Friends on this machine can join on gamepads too.</p><button class="btn primary" data-nav data-act="host">Host a game</button></div>
+      <div class="card"><h3>Join</h3><p>Type the code your friend gave you.</p><input id="netCodeIn" maxlength="4" placeholder="CODE" autocomplete="off"><button class="btn primary" data-nav data-act="join">Join</button></div>
+    </div>
+    <p class="status" id="netStatus"></p>
+    <div class="row"><button class="btn" data-nav data-act="back">Back</button></div>
+  </div>
+</section>
+
+<section class="screen" id="scr-options" hidden>
+  <div class="panel">
+    <h2>Options</h2>
+    <div class="optrow"><span>Music</span><input type="range" min="0" max="1" step="0.05" id="optMusic"></div>
+    <div class="optrow"><span>Effects</span><input type="range" min="0" max="1" step="0.05" id="optSfx"></div>
+    <div class="optrow"><span>Mouse spinner</span><input type="range" min="0.3" max="3" step="0.1" id="optSens"></div>
+    <div class="optrow"><span>Announcer</span><button class="btn cyc" data-nav id="optVoice"></button></div>
+    <div class="optrow"><span>Display</span><button class="btn cyc" data-nav id="optFull">Toggle fullscreen</button></div>
+    <div class="optrow"><span>Controllers</span><button class="btn cyc" data-nav data-act="padsetup">Controller setup</button></div>
+    <div class="row"><button class="btn primary" data-nav data-act="back">Done</button></div>
+  </div>
+</section>
+
+<section class="screen" id="scr-help" hidden>
+  <div class="panel wide">
+    <h2>How to play</h2>
+    <div class="cols">
+      <table class="help">
+        <tr><th>Device</th><th>Steer</th><th>Gas</th><th>Nitro</th><th>Brake / reverse</th></tr>
+        <tr><td>Keyboard A</td><td><span class="kbd">A</span><span class="kbd">D</span></td><td><span class="kbd">W</span></td><td><span class="kbd">Space</span></td><td><span class="kbd">S</span></td></tr>
+        <tr><td>Keyboard B</td><td><span class="kbd">←</span><span class="kbd">→</span></td><td><span class="kbd">↑</span></td><td><span class="kbd">R-Shift</span> <span class="kbd">Enter</span></td><td><span class="kbd">↓</span></td></tr>
+        <tr><td>Mouse</td><td>Move left / right (spinner)</td><td>Left button</td><td>Right button</td><td>Middle button</td></tr>
+        <tr><td>Gamepad / joystick</td><td>Stick / d-pad</td><td>A · RT · stick forward</td><td>X · Y · LB · RB</td><td>B · LT · stick back</td></tr>
+        <tr><td>Touch</td><td>Slide the left pad</td><td>GAS</td><td>NITRO</td><td>BRAKE</td></tr>
+      </table>
+      <div>
+        <h3>The race</h3>
+        <p class="hint" style="text-align:left">Four trucks, one stadium. Hit the jumps, dodge mud and water, and grab <b style="color:#7cc0ff">nitro cans</b> and <b style="color:#ffd76a">cash bags</b>. Prize money buys tires, shocks, acceleration, top speed and more nitro between races.</p>
+        <h3>Joining</h3>
+        <p class="hint" style="text-align:left">On the Drivers screen, press <b>gas</b> on any keyboard or controller to take a seat. Click <b>Mouse</b> or <b>Touch</b> on a seat for those. Press <span class="kbd">Q</span> / <span class="kbd">Backspace</span> / B to leave a seat. <span class="kbd">Enter</span> or Start begins.</p>
+        <p class="hint" style="text-align:left">Controller not responding? <b>Options → Controller setup</b> lets you pick its gas, brake and nitro buttons.</p>
+        <p class="hint" style="text-align:left"><span class="kbd">Esc</span> pauses. <span class="kbd">M</span> mutes music.</p>
+      </div>
+    </div>
+    <div class="row"><button class="btn primary" data-nav data-act="back">Got it</button></div>
+  </div>
+</section>
+
+<section class="screen" id="scr-padsetup" hidden>
+  <div class="panel wide">
+    <h2>Controller setup</h2>
+    <p class="loading" id="psPrompt" style="font-size:24px;animation:none">Press any button</p>
+    <p class="hint" id="psSteps" style="text-align:left"></p>
+    <pre id="psLive" style="font:600 14px/1.45 ui-monospace,Menlo,Consolas,monospace;color:#cfc7b6;background:#0b0d13;border:1px solid var(--line);border-radius:10px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto;margin:0"></pre>
+    <p class="hint" style="text-align:left">Defaults: stick or d-pad steers · A, RT or stick forward = gas · B, LT or stick back = brake · X Y LB RB = nitro. Use this if your controller or joystick doesn't respond. Saved per controller.</p>
+    <div class="row"><button class="btn" data-nav data-act="padreset">Reset to defaults</button><button class="btn" data-nav data-act="padredo">Start over</button><button class="btn primary" data-nav data-act="back">Done</button></div>
+  </div>
+</section>
+
+<section class="screen" id="scr-loading" hidden><div class="loading">LOADING TRACK…</div></section>
+
+<section class="screen" id="scr-results" hidden>
+  <div class="panel wide">
+    <h2 id="resTitle">Results</h2>
+    <div class="cols">
+      <div><table id="resTable"></table></div>
+      <div><h3>Season standings</h3><table id="standTable"></table></div>
+    </div>
+    <p class="hint" id="resHint"></p>
+    <div class="row"><button class="btn primary big" data-nav data-act="continue" id="resBtn">Continue ▸</button></div>
+  </div>
+</section>
+
+<section class="screen" id="scr-shop" hidden>
+  <div class="panel wide">
+    <div class="row between"><h2>Speed Shop</h2><span class="hint" id="shopInfo" style="margin:0"></span></div>
+    <div class="shop" id="shop"></div>
+    <p class="hint">Up / down to choose · <span class="kbd">Space</span> <span class="kbd">Enter</span> or <b>A</b> to buy · click works too · everyone picks <b>Ready</b> to race on</p>
+  </div>
+</section>
+
+<section class="screen" id="scr-champ" hidden>
+  <div class="panel champ">
+    <h2>Season Champion</h2>
+    <canvas id="champTruck" width="216" height="144" style="width:216px;height:144px"></canvas>
+    <div class="who" id="champName"></div>
+    <table id="champTable"></table>
+    <div class="row" style="justify-content:center"><button class="btn primary big" data-nav data-act="menu">Continue ▸</button></div>
+  </div>
+</section>
+
+<section class="screen" id="scr-pause" hidden>
+  <div class="panel" style="max-width:420px">
+    <h2 id="pauseTitle">Paused</h2>
+    <div class="menu" style="min-width:0">
+      <button class="btn big primary" data-nav data-act="resume">Resume</button>
+      <button class="btn" data-nav data-act="restart" id="restartBtn">Restart race</button>
+      <button class="btn" data-nav data-act="options">Options</button>
+      <button class="btn" data-nav data-act="quit">Quit to menu</button>
+    </div>
+  </div>
+</section>
+
+<div id="touch" hidden>
+  <div class="t-steer"><div class="t-track"></div><div class="t-knob"></div><span>STEER</span></div>
+  <div class="t-btns"><button class="t-nitro">NITRO</button><button class="t-gas">GAS</button><button class="t-brake">BRAKE</button></div>
+</div>
+<div id="corner" hidden><button class="btn" id="pauseBtn">❚❚ Pause</button></div>
+<div id="toast" class="hide"></div>
+
+<script src="parley.js"></script>
+<script src="config.js"></script>
+<script src="js/util.js"></script>
+<script src="js/tracks.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/input.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/render.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

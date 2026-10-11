@@ -77,6 +77,21 @@ input[type=text].namein,input[type=text].linkin{font:500 15px/1.2 var(--f-ui);le
 .prow.me{border-color:rgba(77,232,255,.45)}
 .btn.sm{padding:9px 12px;font-size:12px;flex:0 0 auto}
 .btn.sm::before{display:none}
+#chatBox{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));width:min(440px,calc(100% - 32px));z-index:7;display:flex;flex-direction:column;gap:4px;pointer-events:none}
+#chatLog{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.cl{background:rgba(11,7,22,.78);border:1px solid rgba(255,207,107,.22);padding:5px 9px;font:500 13px/1.35 var(--f-ui);color:var(--ink);max-width:100%;overflow-wrap:anywhere;transition:opacity .6s}
+.cl b{font-weight:700;margin-right:6px}
+.cl.faded{opacity:0}
+#chatBox.open .cl.faded{opacity:.85}
+#chatForm{display:flex;gap:6px;pointer-events:auto}
+#chatIn{flex:1 1 auto;min-width:0;box-sizing:border-box;font:500 15px/1.2 var(--f-ui);letter-spacing:.01em;text-transform:none;color:var(--ink);padding:10px 12px;background:rgba(11,7,22,.9)}
+#chatQuick{display:flex;gap:6px;flex-wrap:wrap;pointer-events:auto}
+.qc{appearance:none;font:600 12px/1 var(--f-ui);color:var(--ink);background:rgba(11,7,22,.85);border:1px solid var(--line);padding:8px 10px;cursor:pointer}
+.qc:hover,.qc:focus-visible{border-color:var(--gold);outline:none}
+.lchat{display:flex;flex-direction:column;gap:6px}
+.lchat-log{border:1px solid var(--line);background:rgba(0,0,0,.25);height:140px;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+.lchat-log .empty{color:var(--dim)}
+.lchat-log b{color:var(--gold);margin-right:6px}
 .invite{border:1px solid var(--gold);background:rgba(255,207,107,.08);padding:14px;display:flex;flex-direction:column;gap:10px}
 .invite p{color:var(--ink);font-weight:600}
 #dFields{display:flex;flex-direction:column;gap:14px}
@@ -120,6 +135,7 @@ kbd{font:600 12px var(--f-ui);border:1px solid var(--line);padding:2px 6px;color
   <div id="stage">
     <canvas id="c" aria-label="Lancewing arena"></canvas>
     <div id="hudbtns" hidden>
+      <button class="icon-btn" id="chatBtn" aria-label="Chat" hidden><svg width="14" height="13" viewBox="0 0 14 13"><path d="M1 1h12v8H6l-3 3V9H1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button>
       <button class="icon-btn" id="pauseBtn" aria-label="Pause"><svg width="12" height="14" viewBox="0 0 12 14"><rect x="1" y="1" width="3.5" height="12" fill="currentColor"/><rect x="7.5" y="1" width="3.5" height="12" fill="currentColor"/></svg></button>
     </div>
   </div>
@@ -187,6 +203,7 @@ kbd{font:600 12px var(--f-ui);border:1px solid var(--line);padding:2px 6px;color
     <div class="panel">
       <h2>Online play</h2>
       <div class="status" id="netStatus">Connecting…</div>
+      <div class="field"><label for="netName">Your name</label><input type="text" id="netName" class="namein" maxlength="16" autocomplete="off" spellcheck="false"></div>
       <div class="field" id="directSec" hidden>
         <h3>Invite by link · no services at all</h3>
         <p class="note">Create a link with everything needed to connect built in. Send it by text, chat or email. Your friend opens it, sends you back the reply link it makes, and the match starts directly between your two computers.</p>
@@ -237,6 +254,11 @@ kbd{font:600 12px var(--f-ui);border:1px solid var(--line);padding:2px 6px;color
       <div class="invite" id="inviteBox" hidden>
         <p id="inviteText"></p>
         <div class="row"><button class="btn primary" id="invAccept">Accept</button><button class="btn" id="invDecline">Decline</button></div>
+      </div>
+      <h3>Lobby chat</h3>
+      <div class="lchat">
+        <div class="lchat-log" id="lobChatLog" aria-live="polite"><p class="empty">No messages yet.</p></div>
+        <form class="row" id="lobChatForm" autocomplete="off" style="align-items:stretch"><input type="text" id="lobChatIn" class="namein" maxlength="100" placeholder="Say hello to the lobby" spellcheck="false" style="flex:1 1 200px"><button class="btn" type="submit" style="flex:0 0 auto">Send</button></form>
       </div>
       <h3>Riders in the lobby <span id="lobCount"></span></h3>
       <div class="games" id="lobList"></div>
@@ -295,6 +317,7 @@ kbd{font:600 12px var(--f-ui);border:1px solid var(--line);padding:2px 6px;color
         <dt>Gamepads</dt><dd>Pad 1 is Azure, pad 2 is Rose · stick, D-pad or hat to move · any button, or a flick up, flaps · Start pauses</dd>
         <dt>Touch</dt><dd>On-screen arrows and a flap button. Hold flap to keep climbing.</dd>
         <dt>Pause</dt><dd><kbd>Esc</kbd> or <kbd>P</kbd> · <kbd>M</kbd> mutes music</dd>
+        <dt>Chat</dt><dd>Online, press <kbd>T</kbd> or the speech-bubble button · <kbd>Enter</kbd> sends</dd>
       </dl>
       <h3>Scoring</h3>
       <dl class="keys">
@@ -349,6 +372,13 @@ kbd{font:600 12px var(--f-ui);border:1px solid var(--line);padding:2px 6px;color
       </div>
     </div>
   </section>
+</div>
+<div id="chatBox" hidden>
+  <div id="chatLog" aria-live="polite"></div>
+  <div id="chatQuick" hidden>
+    <button class="qc" type="button">Good luck!</button><button class="qc" type="button">Nice hit!</button><button class="qc" type="button">Ha!</button><button class="qc" type="button">Good game</button><button class="qc" type="button">Rematch?</button>
+  </div>
+  <form id="chatForm" hidden autocomplete="off"><input type="text" id="chatIn" maxlength="100" placeholder="Say something… (Enter to send, Esc to close)" spellcheck="false"><button class="btn sm" type="submit">Send</button></form>
 </div>
 <div id="toast" hidden></div>
 
@@ -1336,8 +1366,8 @@ function drawHUD(v,T){
     }
   });
   if(v.mode==='coop') txt('WAVE '+v.wave,W/2,24,`700 12px ${F}`,'#ffcf6b');
-  if(Game.role==='practice'){ ctx.save(); ctx.globalAlpha=0.6+0.4*Math.sin(T*3)**2; txt(Game.waitRole==='hostwait'&&!Game.chan?'PRACTICE · WAITING FOR YOUR OPPONENT':'PRACTICE · YOUR MATCH STARTS WHEN THEY CONNECT',W/2,92,`600 11px ${F}`,'#c9bde6'); ctx.restore(); }
   else { txt('FIRST TO FIVE',W/2,24,`700 12px ${F}`,'#ffcf6b'); }
+  if(Game.role==='practice'){ ctx.save(); ctx.globalAlpha=0.6+0.4*Math.sin(T*3)**2; txt(Game.waitRole==='hostwait'&&!Game.chan?'PRACTICE · WAITING FOR YOUR OPPONENT':'PRACTICE · YOUR MATCH STARTS WHEN THEY CONNECT',W/2,92,`600 11px ${F}`,'#c9bde6'); ctx.restore(); }
   // banners
   if(v.phase==='intro'){
     const k=clamp(Math.min((2.4-v.phaseT)*3,v.phaseT*2),0,1);
@@ -1400,8 +1430,10 @@ const K1={l:['KeyA'],r:['KeyD'],f:['KeyW','Space']}, K2={l:['ArrowLeft'],r:['Arr
 const has=(arr)=>arr.some(k=>Input.keys.has(k));
 window.addEventListener('keydown',e=>{
   auInit();
+  if(document.activeElement&&document.activeElement.id==='chatIn') return;
   if(e.code==='KeyM'&&!isTyping()){ AU.musicOn=!AU.musicOn; auVolumes(); toast(AU.musicOn?'Music on':'Music muted'); }
   if(UI.current){ menuKey(e); return; }
+  if((e.code==='KeyT'||e.code==='Slash')&&chatAvailable()&&!e.repeat){ e.preventDefault(); chatOpen(); return; }
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
   if(e.code==='Escape'||e.code==='KeyP'){ openPause(); return; }
   if(e.repeat) return;
@@ -1740,6 +1772,7 @@ const Lob={active:false,kind:null,code:null,seen:new Set(),myInv:null,pendingInv
 try{ Lob.name=localStorage.getItem('lw-name')||''; }catch(e){}
 if(!Lob.name) Lob.name='Rider '+Math.floor(100+Math.random()*900);
 const LB={b:null,id:null,lid:null,isHost:false,peers:new Map(),up:null,states:new Map(),mine:{},bcT:null,hb:null,joinT:null,fails:0,rejoin:false};
+const cleanText=t=>String(t||'').replace(/[\u0000-\u001f\u007f-\u009f\u00ad\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g,'').replace(/\s+/g,' ').trim().slice(0,100);
 const cleanName=n=>String(n||'').replace(/[\u0000-\u001f\u007f-\u009f­​-‏‪-‮⁠-⁩﻿]/g,'').replace(/\s+/g,' ').trim().slice(0,16)||'Rider';
 function sanState(o){
   if(!o||typeof o!=='object') return {};
@@ -1747,6 +1780,7 @@ function sanState(o){
   if(typeof o.nm==='string') r.nm=cleanName(o.nm);
   if(o.ls==='idle'||o.ls==='playing') r.ls=o.ls;
   if(o.q==='duel'||o.q==='coop') r.q=o.q;
+  if(Array.isArray(o.say)) r.say=o.say.slice(-3).filter(m=>m&&Number.isInteger(m.i)&&typeof m.t==='string').map(m=>({i:m.i,t:cleanText(m.t)})).filter(m=>m.t);
   if(o.inv&&typeof o.inv==='object'&&typeof o.inv.to==='string'&&okc(o.inv.c)&&(o.inv.m==='duel'||o.inv.m==='coop')) r.inv={to:o.inv.to.slice(0,80),c:o.inv.c,m:o.inv.m,qm:!!o.inv.qm};
   if(o.resp&&typeof o.resp==='object'&&typeof o.resp.to==='string'&&okc(o.resp.c)) r.resp={to:o.resp.to.slice(0,80),c:o.resp.c,ok:!!o.resp.ok};
   return r;
@@ -1849,7 +1883,8 @@ function showLobby(){
 }
 async function enterLobby(code){
   if(Lob.active) leaveLobby();
-  Lob.active=true; Lob.seen.clear(); Lob.myInv=null; Lob.pendingInv=null; Lob.q=null; Lob.retry=null;
+  Lob.active=true; Lob.saySeen={}; Lob.mySay=[]; Lob.saySeq=Lob.saySeq||Date.now()%100000; const lg=document.getElementById('lobChatLog'); lg.textContent=''; const em=document.createElement('p'); em.className='empty'; em.textContent='No messages yet.'; lg.append(em);
+  Lob.seen.clear(); Lob.myInv=null; Lob.pendingInv=null; Lob.q=null; Lob.retry=null;
   Lob.kind=Net.mode==='room'?'room':'p2p'; Lob.code=Lob.kind==='p2p'?(code||genCode(6)):null;
   LB.mine={}; LB.fails=0;
   showLobby();
@@ -1889,9 +1924,27 @@ function showInvite(){
   const v=Lob.pendingInv, box=document.getElementById('inviteBox'); box.hidden=!v;
   if(v) document.getElementById('inviteText').textContent=v.nm+' challenges you to a '+(v.m==='duel'?'duel':'co-op match')+'.';
 }
+function lobChatLine(name,text,mine){
+  const lg=document.getElementById('lobChatLog'); const em=lg.querySelector('.empty'); if(em) em.remove();
+  const atBottom=lg.scrollHeight-lg.scrollTop-lg.clientHeight<30;
+  const d=document.createElement('div'); const b=document.createElement('b'); b.textContent=name+(mine?' (you)':''); d.append(b,document.createTextNode(text)); lg.append(d);
+  while(lg.children.length>80) lg.firstChild.remove();
+  if(atBottom||mine) lg.scrollTop=lg.scrollHeight;
+}
+function lobChatSend(text){
+  text=cleanText(text); if(!text||!Lob.active) return;
+  Lob.saySeq++; Lob.mySay=(Lob.mySay||[]).concat({i:Lob.saySeq,t:text}).slice(-3);
+  lobSet({say:Lob.mySay}); lobChatLine(Lob.name,text,true);
+}
+function lobChatPoll(L){
+  for(const x of L){ if(x.me||!x.st.say) continue; const seen=Lob.saySeen[x.id]||0; let hi=seen;
+    for(const m of x.st.say) if(m.i>seen){ lobChatLine(x.st.nm,m.t,false); if(m.i>hi) hi=m.i; if(UI.current!=='lobby') toast(x.st.nm+': '+m.t); }
+    Lob.saySeen[x.id]=hi; }
+}
 function lobbyTick(){
   if(!Lob.active) return;
   const L=lobList(), myId=lobMyId();
+  lobChatPoll(L);
   if(myId){
     const byId=new Map(L.map(x=>[x.id,x]));
     for(const x of L){
@@ -1963,7 +2016,42 @@ function startLocal(opts){
   Game.sim=newSim({mode:opts.mode,p2:opts.p2}); Game.lastFx=0; Game.paused=false; Game.overShown=false; Game.acc=0;
   setIntensity(1); UI.close(); hudButtons(true); updateTouchUI();
 }
+// ---- match chat: the last few lines ride along in each player's shared state, de-duplicated by number
+const Chat={mine:[],seq:Date.now()%100000,lastIn:0,open:false};
+function chatReset(){ Chat.mine=[]; Chat.lastIn=0; document.getElementById('chatLog').textContent=''; }
+function chatAvailable(){ return (Game.role==='host'||Game.role==='guest')&&!!Game.chan; }
+function chatLine(name,text,pi){
+  const log=document.getElementById('chatLog'), d=document.createElement('div'), b=document.createElement('b');
+  d.className='cl'; b.textContent=name; b.style.color=pi?'var(--rose)':'var(--azure)'; d.append(b,document.createTextNode(text)); log.append(d);
+  while(log.children.length>6) log.firstChild.remove();
+  setTimeout(()=>d.classList.add('faded'),9000);
+}
+function chatSend(text){
+  text=cleanText(text); if(!text||!chatAvailable()) return;
+  Chat.seq++; Chat.mine=Chat.mine.concat({i:Chat.seq,t:text,n:cleanName(Lob.name)}).slice(-5);
+  Game.chan.set({chat:Chat.mine}); chatLine(cleanName(Lob.name),text,Game.myPi);
+}
+function chatPoll(){
+  if(!chatAvailable()) return;
+  const o=Game.chan.others().find(x=>x.st&&(x.st.role==='host'||x.st.role==='guest')); if(!o||!Array.isArray(o.st.chat)) return;
+  for(const m of o.st.chat){ if(!m||!Number.isInteger(m.i)||m.i<=Chat.lastIn) continue; Chat.lastIn=m.i; const t=cleanText(m.t); if(t){ chatLine(cleanName(m.n||(Game.myPi?'Azure':'Rose')),t,1-Game.myPi); sfx('ui'); } }
+}
+function chatOpen(){
+  if(!chatAvailable()) return;
+  Chat.open=true; Input.keys.clear(); Input.mouse.down=false;
+  const box=document.getElementById('chatBox'); box.classList.add('open'); document.getElementById('chatForm').hidden=false; document.getElementById('chatQuick').hidden=false;
+  const i=document.getElementById('chatIn'); i.value=''; i.focus();
+}
+function chatClose(){
+  Chat.open=false; document.getElementById('chatBox').classList.remove('open'); document.getElementById('chatForm').hidden=true; document.getElementById('chatQuick').hidden=true;
+  const i=document.getElementById('chatIn'); if(document.activeElement===i) i.blur();
+}
+function chatUI(){
+  const on=chatAvailable(); document.getElementById('chatBox').hidden=!on; document.getElementById('chatBtn').hidden=!on;
+  if(!on&&Chat.open) chatClose();
+}
 function startHostMatch(){
+  chatReset();
   Game.role='host'; Game.isNet=true; Game.myPi=0; Input.localHumans=1; Input.flapQ=[0,0];
   Game.sim=newSim({mode:Game.netMode,p2:'remote'}); Game.lastFx=0; Game.overShown=false; Game.acc=0; Game.missT=0;
   Game.remote={l:0,r:0,fc:null,pend:0};
@@ -2038,6 +2126,7 @@ function updateGame(dt,now){
     if(Game.role!=='attract'&&v.phase==='over'&&!Game.overShown&&v.phaseT<=1.2){ Game.overShown=true; showOver(v); }
     if(Game.role==='guest'&&Game.overShown&&v.phase!=='over'){ Game.overShown=false; UI.close(); }
   }
+  chatPoll(); chatUI();
   stepParticles(dt);
   render(Game.view,T,Game.role!=='attract'&&Game.role!=='hostwait'&&Game.role!=='guestwait');
 }
@@ -2066,7 +2155,7 @@ function guestWait(dt){
   Game.waitT+=dt; Game.view=Game.sim;
   if(Game.sim){ Game.acc+=dt; while(Game.acc>=STEP){ simStep(Game.sim,[NOIN,NOIN],STEP); Game.acc-=STEP; } }
   const h=Game.chan.others().find(o=>o.st&&o.st.role==='host');
-  if(h&&h.st.s){ Game.role='guest'; lobPlaying(); Game.myPi=1; Game.isNet=true; Game.snaps=[]; Game.lastSnapT=-1; Game.lastFx=0; Game.overShown=false; Game.missT=0; Input.localHumans=1; Input.flapQ=[0,0]; setIntensity(1); UI.close(); hudButtons(true); updateTouchUI(); }
+  if(h&&h.st.s){ chatReset(); Game.role='guest'; lobPlaying(); Game.myPi=1; Game.isNet=true; Game.snaps=[]; Game.lastSnapT=-1; Game.lastFx=0; Game.overShown=false; Game.missT=0; Input.localHumans=1; Input.flapQ=[0,0]; setIntensity(1); UI.close(); hudButtons(true); updateTouchUI(); }
   else if(Game.waitT>12){ netBack('No game found with that code. Check it and try again.'); }
 }
 function guestNet(dt,now){
@@ -2088,7 +2177,7 @@ function guestNet(dt,now){
 }
 // --- online UI actions
 async function openOnline(){
-  UI.show('online'); setNetStatus('Connecting…');
+  UI.show('online'); document.getElementById('netName').value=Lob.name; setNetStatus('Connecting…');
   const ids=['hostBtn','joinBtn','openLobbyBtn','lobJoinBtn'], $=i=>document.getElementById(i), help=$('netHelp'), lh=$('lobbyHelp');
   ids.forEach(i=>$(i).disabled=true);
   const hub=await getHub();
@@ -2197,6 +2286,7 @@ document.getElementById('lobLeave').addEventListener('click',()=>{ sfx('ui'); le
 document.getElementById('quickBtn').addEventListener('click',()=>{ sfx('ui'); if(Lob.q){ Lob.q=null; lobSet({q:null}); } else { Lob.q=Lob.mode; lobSet({q:Lob.mode}); } renderLobby(); });
 document.getElementById('invAccept').addEventListener('click',()=>{ const v=Lob.pendingInv; if(!v) return; sfx('ui'); Lob.pendingInv=null; showInvite(); lobSet({resp:{to:v.from,c:v.c,ok:1}}); UI.netMode=v.m; joinGame(v.c); });
 document.getElementById('invDecline').addEventListener('click',()=>{ const v=Lob.pendingInv; if(!v) return; sfx('ui'); Lob.pendingInv=null; showInvite(); lobSet({resp:{to:v.from,c:v.c,ok:0}}); renderLobby(); });
+document.getElementById('netName').addEventListener('input',e=>{ Lob.name=cleanName(e.target.value); try{ localStorage.setItem('lw-name',Lob.name); }catch(_){} });
 document.getElementById('lobName').addEventListener('input',e=>{ Lob.name=cleanName(e.target.value); try{ localStorage.setItem('lw-name',Lob.name); }catch(_){} lobSet({nm:Lob.name}); });
 document.getElementById('lobCopy').addEventListener('click',()=>{ const t=document.getElementById('lobLink'); if(!t.value) return; const ok=()=>toast('Link copied. Send it to your opponents.'); const fb=()=>{ t.focus(); t.select(); try{ document.execCommand('copy'); ok(); }catch(e){ toast('Select the link and copy it.'); } }; try{ navigator.clipboard.writeText(t.value).then(ok,fb); }catch(e){ fb(); } });
 document.getElementById('dHostBtn').addEventListener('click',()=>{ sfx('ui'); dHost(); });
@@ -2214,6 +2304,11 @@ document.getElementById('againBtn').addEventListener('click',()=>{ sfx('ui');
   else if(Game.role==='practice') restartPractice();
   else if(Game.role==='offline'&&Game.opts) startLocal(Game.opts); });
 document.getElementById('pauseBtn').addEventListener('click',()=>openPause());
+document.getElementById('chatBtn').addEventListener('click',()=>{ Chat.open?chatClose():chatOpen(); });
+document.getElementById('chatForm').addEventListener('submit',e=>{ e.preventDefault(); chatSend(document.getElementById('chatIn').value); chatClose(); });
+document.getElementById('chatIn').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Escape'){ e.preventDefault(); chatClose(); } });
+document.querySelectorAll('#chatQuick .qc').forEach(b=>b.addEventListener('click',()=>{ chatSend(b.textContent); chatClose(); }));
+document.getElementById('lobChatForm').addEventListener('submit',e=>{ e.preventDefault(); const i=document.getElementById('lobChatIn'); lobChatSend(i.value); i.value=''; i.focus(); });
 document.getElementById('fsBtn').addEventListener('click',toggleFS);
 function toggleFS(){ try{ if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); else document.documentElement.requestFullscreen().then(()=>{ try{screen.orientation.lock('landscape').catch(()=>{});}catch(e){} }).catch(()=>toast('Fullscreen is not available in this view.')); }catch(e){ toast('Fullscreen is not available in this view.'); } }
 function openPause(){
