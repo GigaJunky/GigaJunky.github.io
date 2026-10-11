@@ -1,9 +1,16 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Lancewing: aerial jousting for one or two riders.">
 <title>Lancewing</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Chakra+Petch:wght@400;500;600;700&display=swap">
 <style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
 /* Layout: one 16:9 arena canvas centred on a night field; menus float as full-viewport overlays; touch pads pin to the bottom corners. */
 :root{
   --night:#0b0716; --night2:#170e2c; --ink:#f6eedc; --dim:#a99cc4; --gold:#ffcf6b; --ember:#ff6a2b;
@@ -107,6 +114,8 @@ kbd{font:600 12px var(--f-ui);border:1px solid var(--line);padding:2px 6px;color
 @media (prefers-reduced-motion:reduce){.btn,.btn::before{transition:none}}
 </style>
 
+</head>
+<body>
 <div id="app">
   <div id="stage">
     <canvas id="c" aria-label="Lancewing arena"></canvas>
@@ -253,6 +262,7 @@ kbd{font:600 12px var(--f-ui);border:1px solid var(--line);padding:2px 6px;color
         </div>
       </div>
       <div class="status" id="dStatus"></div>
+      <button class="btn primary" id="dPractice" hidden>Practice while you wait</button>
       <button class="btn" data-back>Back</button>
     </div>
   </section>
@@ -263,7 +273,10 @@ kbd{font:600 12px var(--f-ui);border:1px solid var(--line);padding:2px 6px;color
       <h2 id="waitTitle">Waiting for a rider</h2>
       <div class="code" id="waitCode">----</div>
       <p id="waitMsg">Tell your opponent this code. The match starts as soon as they join.</p>
-      <button class="btn" id="cancelWait">Cancel</button>
+      <div class="menu">
+        <button class="btn primary" id="waitPractice">Practice while you wait</button>
+        <button class="btn" id="cancelWait">Cancel</button>
+      </div>
     </div>
   </section>
 
@@ -1323,6 +1336,7 @@ function drawHUD(v,T){
     }
   });
   if(v.mode==='coop') txt('WAVE '+v.wave,W/2,24,`700 12px ${F}`,'#ffcf6b');
+  if(Game.role==='practice'){ ctx.save(); ctx.globalAlpha=0.6+0.4*Math.sin(T*3)**2; txt(Game.waitRole==='hostwait'&&!Game.chan?'PRACTICE · WAITING FOR YOUR OPPONENT':'PRACTICE · YOUR MATCH STARTS WHEN THEY CONNECT',W/2,92,`600 11px ${F}`,'#c9bde6'); ctx.restore(); }
   else { txt('FIRST TO FIVE',W/2,24,`700 12px ${F}`,'#ffcf6b'); }
   // banners
   if(v.phase==='intro'){
@@ -1558,7 +1572,7 @@ function wireDC(dc,role){
 function p2pReady(ch,role){
   Game.chan=ch;
   if(role==='host'){ ch.set({role:'host'}); }
-  else { Game.fc=0; Game.lastIn=null; ch.set({role:'guest',in:{l:0,r:0,fc:0}}); Game.role='guestwait'; Game.waitT=0; if(!Game.sim) Game.sim=newSim({mode:'coop',p1:'cpu',p2:'cpu',attract:true}); }
+  else { Game.fc=0; Game.lastIn=null; ch.set({role:'guest',in:{l:0,r:0,fc:0}}); if(Game.role==='practice') Game.waitRole='guestwait'; else Game.role='guestwait'; Game.waitT=0; if(!Game.sim) Game.sim=newSim({mode:'coop',p1:'cpu',p2:'cpu',attract:true}); }
 }
 function newPC(role){
   const pc=P2P.pc=new RTCPeerConnection({iceServers:ICE});
@@ -1663,7 +1677,7 @@ function dSetup(role){
   $('dGo').textContent=host?'Connect':'Make reply';
   $('dCopy').textContent=canLink()?'Copy link':'Copy code';
   $('dOut').value=''; $('dIn').value='';
-  $('dOutF').hidden=!host; $('dGo').disabled=false; $('dGo').hidden=false;
+  $('dOutF').hidden=!host; $('dGo').disabled=false; $('dGo').hidden=false; $('dPractice').hidden=true;
   $('dNote').textContent=host?(canLink()?'Or open their reply link in this browser and it connects by itself.':'This copy runs from a file on your computer, so it makes a code instead of a link. Your friend pastes it into their own copy under Online play, I have an invite.'):'';
   dStatus(host?'Creating invite…':'Paste the invite your friend sent, then press Make reply.');
   UI.show('direct');
@@ -1678,7 +1692,8 @@ async function dHost(){
   if(P2P.pc!==pc) return;
   const code=await packSDP(pc.localDescription,P2P.inv);
   document.getElementById('dOut').value=canLink()?inviteURL('join',code):code;
-  dStatus('Waiting for their reply. Keep this screen open.');
+  dStatus('Waiting for their reply. Keep this screen open, or practice while you wait.');
+  document.getElementById('dPractice').hidden=false;
   Game.role='hostwait'; Game.chan=null; Game.sim=newSim({mode:'coop',p1:'cpu',p2:'cpu',attract:true});
 }
 async function dGo(){
@@ -1689,7 +1704,7 @@ async function dGo(){
     if(desc.i&&P2P.inv&&desc.i!==P2P.inv){ dStatus('That reply belongs to a different invite. Ask your friend to open your newest invite link.',true); return; }
     if(!P2P.pc){ dStatus('This invite has closed. Create a new invite link.',true); return; }
     if(P2P.pc.remoteDescription) return;
-    try{ await P2P.pc.setRemoteDescription({type:desc.type,sdp:desc.sdp}); dStatus('Connecting…'); P2P.timer=setTimeout(()=>{ if(Game.role==='hostwait') dStatus('Still connecting. Some home networks block direct connections; playing on the same network or over a phone hotspot usually works.',true); },12000); }
+    try{ await P2P.pc.setRemoteDescription({type:desc.type,sdp:desc.sdp}); dStatus('Connecting…'); P2P.timer=setTimeout(()=>{ if(isWaiting('hostwait')) dStatus('Still connecting. Some home networks block direct connections; playing on the same network or over a phone hotspot usually works.',true); },12000); }
     catch(e){ dStatus('That reply does not match this invite. Create a new invite and try again.',true); }
   } else {
     if(desc.type!=='offer'){ dStatus('That is a reply, not an invite. Paste the invite link your friend sent.',true); return; }
@@ -1701,14 +1716,15 @@ async function dGo(){
     document.getElementById('dOut').value=canLink()?inviteURL('reply',code):code;
     document.getElementById('dOutF').hidden=false; document.getElementById('dGo').disabled=true;
     dStatus('Send this back to your friend. The match starts the moment they open or paste it.');
+    document.getElementById('dPractice').hidden=false;
     P2P.timer=setTimeout(()=>{ if(Game.role!=='guest'&&Game.role!=='guestwait'&&UI.current==='direct') dStatus('Still waiting. Make sure your friend still has the invite screen open; if they closed it, ask for a new link.',true); },90000);
   }
 }
 // A reply link opened in another tab of this browser is handed to the tab waiting for it.
 const LWBC=(()=>{ try{ return new BroadcastChannel('lancewing'); }catch(e){ return null; } })();
 function takeReply(code){
-  if(P2P.dRole!=='host'||UI.current!=='direct'||!P2P.pc||P2P.pc.remoteDescription) return false;
-  document.getElementById('dIn').value=code; dGo(); return true;
+  if(P2P.dRole!=='host'||!(UI.current==='direct'||Game.role==='practice')||!P2P.pc||P2P.pc.remoteDescription) return false;
+  document.getElementById('dIn').value=code; dGo(); if(Game.role==='practice') toast('Reply received. Connecting to your friend…'); return true;
 }
 if(LWBC) LWBC.onmessage=e=>{ const m=e.data; if(m&&m.reply&&takeReply(m.reply)) LWBC.postMessage({ack:1}); };
 window.addEventListener('storage',e=>{ if(e.key==='lw-reply'&&e.newValue){ const code=e.newValue.split('|')[0]; if(takeReply(code)){ try{ localStorage.removeItem('lw-reply'); }catch(_){} try{ localStorage.setItem('lw-ack',String(Date.now())); }catch(_){} } } });
@@ -1887,7 +1903,7 @@ function lobbyTick(){
       else { Lob.pendingInv={from:x.id,c:v.c,m:v.m,nm:x.st.nm}; if(Lob.q){ Lob.q=null; lobSet({q:null}); } showInvite(); sfx('egg'); }
     }
     if(Lob.pendingInv){ const x=byId.get(Lob.pendingInv.from); if(!x||!x.st.inv||x.st.inv.c!==Lob.pendingInv.c){ toast(Lob.pendingInv.nm+' withdrew the challenge.'); Lob.pendingInv=null; showInvite(); } }
-    if(Lob.myInv&&Lob.myInv.c!=='----'&&Game.role==='hostwait'){
+    if(Lob.myInv&&Lob.myInv.c!=='----'&&isWaiting('hostwait')){
       const t=byId.get(Lob.myInv.to), r=t&&t.st.resp;
       if(!t){ toast(Lob.myInv.nm+' left the lobby.'); abortChallenge(); }
       else if(r&&r.c===Lob.myInv.c&&r.to===myId&&!r.ok){ toast(Lob.myInv.nm+' declined your challenge.'); abortChallenge(); }
@@ -1969,9 +1985,35 @@ function buildInputs(){
   if(Game.role==='host'){ const R=Game.remote; let f=0; if(R.pend>0){ R.pend--; f=1; } inp[1]={l:!!R.l,r:!!R.r,f}; }
   return inp;
 }
+// ---- practice while waiting: a solo run that keeps listening for the opponent
+function startPractice(){
+  Game.waitRole=(Game.role==='hostwait'||Game.role==='guestwait')?Game.role:'pending';
+  Game.waitScreen=UI.current||'wait';
+  Game.role='practice'; Game.isNet=false; Game.myPi=0; Input.localHumans=1; Input.flapQ=[0,0];
+  Game.sim=newSim({mode:'coop',p2:'off'}); Game.lastFx=0; Game.paused=false; Game.overShown=false; Game.acc=0;
+  setIntensity(1); UI.close(); hudButtons(true); updateTouchUI();
+}
+function restartPractice(){ Game.sim=newSim({mode:'coop',p2:'off'}); Game.lastFx=0; Game.overShown=false; Game.paused=false; Game.acc=0; UI.close(); }
+function backToWaiting(){
+  Game.role=Game.waitRole==='pending'?'attract':Game.waitRole; Game.waitRole=null; Game.paused=false;
+  Game.sim=newSim({mode:'coop',p1:'cpu',p2:'cpu',attract:true}); Game.lastFx=0; setIntensity(0); hudButtons(false);
+  UI.reset(); UI.stack=['title','online']; UI.show(Game.waitScreen||'wait');
+}
+function practiceTick(){
+  if(!Game.chan) return;
+  if(Game.waitRole==='hostwait'){
+    const g=Game.chan.others().find(o=>o.st&&o.st.role==='guest');
+    if(g){ Game.paused=false; Game.role='hostwait'; Game.waitRole=null; Game.guestId=g.id; startHostMatch(); toast('Your opponent is here. The match is starting!'); }
+  } else if(Game.waitRole==='guestwait'){
+    const h=Game.chan.others().find(o=>o.st&&o.st.role==='host');
+    if(h&&h.st.s){ Game.paused=false; Game.role='guestwait'; Game.waitRole=null; Game.waitT=0; guestWait(0); toast('Connected. The match is starting!'); }
+  }
+}
+const isWaiting=r=>Game.role===r||(Game.role==='practice'&&Game.waitRole===r);
 function updateGame(dt,now){
   const T=now/1000;
-  if(Game.role==='attract'||Game.role==='offline'||Game.role==='host'){
+  if(Game.role==='practice') practiceTick();
+  if(Game.role==='attract'||Game.role==='offline'||Game.role==='host'||Game.role==='practice'){
     if(Game.role!=='attract') gameInputTick(dt);
     if(Game.role==='host') hostNet(dt);
     if(!Game.paused||Game.role==='host'){
@@ -2162,21 +2204,24 @@ document.getElementById('dJoinBtn').addEventListener('click',()=>{ sfx('ui'); p2
 document.getElementById('dGo').addEventListener('click',()=>{ sfx('ui'); dGo(); });
 document.getElementById('dCopy').addEventListener('click',()=>{ const t=document.getElementById('dOut'); if(!t.value) return; const ok=()=>dStatus('Copied. Send it to the other player.'); const fb=()=>{ t.focus(); t.select(); try{ document.execCommand('copy'); ok(); }catch(e){ dStatus('Select the code and copy it.'); } }; try{ navigator.clipboard.writeText(t.value).then(ok,fb); }catch(e){ fb(); } });
 document.getElementById('resumeBtn').addEventListener('click',resume);
-document.getElementById('restartBtn').addEventListener('click',()=>{ if(Game.role==='host'){ Game.sim=newSim({mode:Game.sim.mode,p2:'remote'}); Game.lastFx=0; Game.overShown=false; UI.close(); } else if(Game.opts) startLocal(Game.opts); });
-document.getElementById('quitBtn').addEventListener('click',()=>{ sfx('ui'); quitToTitle(); });
-document.getElementById('overQuit').addEventListener('click',()=>{ sfx('ui'); quitToTitle(); });
+document.getElementById('restartBtn').addEventListener('click',()=>{ if(Game.role==='practice'){ restartPractice(); return; } if(Game.role==='host'){ Game.sim=newSim({mode:Game.sim.mode,p2:'remote'}); Game.lastFx=0; Game.overShown=false; UI.close(); } else if(Game.opts) startLocal(Game.opts); });
+document.getElementById('quitBtn').addEventListener('click',()=>{ sfx('ui'); if(Game.role==='practice') backToWaiting(); else quitToTitle(); });
+document.getElementById('overQuit').addEventListener('click',()=>{ sfx('ui'); if(Game.role==='practice') backToWaiting(); else quitToTitle(); });
+document.getElementById('waitPractice').addEventListener('click',()=>{ sfx('ui'); startPractice(); });
+document.getElementById('dPractice').addEventListener('click',()=>{ sfx('ui'); startPractice(); });
 document.getElementById('againBtn').addEventListener('click',()=>{ sfx('ui');
   if(Game.role==='host'){ Game.sim=newSim({mode:Game.sim.mode,p2:'remote'}); Game.lastFx=0; Game.overShown=false; UI.close(); }
+  else if(Game.role==='practice') restartPractice();
   else if(Game.role==='offline'&&Game.opts) startLocal(Game.opts); });
 document.getElementById('pauseBtn').addEventListener('click',()=>openPause());
 document.getElementById('fsBtn').addEventListener('click',toggleFS);
 function toggleFS(){ try{ if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); else document.documentElement.requestFullscreen().then(()=>{ try{screen.orientation.lock('landscape').catch(()=>{});}catch(e){} }).catch(()=>toast('Fullscreen is not available in this view.')); }catch(e){ toast('Fullscreen is not available in this view.'); } }
 function openPause(){
-  if(UI.current||!(Game.role==='offline'||Game.role==='host'||Game.role==='guest')) return;
-  if(Game.role==='offline') Game.paused=true;
+  if(UI.current||!(Game.role==='offline'||Game.role==='host'||Game.role==='guest'||Game.role==='practice')) return;
+  if(Game.role==='offline'||Game.role==='practice') Game.paused=true;
   document.getElementById('restartBtn').hidden=Game.role==='guest';
-  document.getElementById('quitBtn').textContent=Lob.active?'Back to lobby':'Quit to title';
-  document.querySelector('#s-pause h2').textContent=Game.isNet?'Match menu':'Paused';
+  document.getElementById('quitBtn').textContent=Game.role==='practice'?'Back to waiting screen':Lob.active?'Back to lobby':'Quit to title';
+  document.querySelector('#s-pause h2').textContent=Game.isNet?'Match menu':Game.role==='practice'?'Practice paused':'Paused';
   UI.show('pause');
 }
 function resume(){ Game.paused=false; UI.close(); }
@@ -2187,7 +2232,8 @@ function showOver(v){
   else { saveBest(top); t.textContent='The skies fall silent'; sub.textContent='You held out to wave '+v.wave+'. Best score '+best.toLocaleString()+'.'; }
   sc.textContent='';
   v.players.forEach((p,i)=>{ const d=document.createElement('div'); d.className='score-card'; const n=document.createElement('span'); n.className='nm '+(i?'ro':'az'); n.textContent=NAMES[i]+(p.cpu?' · CPU':''); const val=document.createElement('span'); val.className='val'; val.textContent=p.score.toLocaleString(); d.append(n,val); sc.append(d); });
-  document.getElementById('overQuit').textContent=Lob.active?'Back to lobby':'Quit to title';
+  document.getElementById('overQuit').textContent=Game.role==='practice'?'Back to waiting screen':Lob.active?'Back to lobby':'Quit to title';
+  if(Game.role==='practice') sub.textContent+=' Still waiting for your opponent; the match starts the moment they connect.';
   const again=document.getElementById('againBtn');
   if(Game.role==='guest'){ again.hidden=true; sub.textContent+=' Waiting for the host to start a rematch.'; } else { again.hidden=false; again.textContent=Game.role==='host'?'Rematch':'Ride again'; }
   UI.show('over');
@@ -2196,7 +2242,7 @@ function hudButtons(on){ document.getElementById('hudbtns').hidden=!on; }
 function updateTouchUI(){
   const el=document.getElementById('touch');
   const want=Settings.touch==='on'||(Settings.touch==='auto'&&(Input.usedTouch||matchMedia('(pointer:coarse)').matches));
-  const playing=!UI.current&&(Game.role==='offline'||Game.role==='host'||Game.role==='guest');
+  const playing=!UI.current&&(Game.role==='offline'||Game.role==='host'||Game.role==='guest'||Game.role==='practice');
   el.hidden=!(want&&playing);
   el.className=Input.localHumans>1?'dual':'single';
 }
@@ -2227,7 +2273,7 @@ function menuPads(){
    ========================================================= */
 window.addEventListener('resize',layout);
 window.addEventListener('pointerdown',()=>auInit(),{once:false,capture:true});
-document.addEventListener('visibilitychange',()=>{ if(document.hidden&&Game.role==='offline'&&!UI.current) openPause(); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&(Game.role==='offline'||Game.role==='practice')&&!UI.current) openPause(); });
 layout(); startAttract(); UI.show('title'); syncSettingsUI(); updateLocalDesc();
 (()=>{ const jm=/^#(join|reply)=(LW1z?\.[A-Za-z0-9_-]+)$/.exec(location.hash||''); if(!jm) return;
   try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
@@ -2262,4 +2308,5 @@ requestAnimationFrame(frame);
 })();
 </script>
 
-</body></html>
+</body>
+</html>
