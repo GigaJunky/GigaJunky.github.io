@@ -19,7 +19,9 @@ const LINKS = [
    links.html scans your repo for .html pages and lists them under "Pages".
    It works with no settings. Uncomment to customize.
    Tip: in any page's <head>, add <meta name="description" content="..."> for the
-   description, <meta name="icon" content="🎮"> for the icon, or
+   description, <meta name="icon" content="🎮"> for the icon,
+   <meta name="category" content="Games"> to group it (pages without one go under
+   "Pages"; a category matching a group above is merged into that group), or
    <meta name="links" content=" hide"> to keep that page off the list. */
 
 const AUTO_LINKS = {

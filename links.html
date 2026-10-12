@@ -28,6 +28,10 @@ h2{font:700 1.15rem Orbitron,sans-serif;margin:34px 0 12px;color:var(--yellow);l
 .d{color:var(--dim);font-size:.9rem}
 .host{margin-left:auto;color:var(--dim);font-size:.8rem;white-space:nowrap}
 .none{color:var(--dim);display:none}
+.cats{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 6px}
+.cat{background:rgba(39,240,255,.06);border:1px solid var(--line);color:var(--dim);font:inherit;font-size:.85rem;padding:4px 12px;cursor:pointer;transition:.15s}
+.cat:hover,.cat:focus-visible{border-color:var(--cyan);color:var(--text);outline:none}
+.cat[aria-pressed="true"]{border-color:var(--cyan);background:var(--cyan);color:#021;box-shadow:0 0 12px rgba(39,240,255,.5)}
 @media (max-width:560px){.host{display:none}}
 @media (prefers-reduced-motion:reduce){.link{transition:none}}
 </style>
@@ -39,6 +43,7 @@ h2{font:700 1.15rem Orbitron,sans-serif;margin:34px 0 12px;color:var(--yellow);l
   <h1>Links</h1>
   <p class="sub">Stuff worth bookmarking.</p>
   <input id="q" type="search" placeholder="Filter links..." aria-label="Filter links">
+  <div class="cats" id="cats" role="group" aria-label="Filter by category"></div>
   <p class="sub" id="status" style="font-size:.85rem;margin:0 0 6px"></p>
   <div id="out"></div>
   <p class="none" id="none">No links match.</p>
@@ -52,12 +57,34 @@ const CFG = Object.assign(
   {enabled:true, repo:'', group:'Pages', exclude:['index.html','links.html','404.html'], max:40, ttlMin:30},
   typeof AUTO_LINKS!=='undefined' ? AUTO_LINKS : {});
 const out = document.getElementById('out'), statusEl = document.getElementById('status'), qEl = document.getElementById('q');
-let autoItems = [];
-const groups = () => autoItems.length ? LINKS.concat([{group:CFG.group, items:autoItems}]) : LINKS;
+let autoItems = [], cat = '';
+/* Scanned pages go under their <meta name="category">, merged into a LINKS group of the same name if one exists */
+function groups(){
+  const gs = LINKS.map(g => ({group:g.group, items:g.items.slice()})), extra = {};
+  for(const i of autoItems){
+    const name = i.category || CFG.group;
+    const g = gs.find(g => g.group.toLowerCase()===name.toLowerCase());
+    if(g) g.items.push(i); else (extra[name] = extra[name] || []).push(i);
+  }
+  const names = Object.keys(extra).sort((a,b) => a===CFG.group ? 1 : b===CFG.group ? -1 : a.localeCompare(b));
+  return gs.concat(names.map(n => ({group:n, items:extra[n]})));
+}
+const catsEl = document.getElementById('cats');
+function renderCats(gs){
+  if(cat && !gs.some(g => g.group===cat)) cat = '';
+  catsEl.innerHTML = ['', ...gs.map(g => g.group)].map(n =>
+    `<button class="cat" data-cat="${esc(n)}" aria-pressed="${n===cat}">${esc(n||'All')}</button>`).join('');
+}
+catsEl.addEventListener('click', e => {
+  const b = e.target.closest('.cat'); if(!b) return;
+  cat = b.dataset.cat; render(qEl.value);
+});
 function render(filter){
   const f = (filter||'').trim().toLowerCase();
+  const gs = groups();
+  renderCats(gs);
   let total = 0;
-  out.innerHTML = groups().map(g => {
+  out.innerHTML = gs.filter(g => !cat || g.group===cat).map(g => {
     const items = g.items.filter(i => !f || (i.title+' '+(i.desc||'')+' '+i.url+' '+g.group).toLowerCase().includes(f));
     total += items.length;
     if(!items.length) return '';
@@ -92,10 +119,10 @@ async function pageInfo(path, base){
     if(!r.ok) return null;
     const doc = new DOMParser().parseFromString(await r.text(), 'text/html');
     if(doc.querySelector('meta[name="links"][content="hide"]')) return null;
-    const meta = n => (doc.querySelector(`meta[name="${n}"]`)||{}).content || '';
+    const meta = n => ((doc.querySelector(`meta[name="${n}"]`)||{}).content || '').trim();
     return {
       title: (doc.title||'').trim() || path.split('/').pop().replace(/\.html?$/i,''),
-      url: base + url, desc: meta('description'), icon: meta('icon') || '📄',
+      url: base + url, desc: meta('description'), icon: meta('icon') || '📄', category: meta('category'),
       internal: true, host: '/' + url
     };
   }catch(e){ return null; }
@@ -104,7 +131,7 @@ async function pageInfo(path, base){
   const repo = detectRepo();
   if(!CFG.enabled) return;
   if(!repo){ statusEl.textContent = 'Auto-scan of your pages runs once this is live on github.io.'; return; }
-  const key = 'bj-pages-'+repo; let cached = null;
+  const key = 'bj-pages-v2-'+repo; let cached = null;
   try{ cached = JSON.parse(localStorage.getItem(key)); }catch(e){}
   if(cached && Date.now()-cached.t < CFG.ttlMin*60000){ autoItems = cached.items; render(qEl.value); return; }
   statusEl.textContent = 'Scanning for pages...';
