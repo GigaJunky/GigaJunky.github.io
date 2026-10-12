@@ -1,0 +1,704 @@
+{
+  "format": "gta-1",
+  "id": "st-hilarion",
+  "title": "THE ABBEY OF ST. HILARION",
+  "author": "An original gothic adventure for this engine, in the spirit of the Mark Data Products classics",
+  "theme": "coco",
+  "maxScore": 100,
+  "maxCarry": 8,
+  "start": "road",
+  "intro": "The year is 1751. Word has reached the Bishop that the brothers of St. Hilarion's have fallen silent, and that strange lights burn beneath their chapel at night. No one sent to investigate has returned.\n\nNow it is your turn. Somewhere within the monastery lies the source of the black magic. Find it. Destroy it.\n\n(Type HELP for instructions.)",
+  "help": "Use two-word commands like GO NORTH (or N), GET CANDLE, LIGHT CANDLE, OPEN CABINET, READ BOOK, PUSH STATUE. You can also try longer ones like UNLOCK DOOR WITH KEY or POUR WATER ON PENTAGRAM. INVENTORY (I) lists what you carry. SAVE, RESTORE, UNDO and SCORE work at any time. Some places are dark: you'll want a light.",
+  "ranks": [[0, "Novice"], [20, "Pilgrim"], [45, "Acolyte"], [70, "Exorcist"], [100, "Saint"]],
+  "messages": {
+    "dark": "It is too dark to see. Cold air moves against your face, and something nearby is breathing.",
+    "noExit": "You can't go that way.",
+    "won": "*** THE BLACK MAGIC IS DESTROYED ***"
+  },
+  "colors": { "blood": "#8a0a0a", "ember": "#ff3a1a" },
+  "darkArt": [["bg", "black"], ["circle", 120, 96, 1.5, "ember"], ["circle", 134, 96, 1.5, "ember"]],
+  "artLib": {
+    "nightsky": [["gradient", 0, 120, "night", "darkred"], ["stars", 30, "buff", 3, 70], ["moon", 210, 26, 9, "buff"], ["circle", 214, 23, 8, "night"]],
+    "arches_right": [["arch", "right", 0.25, "night", "darkstone", 0.2, 0.55], ["arch", "right", 0.6, "night", "darkstone", 0.2, 0.55]],
+    "arches_left": [["arch", "left", 0.25, "night", "darkstone", 0.2, 0.55], ["arch", "left", 0.6, "night", "darkstone", 0.2, 0.55]],
+    "sigils": [["pentagram", 30, 70, 10, "blood"], ["line", [220, 60, 236, 90, 214, 82, 240, 70], "blood", 2]]
+  },
+
+  "rooms": {
+    "road": {
+      "name": "Road before the monastery",
+      "desc": "You stand on a rutted road at dusk. North, behind a high stone wall, the black bulk of St. Hilarion's monastery rises against a blood-red sky. A crow watches you from a dead tree. An iron gate is set into the wall.",
+      "exits": { "north": { "to": "gatehouse", "door": "gate" }, "south": { "msg": "You've come too far to turn back now." } },
+      "art": [
+        ["use", "nightsky"],
+        ["rect", 20, 92, 216, 30, "darkstone"], ["dither", 20, 92, 216, 30, "darkstone", "black", "brick"],
+        ["rect", 92, 52, 64, 44, "darkstone"], ["poly", [88, 52, 160, 52, 124, 26], "black"],
+        ["rect", 162, 30, 18, 66, "darkstone"], ["poly", [160, 30, 182, 30, 171, 8], "black"],
+        ["rect", 120, 64, 8, 14, "ember"], ["rect", 168, 44, 5, 8, "ember"],
+        ["ground", 120, "darkbrown"], ["path", "tan", 120, 130, 40],
+        ["if", "open:gate", [["rect", 104, 98, 48, 22, "black"], ["gate", 104, 98, 48, 22, "gray", true]], [["gate", 104, 98, 48, 22, "gray"]]],
+        ["line", [36, 170, 38, 120, 30, 96], "darkbrown", 4], ["line", [37, 132, 54, 112, 62, 112], "darkbrown", 2], ["line", [33, 110, 18, 92], "darkbrown", 2],
+        ["poly", [56, 108, 64, 104, 70, 107, 63, 110], "black"]
+      ]
+    },
+    "gatehouse": {
+      "name": "Gatehouse",
+      "desc": "A crumbling gatehouse. Faded frescoes of saints peel from the walls; every one of their eyes has been scratched out. A notice is nailed beside the arch. The courtyard lies north, the road south.",
+      "exits": { "north": "courtyard", "south": { "to": "road", "door": "gate" } },
+      "art": [
+        ["room", "stone", "darkstone", "darkgray", "black"],
+        ["arch", "back", 0.5, "night", "darkstone", 0.42, 0.7],
+        ["wall", "left", 0.3, 0.7, 0.35, 0.78, "tan", "brown"], ["wall", "right", 0.3, 0.7, 0.35, 0.78, "tan", "brown"],
+        ["wall", "left", 0.45, 0.55, 0.62, 0.7, "skin"], ["wall", "right", 0.45, 0.55, 0.62, 0.7, "skin"],
+        ["wall", "left", 0.75, 0.9, 0.38, 0.55, "buff", "black"],
+        ["stars", 6, "buff", 41, 60]
+      ]
+    },
+    "courtyard": {
+      "name": "Courtyard",
+      "desc": [
+        "A weed-choked courtyard. In its center stands an old stone well with a rusted crank.",
+        { "if": "flag:bucket_up", "text": "A dripping bucket hangs at the top of the well." },
+        "The chapel looms to the north, a cloister walk opens east, and a gap in the hedge leads west into a garden. The gatehouse is south."
+      ],
+      "exits": { "north": "nave", "east": "cloister", "west": "garden", "south": "gatehouse" },
+      "art": [
+        ["gradient", 0, 112, "night", "darkblue"], ["stars", 25, "white", 9, 60],
+        ["rect", 78, 28, 100, 84, "darkstone"], ["poly", [74, 28, 182, 28, 128, 4], "black"],
+        ["circle", 128, 52, 11, "blood", "black", 2], ["line", [128, 41, 128, 63], "black"], ["line", [117, 52, 139, 52], "black"],
+        ["poly", [116, 112, 116, 86, 128, 76, 140, 86, 140, 112], "black"],
+        ["rect", 196, 62, 60, 50, "stone"], ["poly", [204, 112, 204, 82, 212, 74, 220, 82, 220, 112], "black"], ["poly", [230, 112, 230, 82, 238, 74, 246, 82, 246, 112], "black"],
+        ["rect", 0, 70, 58, 42, "darkgreen"], ["dither", 0, 70, 58, 42, "darkgreen", "moss"], ["rect", 22, 84, 14, 28, "black"],
+        ["ground", 112, "moss"], ["dither", 0, 112, 256, 80, "moss", "darkgreen", "sparse"],
+        ["well", 128, 176, 22, "stone"],
+        ["if", "flag:bucket_up", [["rect", 121, 126, 14, 10, "wood", "black"], ["line", [128, 126, 128, 126, 128, 128], "buff"]]]
+      ]
+    },
+    "garden": {
+      "name": "Herb garden",
+      "desc": "The monks' herb garden has run wild. Nightshade and wolfsbane choke the beds. A tool shed sags to the west, and a rusted gate in the north wall leads to the cemetery. The courtyard is east.",
+      "exits": { "east": "courtyard", "west": "shed", "north": "cemetery" },
+      "art": [
+        ["use", "nightsky"],
+        ["rect", 0, 70, 256, 40, "darkstone"], ["dither", 0, 70, 256, 40, "darkstone", "black", "brick"],
+        ["gate", 150, 76, 36, 34, "rust"],
+        ["poly", [6, 112, 6, 64, 30, 48, 60, 64, 60, 112], "wood", "black"], ["rect", 24, 80, 14, 32, "black"],
+        ["ground", 110, "darkgreen"],
+        ["dither", 70, 130, 70, 30, "darkgreen", "purple"], ["dither", 160, 140, 90, 40, "darkgreen", "olive"],
+        ["dither", 20, 160, 100, 30, "moss", "purple", "sparse"],
+        ["circle", 90, 138, 2, "purple"], ["circle", 120, 145, 2, "purple"], ["circle", 200, 150, 2, "yellow"], ["circle", 230, 170, 2, "yellow"]
+      ]
+    },
+    "shed": {
+      "name": "Tool shed",
+      "desc": "A cramped, leaning shed. Rotten rakes, cracked pots and coils of mouldy twine fill every corner. Daylight leaks through the boards. The garden is east.",
+      "exits": { "east": "garden", "out": "garden" },
+      "art": [
+        ["room", "wood", "darkbrown", "darkbrown", "black"],
+        ["dither", 72, 40, 112, 88, "wood", "darkbrown", "lines"],
+        ["line", [96, 50, 100, 128], "tan", 2], ["line", [108, 46, 112, 128], "tan", 2], ["poly", [90, 46, 106, 46, 104, 52, 92, 52], "gray"],
+        ["circle", 160, 118, 9, "rust", "black"], ["circle", 172, 120, 7, "rust", "black"],
+        ["door", "right", 0.45, "wood", true]
+      ]
+    },
+    "cemetery": {
+      "name": "Cemetery",
+      "desc": [
+        "Leaning headstones crowd a sunken burial ground, and mist curls about your ankles.",
+        { "if": "flag:dug", "text": "One grave has been dug open.", "else": "One grave, newer than the rest, has no name upon its stone - only a carved cross." },
+        "The garden is south."
+      ],
+      "exits": { "south": "garden" },
+      "art": [
+        ["gradient", 0, 100, "night", "darkblue"], ["stars", 30, "white", 21, 60], ["moon", 50, 30, 12, "buff"],
+        ["forest", 100, "black", 4, 10],
+        ["ground", 100, "darkgreen"],
+        ["poly", [20, 150, 20, 120, 28, 114, 36, 120, 36, 150], "stone", "black"],
+        ["poly", [60, 130, 60, 108, 67, 103, 74, 108, 74, 130], "stone", "black"],
+        ["poly", [196, 140, 198, 112, 206, 106, 214, 112, 214, 142], "stone", "black"],
+        ["cross", 236, 132, 26, "stone"], ["cross", 170, 116, 16, "stone"],
+        ["poly", [112, 146, 112, 112, 128, 102, 144, 112, 144, 146], "lightgray", "black"],
+        ["cross", 128, 130, 18, "darkstone"],
+        ["if", "flag:dug", [["ellipse", 128, 168, 34, 12, "black"], ["poly", [170, 176, 178, 160, 196, 156, 210, 176], "darkbrown"]], [["ellipse", 128, 166, 34, 10, "darkbrown"]]],
+        ["alpha", 0.35], ["ellipse", 70, 178, 90, 10, "white"], ["ellipse", 200, 186, 80, 8, "white"], ["alpha", 1]
+      ]
+    },
+    "nave": {
+      "name": "Chapel nave",
+      "desc": "The nave of the chapel. Pews lie overturned and splintered, and someone has smeared strange sigils across the walls in something dark. Moonlight filters through a shattered rose window. A stone font stands beside the door. Stairs climb to the bell tower; the vestry is east, the sanctuary north, and the courtyard south.",
+      "exits": { "north": "sanctuary", "east": "vestry", "up": "belltower", "south": "courtyard" },
+      "art": [
+        ["room", "stone", "darkstone", "darkgray", "black"],
+        ["arch", "back", 0.5, "black", "darkstone", 0.3, 0.45],
+        ["stainedglass", "back", 0.5, 0.82, 0.18, 0.3],
+        ["stairs", "up", "stone", 0.6, "left"],
+        ["door", "right", 0.5, "wood"],
+        ["use", "sigils"],
+        ["poly", [70, 150, 120, 146, 122, 152, 72, 158], "wood", "black"], ["poly", [140, 160, 196, 152, 200, 158, 144, 168], "wood", "black"],
+        ["poly", [96, 170, 104, 160, 150, 182, 140, 188], "darkbrown", "black"],
+        ["rect", 22, 160, 14, 24, "stone", "black"], ["ellipse", 29, 160, 14, 5, "stone", "black"], ["ellipse", 29, 160, 10, 3, "cyan"]
+      ]
+    },
+    "sanctuary": {
+      "name": "Sanctuary",
+      "desc": [
+        "The sanctuary. The high altar has been stripped and defaced.",
+        { "if": "flag:statue_moved", "text": "The statue of the Virgin has been pushed aside, and a narrow stair leads down into darkness.", "else": "Behind it, in a deep niche, stands a statue of the Virgin, her stone hands folded in prayer." },
+        "The nave is south."
+      ],
+      "exits": { "south": "nave" },
+      "art": [
+        ["room", "stone", "darkstone", "darkgray", "black"],
+        ["window", "left", 0.5, 0.6, "darkblue", "black", 0.16, 0.4], ["window", "right", 0.5, 0.6, "darkblue", "black", 0.16, 0.4],
+        ["arch", "back", 0.5, "darkstone", "black", 0.3, 0.6],
+        ["if", "flag:statue_moved",
+          [["poly", [114, 128, 142, 128, 142, 80, 128, 64, 114, 80], "black"], ["line", [118, 124, 138, 124], "gray"], ["line", [120, 118, 136, 118], "gray"], ["line", [122, 112, 134, 112], "gray"], ["statue", 158, 128, 46, "lightgray"]],
+          [["statue", 128, 128, 52, "lightgray"]]],
+        ["altar", 96, 168, 64, 26, "stone"],
+        ["line", [100, 150, 112, 160, 124, 148], "blood", 2]
+      ]
+    },
+    "vestry": {
+      "name": "Vestry",
+      "desc": "A cramped vestry. Moth-eaten vestments hang from wooden pegs, and a tall cabinet stands against the far wall. The nave is west.",
+      "exits": { "west": "nave" },
+      "art": [
+        ["room", "wood", "darkbrown", "darkbrown", "black"],
+        ["door", "left", 0.5, "wood", true],
+        ["rect", 108, 52, 40, 76, "darkbrown", "black"],
+        ["if", "open:cabinet", [["rect", 112, 56, 32, 68, "black"], ["poly", [148, 52, 166, 46, 166, 134, 148, 128], "darkbrown", "black"]], [["line", [128, 52, 128, 128], "black"], ["rect", 124, 88, 2, 4, "gold"], ["rect", 130, 88, 2, 4, "gold"]]],
+        ["poly", [192, 60, 204, 58, 210, 120, 186, 124], "purple", "black"], ["poly", [218, 54, 230, 52, 236, 124, 212, 128], "darkred", "black"],
+        ["rect", 196, 54, 4, 4, "gold"], ["rect", 222, 48, 4, 4, "gold"]
+      ]
+    },
+    "belltower": {
+      "name": "Belfry",
+      "desc": "A dizzying climb ends in the belfry. A great bronze bell hangs from a beam above you, its rope trailing at your feet. Through the louvers you can see the whole dark monastery spread below - and a faint red glow seeping up from the ground beneath the chapel. Stairs lead down.",
+      "exits": { "down": "nave" },
+      "art": [
+        ["bg", "darkstone"], ["gradient", 0, 192, "darkstone", "black"],
+        ["rect", 0, 40, 40, 110, "night"], ["rect", 216, 40, 40, 110, "night"],
+        ["line", [0, 60, 40, 66], "wood", 3], ["line", [0, 80, 40, 86], "wood", 3], ["line", [0, 100, 40, 106], "wood", 3], ["line", [0, 120, 40, 126], "wood", 3],
+        ["line", [216, 66, 256, 60], "wood", 3], ["line", [216, 86, 256, 80], "wood", 3], ["line", [216, 106, 256, 100], "wood", 3], ["line", [216, 126, 256, 120], "wood", 3],
+        ["rect", 20, 14, 216, 10, "wood", "black"],
+        ["line", [128, 24, 128, 36], "darkgray", 3],
+        ["bell", 128, 120, 90, "gold"],
+        ["line", [128, 122, 136, 192], "tan", 2],
+        ["glow", 240, 150, 30, "ember", 0.4]
+      ]
+    },
+    "cloister": {
+      "name": "Cloister walk",
+      "desc": "A covered walk runs around a dead, grey garth. Doors lead north to the refectory, east to the monks' cells and south to the library. The courtyard is west.",
+      "exits": { "west": "courtyard", "north": "refectory", "east": "cells", "south": "library" },
+      "art": [
+        ["room", "stone", "darkstone", "wood", "black"],
+        ["use", "arches_left"], ["use", "arches_right"],
+        ["door", "back", 0.5, "wood"],
+        ["dither", 0, 186, 256, 6, "darkstone", "black"]
+      ]
+    },
+    "refectory": {
+      "name": "Refectory",
+      "desc": "The refectory. A long oak table is laid for a meal that was never eaten: the bread has turned to stone and the wine has dried to a black crust in the jugs. The kitchen is east, the cloister south.",
+      "exits": { "east": "kitchen", "south": "cloister" },
+      "art": [
+        ["room", "stone", "wood", "darkgray", "black"],
+        ["window", "back", 0.3, 0.6, "darkblue", "black"], ["window", "back", 0.7, 0.6, "darkblue", "black"],
+        ["door", "right", 0.55, "wood"],
+        ["poly", [70, 178, 186, 178, 160, 130, 96, 130], "wood", "black"],
+        ["circle", 100, 165, 5, "lightgray", "black"], ["circle", 156, 165, 5, "lightgray", "black"], ["circle", 112, 145, 4, "lightgray", "black"], ["circle", 144, 145, 4, "lightgray", "black"],
+        ["rect", 124, 150, 8, 8, "tan", "black"], ["rect", 104, 136, 5, 8, "darkbrown", "black"], ["rect", 148, 136, 5, 8, "darkbrown", "black"]
+      ]
+    },
+    "kitchen": {
+      "name": "Kitchen",
+      "desc": "A soot-blackened kitchen. A great hearth gapes cold and empty in the far wall, and copper pots hang from hooks overhead. The refectory is west.",
+      "exits": { "west": "refectory" },
+      "art": [
+        ["room", "darkstone", "darkstone", "black", "black"],
+        ["dither", 72, 40, 112, 88, "darkstone", "black", "sparse"],
+        ["poly", [96, 128, 96, 80, 160, 80, 160, 128], "black", "stone"], ["rect", 88, 72, 80, 10, "stone", "black"],
+        ["line", [108, 126, 148, 126], "gray", 2], ["line", [112, 122, 140, 120], "darkgray", 2],
+        ["door", "left", 0.5, "wood", true],
+        ["circle", 196, 40, 10, "orange", "black"], ["circle", 222, 34, 12, "rust", "black"], ["circle", 240, 50, 8, "orange", "black"],
+        ["line", [196, 30, 196, 0], "black"], ["line", [222, 22, 222, 0], "black"], ["line", [240, 42, 240, 0], "black"]
+      ]
+    },
+    "cells": {
+      "name": "Monks' cells",
+      "desc": [
+        "A narrow passage lined with tiny bare cells where the brothers slept. In one, a straw pallet has been slashed open.",
+        { "if": "open:abbot_door", "text": "The heavy oak door to the north stands open.", "else": "A heavy oak door to the north bears the abbot's seal." },
+        "The cloister is west."
+      ],
+      "exits": { "west": "cloister", "north": { "to": "abbot", "door": "abbot_door" } },
+      "art": [
+        ["room", "stone", "darkstone", "darkgray", "black"],
+        ["door", "left", 0.2, "darkbrown", true, 0.18], ["door", "left", 0.62, "darkbrown", true, 0.18],
+        ["door", "right", 0.2, "darkbrown", true, 0.18], ["door", "right", 0.62, "darkbrown", true, 0.18],
+        ["if", "open:abbot_door", [["door", "back", 0.5, "wood", true, 0.34, 0.8]], [["door", "back", 0.5, "wood", false, 0.34, 0.8], ["circle", 128, 80, 5, "red", "black"]]],
+        ["poly", [30, 178, 70, 168, 76, 176, 36, 188], "tan", "black"], ["line", [40, 180, 60, 174], "darkbrown"]
+      ]
+    },
+    "abbot": {
+      "name": "Abbot's quarters",
+      "desc": "The abbot lived far better than his brothers: a carved bed, a writing desk, and a great tapestry of the Last Judgment - in which, you notice, the damned appear to be smiling. The air smells faintly of sulphur. The cells lie south.",
+      "exits": { "south": "cells" },
+      "art": [
+        ["room", "wood", "darkred", "darkbrown", "black"],
+        ["rect", 84, 48, 88, 68, "gold", "black"], ["dither", 88, 52, 80, 60, "darkred", "gold"],
+        ["circle", 128, 72, 10, "red"], ["poly", [100, 108, 156, 108, 128, 92], "black"],
+        ["poly", [176, 150, 236, 136, 256, 160, 256, 192, 196, 192], "darkred", "black"], ["rect", 226, 110, 8, 40, "wood"],
+        ["table", 20, 150, 50, 30, "wood"],
+        ["glow", 128, 120, 40, "ember", 0.15]
+      ]
+    },
+    "library": {
+      "name": "Library",
+      "desc": [
+        "Tall shelves of rotting books line the walls.",
+        { "if": "here:glass_case", "text": "In the middle of the room stands a glass case on a carved pedestal." },
+        "A spiral stair leads up to the scriptorium. The cloister is north."
+      ],
+      "exits": { "north": "cloister", "up": "scriptorium" },
+      "art": [
+        ["room", "darkbrown", "darkred", "darkbrown", "black"],
+        ["bookcase", 74, 42, 108, 84, "darkbrown"],
+        ["texture", "left", "darkbrown", "darkred", "lines"],
+        ["stairs", "up", "wood", 0.55, "right"],
+        ["rect", 116, 150, 24, 30, "stone", "black"],
+        ["rect", 110, 128, 36, 22, "none", "cyan"], ["alpha", 0.25], ["rect", 110, 128, 36, 22, "cyan"], ["alpha", 1],
+        ["if", "at:liber:glass_case", [["rect", 118, 140, 20, 6, "white", "gray"], ["glow", 128, 142, 20, "white", 0.3]]]
+      ]
+    },
+    "scriptorium": {
+      "name": "Scriptorium",
+      "desc": "Slanted writing desks fill the scriptorium beneath a tall window. Pots of dried ink and broken quills litter the floor. One desk is larger than the rest and has a drawer. A spiral stair leads down.",
+      "exits": { "down": "library" },
+      "art": [
+        ["room", "stone", "wood", "darkgray", "black"],
+        ["window", "back", 0.5, 0.65, "darkblue", "black", 0.3, 0.5],
+        ["poly", [30, 160, 80, 150, 84, 140, 34, 150], "wood", "black"], ["rect", 34, 160, 4, 20, "wood"], ["rect", 74, 152, 4, 22, "wood"],
+        ["poly", [176, 150, 228, 160, 224, 150, 172, 140], "wood", "black"], ["rect", 180, 150, 4, 22, "wood"], ["rect", 218, 160, 4, 20, "wood"],
+        ["rect", 100, 130, 56, 8, "wood", "black"], ["rect", 104, 138, 48, 16, "darkbrown", "black"],
+        ["if", "open:drawer", [["rect", 112, 150, 32, 10, "black", "wood"]], [["rect", 126, 144, 4, 3, "gold"]]],
+        ["line", [96, 176, 108, 170], "white"], ["line", [160, 182, 150, 174], "white"], ["circle", 140, 180, 3, "black"]
+      ]
+    },
+    "crypt": {
+      "name": "Crypt",
+      "dark": true,
+      "desc": "The crypt. Stone coffins of long-dead abbots line the walls. Several lids have been pushed aside... from the inside. A low passage leads north; stairs climb up to the sanctuary.",
+      "exits": { "up": "sanctuary", "north": "catacombs" },
+      "art": [
+        ["room", "darkstone", "darkstone", "black", "black"],
+        ["arch", "back", 0.5, "black", "stone", 0.3, 0.5],
+        ["poly", [6, 186, 60, 160, 70, 168, 16, 192], "stone", "black"], ["poly", [20, 150, 56, 136, 64, 140, 28, 156], "stone", "black"],
+        ["poly", [250, 186, 196, 160, 186, 168, 240, 192], "stone", "black"], ["poly", [236, 150, 200, 136, 192, 140, 228, 156], "darkstone", "black"],
+        ["poly", [190, 152, 204, 146, 210, 150, 196, 156], "black"],
+        ["stairs", "up", "stone", 0.3, "left"]
+      ]
+    },
+    "catacombs": {
+      "name": "Catacombs",
+      "dark": true,
+      "desc": [
+        "Narrow catacombs wind between niches stacked with skulls. The air is thick, and strangely warm.",
+        { "if": "!flag:bats_gone", "text": "From the north passage comes a dry, restless fluttering." },
+        "Passages lead north and east; the crypt is south."
+      ],
+      "exits": {
+        "south": "crypt", "east": "ossuary",
+        "north": {
+          "to": "sanctum", "if": ["flag:bats_gone", "has:crucifix"],
+          "else": [{ "if": "!flag:bats_gone", "then": ["A shrieking, flapping cloud of bats boils out of the north passage! Claws and leathery wings beat at your face, and you stagger back, half blinded."], "else": ["You step toward the north passage, and a wave of pure malice hurls you back against the bones. Something down there knows you are coming - and you have no holy protection."] }]
+        }
+      },
+      "art": [
+        ["tunnel", "darkstone", 6],
+        ["skull", 30, 60, 6], ["skull", 44, 60, 6], ["skull", 30, 80, 6], ["skull", 44, 80, 6],
+        ["skull", 212, 60, 6], ["skull", 226, 60, 6], ["skull", 212, 80, 6], ["skull", 226, 80, 6],
+        ["skull", 60, 100, 4], ["skull", 196, 100, 4],
+        ["if", "!flag:bats_gone", [["glow", 128, 90, 24, "ember", 0.3], ["line", [118, 86, 122, 82, 126, 86], "black", 2], ["line", [130, 92, 134, 88, 138, 92], "black", 2], ["line", [112, 96, 116, 93, 120, 96], "black", 2]]]
+      ]
+    },
+    "ossuary": {
+      "name": "Ossuary",
+      "dark": true,
+      "desc": "An ossuary. The bones of generations of monks have been sorted with horrible neatness - skulls in one heap, thighbones stacked like firewood in another. The catacombs are west.",
+      "exits": { "west": "catacombs" },
+      "art": [
+        ["cave", "darkstone", "black", "darkstone", 12],
+        ["bones", 80, 164, 14, "bone", 3], ["bones", 190, 170, 14, "bone", 8],
+        ["skull", 40, 150, 7], ["skull", 54, 150, 7], ["skull", 47, 140, 7], ["skull", 210, 146, 7], ["skull", 224, 146, 7]
+      ]
+    },
+    "sanctum": {
+      "name": "The Black Sanctum",
+      "desc": [
+        "A vaulted chamber hewn from living rock. Black candles burn in iron stands, giving off a greasy, choking smoke. An inverted cross hangs above a black altar, upon which lies a book bound in what you sincerely hope is not human skin.",
+        { "if": "!flag:circle_broken", "text": "A great pentagram is cut into the floor, glowing a sullen red, and within it something shifts - a darkness with eyes." },
+        { "if": ["flag:circle_broken", "!flag:banished"], "text": "The pentagram is broken, and the THING within it is free and coming for you!" },
+        { "if": "flag:banished", "text": "The pentagram is scorched and dead. The darkness that dwelt here is gone." },
+        "The catacombs are south."
+      ],
+      "exits": { "south": { "to": "catacombs", "if": { "any": ["!flag:circle_broken", "flag:banished"] }, "msg": "The demon flows between you and the passage. There is no way out but through it!" } },
+      "art": [
+        ["bg", "black"], ["dither", 0, 0, 256, 140, "blood", "black"],
+        ["poly", [0, 0, 256, 0, 256, 20, 128, 4, 0, 20], "black"],
+        ["cross", 128, 96, 44, "darkstone", true],
+        ["altar", 92, 132, 72, 26, "black", "darkred"],
+        ["if", "here:grimoire", [["rect", 116, 102, 24, 4, "skin", "darkbrown"]]],
+        ["candle", 40, 120, 18, "black"], ["candle", 216, 120, 18, "black"], ["candle", 70, 110, 14, "black"], ["candle", 186, 110, 14, "black"],
+        ["rect", 0, 140, 256, 52, "darkstone"],
+        ["if", "!flag:circle_broken",
+          [["glow", 128, 166, 70, "red", 0.5], ["pentagram", 128, 166, 60, "ember", 0.3]],
+          [["pentagram", 128, 166, 60, "darkgray", 0.3], ["line", [100, 162, 140, 172], "darkstone", 4]]],
+        ["if", "!flag:banished",
+          [["ellipse", 128, 150, 18, 30, "black"], ["circle", 122, 140, 2, "ember"], ["circle", 134, 140, 2, "ember"]]]
+      ]
+    }
+  },
+
+  "items": {
+    "gate": {
+      "name": "iron gate", "at": "road", "scenery": true, "open": false,
+      "desc": [{ "if": "open:gate", "text": "The iron gate stands open.", "else": "A tall iron gate, scabbed with rust. It isn't locked - just shut." }],
+      "openMsg": "The gate shrieks on its hinges as you force it open. The crow takes flight, cawing."
+    },
+    "crow": {
+      "name": "crow", "at": "road", "scenery": true,
+      "desc": "The crow regards you with one black eye, as if it has seen people like you go in before.",
+      "on": { "attack,take,catch": "The crow hops just out of reach and croaks derisively." }
+    },
+    "notice": {
+      "name": "notice", "nouns": ["sign", "paper"], "at": "gatehouse", "scenery": true,
+      "desc": "A yellowed notice, nailed to the wall.",
+      "text": "BY ORDER OF HIS GRACE THE BISHOP: THIS HOUSE IS CLOSED. LET NO ONE ENTER. - Anno Domini 1749"
+    },
+    "frescoes": {
+      "name": "frescoes", "nouns": ["fresco", "saints", "eyes", "walls"], "at": "gatehouse", "scenery": true,
+      "desc": "The saints' eyes have been gouged out with something sharp. Recently, by the look of the fresh plaster dust."
+    },
+    "well": {
+      "name": "stone well", "nouns": ["crank"], "adj": ["rusted", "rusty"], "at": "courtyard", "scenery": true,
+      "desc": "An old stone well with a rusted crank. A rope runs down into the darkness. Far below, water glints.",
+      "on": {
+        "turn,pull,use": {
+          "if": "!flag:bucket_up",
+          "do": ["Groaning and squealing, the crank turns. Hand over hand a dripping wooden bucket rises out of the depths and swings at the lip of the well.", { "set": "bucket_up", "show": "bucket" }],
+          "else": ["The crank is jammed now that the bucket is up."]
+        },
+        "climb,enter": "The shaft is narrow, slick, and far too deep. You'd never climb back out.",
+        "search": { "if": "!flag:bucket_up", "do": "You can't see much - just a rope disappearing into black water.", "else": [{ "if": "at:iron_key:bucket", "then": "There's something in the bucket.", "else": "You find nothing more." }] }
+      }
+    },
+    "well_rope": {
+      "name": "rope", "nouns": ["rope"], "adj": ["well"], "at": "courtyard", "scenery": true,
+      "desc": "A frayed rope, wound around the well's crank.",
+      "on": {
+        "pull,turn,take": {
+          "if": "!flag:bucket_up",
+          "do": ["You haul on the rope. Groaning, a dripping wooden bucket rises out of the depths and swings at the lip of the well.", { "set": "bucket_up", "show": "bucket" }],
+          "else": ["The rope is already wound up tight."]
+        }
+      }
+    },
+    "bucket": {
+      "name": "wooden bucket", "at": "courtyard", "hidden": true, "scenery": true, "container": true,
+      "fixedMsg": "The bucket is chained to the well rope.",
+      "desc": "A slimy wooden bucket, chained to the well rope."
+    },
+    "iron_key": {
+      "name": "iron key", "adj": ["heavy", "large", "abbot's"], "at": "bucket", "points": 5,
+      "desc": "A heavy iron key. Its bow is worked into the shape of a mitre - the abbot's mark.",
+      "art": [["circle", -5, -4, 3, null, "darkgray", 2], ["line", [-2, -4, 9, -4], "darkgray", 2], ["line", [7, -4, 7, -1], "darkgray", 2]]
+    },
+    "shovel": {
+      "name": "shovel", "nouns": ["spade"], "adj": ["rusty"], "at": "shed",
+      "desc": "A rusty shovel with a split handle. Still serviceable.",
+      "art": [["line", [-10, 0, 10, -22], "wood", 2], ["poly", [-14, 2, -8, -5, -3, 0, -9, 6], "gray"]]
+    },
+    "pots": {
+      "name": "pots", "nouns": ["rakes", "twine", "pot", "rake", "tools"], "at": "shed", "scenery": true,
+      "desc": "Junk. Nothing you need."
+    },
+    "headstone": {
+      "name": "headstone", "nouns": ["headstones", "stone", "stones", "gravestone"], "at": "cemetery", "scenery": true,
+      "desc": "Most of the stones are worn smooth. The newest bears only a carved cross and a line of text.",
+      "text": "HERE LIES BROTHER ANSELM, WHO KEPT THE LIGHT. HE SHALL GUARD IT STILL."
+    },
+    "grave": {
+      "name": "grave", "nouns": ["earth", "dirt", "mound"], "adj": ["new", "newer", "nameless"], "at": "cemetery", "scenery": true,
+      "desc": [{ "if": "flag:dug", "text": "A shallow open grave. Brother Anselm's bones lie at peace at the bottom.", "else": "The earth on this grave is softer than the others." }]
+    },
+    "crucifix": {
+      "name": "silver crucifix", "nouns": ["cross"], "adj": ["silver", "holy"], "at": "cemetery", "hidden": true, "points": 10,
+      "here": "A silver crucifix gleams in the open grave.",
+      "desc": "A heavy silver crucifix. It is warm to the touch, and seems to shine with a light of its own.",
+      "art": [["cross", 0, 0, 16, "silver"], ["glow", 0, -10, 10, "white", 0.4]]
+    },
+    "font": {
+      "name": "stone font", "nouns": ["water", "basin", "font"], "adj": ["holy", "stone"], "at": "nave", "scenery": true,
+      "desc": "A stone font of holy water. Remarkably, the water is still clear and pure, untouched by whatever has fouled this place.",
+      "on": { "drink": "You sip the holy water. You feel a little braver." }
+    },
+    "sigils": {
+      "name": "sigils", "nouns": ["symbols", "sigil", "symbol", "writing"], "at": ["nave", "sanctuary"], "scenery": true,
+      "desc": "Sigils of summoning and binding, daubed in what you very much hope is paint. One shape repeats over and over: a five-pointed star within a circle."
+    },
+    "pews": {
+      "name": "pews", "nouns": ["pew", "bench", "benches"], "at": "nave", "scenery": true,
+      "desc": "Overturned and smashed, as if something very strong passed through in a rage."
+    },
+    "altar": {
+      "name": "high altar", "at": "sanctuary", "scenery": true,
+      "desc": "The altar has been stripped of its cloths and its cross. Gouges in the stone spell out words in a language you don't know.",
+      "on": { "push,pull": "The altar is a solid block of stone. It doesn't budge." }
+    },
+    "statue": {
+      "name": "statue", "nouns": ["virgin", "mary", "niche", "madonna"], "adj": ["stone"], "at": "sanctuary", "scenery": true,
+      "desc": [{ "if": "flag:statue_moved", "text": "The statue has been slid aside on hidden runners.", "else": "A stone statue of the Virgin. Her eyes are cast down - at the floor beneath her feet. The stone around her base is scratched in a curving arc." }],
+      "on": {
+        "push,pull,turn": {
+          "if": "!flag:statue_moved",
+          "do": ["You put your shoulder to the statue and heave. With a grinding of stone it slides aside on hidden runners, revealing a narrow stair leading down into darkness. A warm, foul draught rises from below.", { "set": "statue_moved" }, { "exit": "sanctuary", "dir": "down", "to": "crypt" }],
+          "else": ["It won't move any further."]
+        },
+        "pray": "You kneel before the statue and pray. For a moment, the oppressive air seems to lift."
+      }
+    },
+    "cabinet": {
+      "name": "cabinet", "nouns": ["cupboard", "wardrobe"], "adj": ["tall"], "at": "vestry", "scenery": true, "container": true, "open": false,
+      "desc": [{ "if": "open:cabinet", "text": "A tall oak cabinet, standing open." , "else": "A tall oak cabinet with brass handles. It is closed." }]
+    },
+    "candle": {
+      "name": "beeswax candle", "nouns": ["candle", "light"], "adj": ["beeswax", "wax"], "at": "cabinet",
+      "lightable": true, "lit": false, "lightWith": "tinderbox",
+      "needMsg": "You have nothing to light it with.",
+      "desc": [{ "if": "lit:candle", "text": "A thick beeswax candle, burning with a steady flame.", "else": "A thick beeswax church candle. It is not lit." }],
+      "lightMsg": "You strike the tinderbox. Sparks catch the wick, and the candle burns with a clear, steady flame.",
+      "outMsg": "You pinch out the candle.",
+      "art": [["if", "lit:candle", [["candle", 0, 0, 10, "buff"]], [["candle", 0, 0, 10, "buff", false]]]]
+    },
+    "vestments": {
+      "name": "vestments", "nouns": ["vestment", "pegs"], "at": "vestry", "scenery": true,
+      "desc": "Rotting vestments, eaten through by moths. One plain monk's robe looks wearable."
+    },
+    "robe": {
+      "name": "monk's robe", "nouns": ["robe", "habit", "cowl"], "adj": ["monk's", "brown", "plain"], "at": "vestry", "wearable": true,
+      "here": "A plain monk's robe hangs from a peg.",
+      "desc": "A coarse brown monk's robe with a deep cowl.",
+      "art": [["poly", [-5, 0, 5, 0, 3, -18, -3, -18], "brown", "black"]]
+    },
+    "bell": {
+      "name": "bronze bell", "nouns": ["bell", "rope"], "adj": ["bronze", "great", "bell"], "at": "belltower", "scenery": true,
+      "desc": "A great bronze bell, green with age. Its rope trails to the floor.",
+      "on": {
+        "ring,pull,push,hit,attack": {
+          "if": "!flag:bats_gone",
+          "do": ["You haul on the rope. BOOONG! ... BOOONG! ... The bell's voice rolls out over the monastery like thunder. From somewhere far beneath your feet comes a thin, rising shriek - a thousand bats, fleeing the holy sound out into the night.", { "set": "bats_gone", "score": 5 }],
+          "else": ["The bell tolls again, long and mournful. Nothing else stirs."]
+        }
+      }
+    },
+    "table": {
+      "name": "long table", "nouns": ["table"], "adj": ["oak", "long"], "at": "refectory", "scenery": true, "container": true, "surface": true,
+      "desc": "A long oak table set with pewter plates, stone-hard bread and dried-out wine jugs."
+    },
+    "bread": {
+      "name": "bread", "nouns": ["loaf", "food", "wine", "jugs", "plates"], "at": "refectory", "scenery": true,
+      "desc": "Petrified. You could break a tooth on it.",
+      "on": { "eat,drink": "It has long since turned to stone and dust." }
+    },
+    "chalice": {
+      "name": "silver chalice", "nouns": ["cup", "goblet"], "adj": ["silver"], "at": "table", "points": 5,
+      "desc": "A beautiful silver chalice, chased with grapevines. The only thing of value that wasn't stolen or smashed.",
+      "art": [["poly", [-4, -14, 4, -14, 2, -8, -2, -8], "silver"], ["rect", -1, -8, 2, 6, "silver"], ["rect", -4, -2, 8, 2, "silver"]]
+    },
+    "hearth": {
+      "name": "hearth", "nouns": ["fireplace", "fire", "ashes", "ash"], "at": "kitchen", "scenery": true,
+      "desc": "A cold hearth full of old ash.",
+      "on": { "search": "You sift through the ashes. Nothing but charcoal and the tiny bones of what might have been a cat." }
+    },
+    "tinderbox": {
+      "name": "tinderbox", "nouns": ["box", "flint", "tinder"], "at": "kitchen",
+      "desc": "A small tin tinderbox containing flint, steel and dry tinder.",
+      "art": [["rect", -6, -5, 12, 5, "gray", "black"], ["line", [-6, -3, 6, -3], "black"]]
+    },
+    "flask": {
+      "name": "glass flask", "nouns": ["flask", "bottle", "vial"], "adj": ["glass", "empty"], "at": "kitchen",
+      "desc": "A small stoppered glass flask. It's empty.",
+      "art": [["poly", [-4, 0, 4, 0, 4, -6, 1, -9, 1, -13, -1, -13, -1, -9, -4, -6], "lightgray", "black"]],
+      "on": {
+        "fill,put,dip": {
+          "if": "near:font",
+          "do": ["You fill the flask from the font. The holy water seems to glow faintly in the glass.", { "destroy": "flask", "give": "holy_water" }],
+          "else": ["There's nothing here to fill it with."]
+        }
+      }
+    },
+    "holy_water": {
+      "name": "flask of holy water", "nouns": ["flask", "water", "bottle", "vial"], "adj": ["holy", "glass"], "at": null,
+      "desc": "The flask is full of holy water. It glows faintly.",
+      "art": [["poly", [-4, 0, 4, 0, 4, -6, 1, -9, 1, -13, -1, -13, -1, -9, -4, -6], "cyan", "black"]],
+      "on": {
+        "drink": "That would be a waste of something precious.",
+        "pour,throw,sprinkle": {
+          "if": ["in:sanctum", "!flag:circle_broken"],
+          "do": ["You hurl the holy water across the glowing pentagram. Where it lands the red lines hiss and boil, and the light gutters out. The circle is broken!\n\nThe thing inside SCREAMS - and then the scream becomes laughter. It is no longer bound. It uncoils from the dead circle and turns its burning eyes toward you...", { "set": "circle_broken", "destroy": "holy_water", "score": 15 }, { "give": "flask" }],
+          "else": ["You'd better save the holy water for when it's really needed."]
+        }
+      }
+    },
+    "pallet": {
+      "name": "straw pallet", "nouns": ["pallet", "bed", "straw", "mattress"], "adj": ["straw"], "at": "cells", "scenery": true,
+      "desc": "A slashed straw pallet. Someone was searching for something - or hiding something.",
+      "on": {
+        "search": {
+          "if": "hidden:note",
+          "do": ["Deep in the straw your fingers find a folded scrap of paper.", { "show": "note", "move": "note", "to": "here" }],
+          "else": ["There's nothing else in the straw."]
+        }
+      }
+    },
+    "note": {
+      "name": "scrap of paper", "nouns": ["note", "paper", "scrap"], "adj": ["folded"], "at": "cells", "hidden": true,
+      "desc": "A scrap of paper covered in hurried, shaking handwriting.",
+      "text": "\"They meet below, every night now. The Abbot has gone over to Them. God forgive me, I took his key and gave it to the well - only water may find it now. If any read this: the Thing is bound by the circle. Break the circle and it is free - so have the Words ready. - Br. Anselm\"",
+      "art": [["rect", -5, -2, 10, 3, "buff", "black"]]
+    },
+    "abbot_door": {
+      "name": "oak door", "nouns": ["door", "seal"], "adj": ["oak", "heavy", "abbot's"], "at": ["cells", "abbot"], "scenery": true,
+      "open": false, "locked": true, "key": "iron_key",
+      "desc": "A heavy oak door, sealed with red wax stamped with a mitre.",
+      "unlockMsg": "The iron key turns stiffly in the lock. The wax seal cracks and falls away."
+    },
+    "desk": {
+      "name": "writing desk", "nouns": ["desk"], "adj": ["writing", "abbot's"], "at": "abbot", "scenery": true, "container": true, "surface": true,
+      "desc": "A handsome walnut writing desk."
+    },
+    "tapestry": {
+      "name": "tapestry", "nouns": ["judgment", "damned"], "at": "abbot", "scenery": true,
+      "desc": "The Last Judgment. Christ sits enthroned above, but the artist has lavished all his care on the demons below - and on one in particular, a shape of darkness with burning eyes, crouched in a circle of fire.",
+      "on": { "search,pull": "You look behind the tapestry. Only cold stone." }
+    },
+    "diary": {
+      "name": "leather diary", "nouns": ["diary", "journal", "book"], "adj": ["leather", "abbot's"], "at": "desk",
+      "desc": "The abbot's diary, bound in black leather.",
+      "text": "Most of the entries are in a cramped Latin cipher. The last pages are plain enough:\n\n\"...the Master is pleased. The way down lies beneath Our Lady's feet - she yields to a firm shoulder. The fool Anselm prattles of his Liber Lucis and its Words of Banishing; I have locked it in its case and hidden the little key among the scribes' clutter. Let the bells ring all they like; my winged children guard the passage to the Sanctum. Without the protection of the Holy Rood no man may even approach it...\"",
+      "on": { "read": { "do": [{ "set": "read_diary" }], "continue": true } },
+      "art": [["rect", -6, -4, 12, 4, "darkbrown", "black"]]
+    },
+    "glass_case": {
+      "name": "glass case", "nouns": ["case", "pedestal", "glass"], "adj": ["glass"], "at": "library", "scenery": true, "container": true,
+      "open": false, "locked": true, "key": "small_key", "transparent": true,
+      "desc": "A glass case with a small brass lock, set upon a carved pedestal.",
+      "on": { "break,attack,kick": "The glass is thick, and breaking a reliquary case feels like a very bad idea here." }
+    },
+    "books": {
+      "name": "books", "nouns": ["shelves", "shelf", "bookshelf", "bookshelves"], "adj": ["rotting", "tall"], "at": "library", "scenery": true,
+      "desc": "Psalters, lives of the saints, herbals. Damp has rotted most of them into pulp.",
+      "on": { "read,search": "You leaf through a few. Nothing useful - except that several books on demonology have their pages carefully annotated in the abbot's hand." }
+    },
+    "liber": {
+      "name": "Liber Lucis", "nouns": ["book", "volume", "lucis", "liber"], "adj": ["white", "holy", "leather"], "article": "the", "at": "glass_case", "points": 10,
+      "desc": "The Liber Lucis - the Book of Light - bound in white leather. Its pages glow faintly in the dark.",
+      "text": "One passage is marked with a ribbon:\n\n\"BEGONE, UNCLEAN SPIRIT, BY THE LIGHT THAT WAS BEFORE THE DARKNESS!\"\n\nBeneath it, a monk has written: \"Speak these words before the Beast when it stands unbound. Then give its black book to the flame, or it shall rise again.\"",
+      "art": [["rect", -6, -4, 12, 4, "white", "gray"], ["glow", 0, -2, 10, "white", 0.3]]
+    },
+    "desks": {
+      "name": "desks", "nouns": ["quills", "ink", "pots"], "adj": ["slanted", "writing"], "at": "scriptorium", "scenery": true,
+      "desc": "Slanted writing desks, crusted with old ink. The largest has a drawer."
+    },
+    "drawer": {
+      "name": "drawer", "nouns": ["drawer"], "adj": ["desk"], "at": "scriptorium", "scenery": true, "container": true, "open": false,
+      "desc": "A shallow drawer in the largest desk."
+    },
+    "small_key": {
+      "name": "small brass key", "nouns": ["key"], "adj": ["small", "brass", "little"], "at": "drawer",
+      "desc": "A small, delicate brass key.",
+      "art": [["circle", -3, -2, 2, null, "gold", 1.5], ["line", [-1, -2, 5, -2], "gold", 1.5]]
+    },
+    "coffins": {
+      "name": "coffins", "nouns": ["coffin", "lids", "lid", "abbots"], "adj": ["stone"], "at": "crypt", "scenery": true,
+      "desc": "Stone coffins. The open ones are empty. Scratches mark the inside of the lids.",
+      "on": { "search,open": "You peer into the nearest open coffin. Empty, but for some long scratches on the inside of the lid. You decide not to dwell on it." }
+    },
+    "skulls": {
+      "name": "skulls", "nouns": ["skull", "niches", "bones", "bone", "thighbones"], "at": ["catacombs", "ossuary"], "scenery": true,
+      "desc": "Hundreds of them, staring. You could swear some of them turn to follow you."
+    },
+    "reliquary": {
+      "name": "golden reliquary", "nouns": ["reliquary", "box", "casket"], "adj": ["golden", "gold"], "at": "ossuary", "points": 5,
+      "here": "In a niche sits a golden reliquary.",
+      "desc": "A small golden reliquary set with garnets. Inside, a fingerbone wrapped in silk - the relic of St. Hilarion himself.",
+      "art": [["rect", -6, -8, 12, 8, "gold", "darkbrown"], ["poly", [-6, -8, 6, -8, 0, -13], "gold", "darkbrown"], ["circle", 0, -4, 1.5, "red"]]
+    },
+    "grimoire": {
+      "name": "black grimoire", "nouns": ["grimoire", "book", "tome"], "adj": ["black", "skin", "unholy"], "at": "sanctum", "scenery": true,
+      "fixedMsg": "As your fingers approach it, the book's cover ripples like flesh. You snatch your hand back.",
+      "desc": "A thick book bound in pale, stitched skin. The air above it shimmers like heat over a road.",
+      "text": "You can't bring yourself to read it."
+    },
+    "pentagram": {
+      "name": "pentagram", "nouns": ["circle", "star", "floor", "lines"], "adj": ["great", "glowing"], "at": "sanctum", "scenery": true,
+      "desc": [{ "if": "!flag:circle_broken", "text": "Deep grooves cut into the floor, glowing a sullen red. The air above it is foul and heavy. Whatever is inside cannot cross the lines - but nothing outside can reach it either.", "else": "A broken, smoking pattern of grooves." }],
+      "on": { "enter,touch,go": "You step toward the circle and the darkness inside lunges - stopping just at the line. Not a good idea." }
+    },
+    "demon": {
+      "name": "demon", "nouns": ["thing", "darkness", "beast", "eyes", "shape", "creature"], "adj": ["dark"], "at": "sanctum", "scenery": true,
+      "desc": [{ "if": "!flag:circle_broken", "text": "A shape of living darkness, twice your height. Two eyes like coals regard you with hungry patience. It is bound within the circle - for now.", "else": "The darkness looms over you, unbound, eyes burning." }],
+      "on": {
+        "attack": "You might as well attack the night sky."
+      }
+    },
+    "inverted_cross": {
+      "name": "inverted cross", "nouns": ["cross", "candles", "candle", "stands"], "adj": ["inverted", "black", "iron"], "at": "sanctum", "scenery": true,
+      "desc": "A cross hung upside-down above the black altar, ringed by black candles."
+    },
+    "black_altar": {
+      "name": "black altar", "nouns": ["altar"], "adj": ["black"], "at": "sanctum", "scenery": true,
+      "desc": "A slab of polished black stone. The skin-bound grimoire lies upon it."
+    }
+  },
+
+  "actions": [
+    { "verb": "dig", "room": "cemetery", "if": ["has:shovel", "!flag:dug"],
+      "do": ["You set the shovel to the soft earth of the nameless grave. A foot down, the blade rings on something metal. You brush away the soil: Brother Anselm lies here, and clasped in his bony hands is a silver crucifix. You whisper an apology and gently free it.", { "set": "dug", "show": "crucifix" }],
+      "else": [{ "if": "flag:dug", "then": "You've dug enough here.", "else": "You claw at the earth with your fingers. It's hopeless without a proper tool." }] },
+    { "verb": "fill", "noun": ["font", "water"], "noun2": "flask", "do": [{ "if": "has:flask", "then": ["You fill the flask from the font. The holy water seems to glow faintly in the glass.", { "destroy": "flask", "give": "holy_water" }], "else": "You have nothing to put the water in." }] },
+    { "verb": "put", "noun": ["water", "font"], "noun2": "flask", "do": [{ "if": "has:flask", "then": ["You fill the flask from the font.", { "destroy": "flask", "give": "holy_water" }], "else": "You have nothing to put the water in." }] },
+    { "verb": "take", "noun": ["water", "font"], "room": "nave", "do": [{ "if": "has:flask", "then": ["You fill the flask from the font. The holy water seems to glow faintly in the glass.", { "destroy": "flask", "give": "holy_water" }], "else": "You'll need something to carry the water in." }] },
+    { "verb": "read", "noun": "liber", "room": "sanctum",
+      "if": ["flag:circle_broken", "!flag:banished"],
+      "do": ["You raise the Liber Lucis, and your voice rings out against the stone:\n\n\"BEGONE, UNCLEAN SPIRIT, BY THE LIGHT THAT WAS BEFORE THE DARKNESS!\"\n\nThe pages blaze with white fire. The demon shrieks - a sound like tearing iron - and its body unravels into smoke that is sucked down into the broken pentagram. The black candles gutter out one by one. It is gone.\n\nOnly the black grimoire remains on the altar, pulsing faintly, as if with a heartbeat...", { "set": "banished", "score": 20 }] },
+    { "verb": "read", "noun": "liber", "room": "sanctum", "if": "!flag:circle_broken",
+      "do": "You read the holy words aloud, but they break against the glowing circle like waves on a rock. The circle that binds the demon also shields it. The thing inside chuckles." },
+    { "verb": "say", "noun": ["begone", "unclean", "spirit", "light"], "room": "sanctum", "if": ["has:liber", "flag:circle_broken", "!flag:banished"],
+      "do": ["You speak the Words of Banishing from the Liber Lucis. The pages blaze with white fire. The demon shrieks and unravels into smoke, sucked down into the broken pentagram. The black candles gutter out. It is gone.\n\nOnly the black grimoire remains on the altar, pulsing faintly, as if with a heartbeat...", { "set": "banished", "score": 20 }] },
+    { "verb": "light", "noun": "grimoire", "room": "sanctum",
+      "if": ["flag:banished", "has:candle", "lit:candle"],
+      "do": ["You touch the candle flame to the corner of the grimoire. For a moment nothing happens - then the skin cover curls and blackens, and the book erupts in a roaring column of white fire that reaches to the vault. Voices scream from its pages as they burn, dozens of them, then hundreds, then silence.\n\nWhen the fire dies there is only a little grey ash, and the faint, clean smell of beeswax.\n\nYou climb back up through the crypt and out into the chapel. Through the shattered rose window, the first light of dawn is breaking over St. Hilarion's. Somewhere, a bird begins to sing.", { "score": 25 }, { "win": "The monastery is cleansed." }],
+      "else": [{ "if": "!flag:banished", "then": "As the flame nears the book, the demon's will snuffs it out like a breath. Not while its master stands.", "else": "You need a lit flame to burn it." }] },
+    { "verb": "take,read,open,touch", "noun": "grimoire", "if": "!flag:banished",
+      "do": [{ "die": "Your fingers brush the grimoire's skin cover - and it is warm, and it MOVES. The pages fly open and a voice speaks your true name from inside them. You feel your soul pulled out through your eyes like thread through a needle.\n\nThe brothers of St. Hilarion's have a new novice." }] },
+    { "verb": "take,read,open,touch", "noun": "grimoire", "if": "flag:banished", "do": "Even with its master gone, you won't touch that thing with your bare hands. Better to burn it." },
+    { "verb": "pray", "room": "sanctum", "if": "!flag:banished", "do": "You pray. The demon laughs at you, but the laughter is a little less certain than before." },
+    { "verb": "pray", "if": "has:crucifix", "do": "You grip the crucifix and pray. Warmth spreads from the silver into your hand." },
+    { "verb": "wear", "noun": "robe", "room": "sanctum", "do": ["You pull on the robe. The demon is not fooled.", { "prop": "robe", "key": "worn", "value": true }, { "give": "robe" }] },
+    { "verb": "xyzzy,plugh", "do": "A distant bell tolls once. Wrong game, pilgrim." },
+    { "verb": "show,wave", "noun": "crucifix", "room": "sanctum", "do": "You hold the crucifix high. The demon recoils, hissing - but it does not leave." }
+  ],
+
+  "events": [
+    { "if": ["in:sanctum", "flag:circle_broken", "!flag:banished"],
+      "do": [{ "var": "demon", "add": 1 },
+        { "if": "var:demon>=3",
+          "then": [{ "die": "The darkness closes around you like a fist. The last thing you see are the two burning eyes, very close now, and very amused." }],
+          "else": [{ "if": "var:demon==1", "then": "The demon drifts out of the broken circle toward you. You haven't much time!", "else": "The demon is nearly upon you! Its breath is cold as the grave." }] }] },
+    { "if": "dark", "do": [{ "var": "darkturns", "add": 1 }, { "if": "var:darkturns>=4", "then": [{ "die": "In the blackness something cold and bony closes around your ankle and pulls. You fall, and hands - so many hands - drag you down among the bones." }], "else": [{ "if": "var:darkturns==2", "then": "Something skitters through the bones nearby. You'd better find some light." }] }] },
+    { "if": "!dark", "do": [{ "var": "darkturns", "value": 0 }] }
+  ]
+}

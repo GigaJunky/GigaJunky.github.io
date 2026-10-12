@@ -1,0 +1,117 @@
+go cabin
+open door
+go door
+look mantle
+get matches
+get wine
+get net
+go stairs
+look woman
+get note
+read note
+drop note
+get sheet
+go closet
+get robe
+go mirror
+s
+read plaque
+e
+n
+look bookcases
+look bookcases
+look bookcases
+get parchment
+get manuscript
+read manuscript
+drop manuscript
+s
+s
+e
+get jug
+w
+s
+go stairs
+get keys
+give wine to man
+get keys
+get saw
+get shears
+d
+n
+n
+w
+unlock door with keys
+open door
+go door
+play organ
+play fugue
+drop keys
+drop parchment
+go passage
+get raven
+get raven
+get feather
+drop raven
+get salt
+drop net
+go passage
+go door
+w
+s
+listen
+s
+e
+get lantern
+light lantern
+w
+n
+n
+e
+n
+go mirror
+out
+cut hair
+drop shears
+d
+get snow
+w
+w
+get needles
+i
+go cabin
+go door
+go stairs
+go closet
+go mirror
+s
+go door
+go passage
+go vent
+n
+open coffin
+listen
+build altar
+drop all
+get hammer
+get lantern
+s
+go vent
+go passage
+go door
+w
+s
+s
+e
+pull nails
+get boards
+get nails
+go door
+n
+drop all
+build altar
+get ashes
+s
+go vent
+throw ashes
+invocare episcopus

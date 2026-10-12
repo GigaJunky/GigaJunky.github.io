@@ -1,0 +1,33 @@
+enter building
+take lamp
+take keys
+light lamp
+xyzzy
+xyzzy
+extinguish lamp
+out
+s
+downstream
+s
+unlock grate
+open grate
+d
+w
+take cage
+w
+light lamp
+read note
+w
+w
+take bird
+w
+d
+s
+take nugget
+n
+u
+d
+drop bird
+n
+plugh
+drop nugget

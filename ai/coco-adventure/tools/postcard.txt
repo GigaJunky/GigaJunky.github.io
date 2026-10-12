@@ -1,0 +1,9 @@
+take stamp
+put stamp on card
+e
+take stamp
+put austrian stamp on card
+n
+take stamp
+put german stamp on card
+post card

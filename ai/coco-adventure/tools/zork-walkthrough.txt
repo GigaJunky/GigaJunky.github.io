@@ -1,0 +1,56 @@
+open mailbox
+read leaflet
+n
+n
+u
+get egg
+d
+s
+e
+open window
+w
+take all
+w
+take lamp
+take sword
+open case
+put egg in case
+move rug
+open trap door
+turn on lamp
+d
+n
+kill troll with sword
+kill troll with sword
+kill troll with sword
+kill troll with sword
+w
+n
+take coins
+take key
+s
+w
+ne
+unlock grating with key
+open grating
+u
+s
+s
+e
+w
+w
+put coins in case
+drop sack
+drop bottle
+move rug
+open trap door
+d
+s
+e
+take painting
+n
+drop sword
+drop key
+u
+w
+put painting in case

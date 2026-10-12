@@ -1,0 +1,66 @@
+open gate
+n
+read notice
+n
+turn crank
+look in bucket
+get key
+w
+w
+get shovel
+e
+n
+dig grave
+get crucifix
+drop shovel
+s
+e
+e
+n
+get chalice
+e
+get tinderbox
+get flask
+w
+s
+e
+search pallet
+read note
+unlock door with key
+open door
+n
+read diary
+s
+w
+s
+u
+open drawer
+get key
+d
+unlock case with brass key
+open case
+get book
+n
+w
+n
+fill flask
+e
+open cabinet
+get candle
+w
+u
+ring bell
+d
+n
+push statue
+light candle
+d
+n
+e
+get reliquary
+w
+n
+x demon
+pour water on pentagram
+read book
+burn grimoire

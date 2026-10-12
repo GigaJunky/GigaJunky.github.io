@@ -1,0 +1,51 @@
+{
+  "format": "gta-1",
+  "id": "postcard-tour",
+  "title": "THE POSTCARD TOUR",
+  "author": "A tiny demo of rooms drawn from image URLs (photos from Wikimedia Commons)",
+  "theme": "paper",
+  "maxScore": 15,
+  "start": "stonehenge",
+  "overlayItems": false,
+  "intro": "A short demo: every room here uses a photograph loaded from a URL instead of vector art. If a picture can't load, the room's vector \"art\" is drawn instead.\n\nYour aunt has sent you on a postcard tour of Europe. Find the three stamps and post your card from the castle.",
+  "help": "Try LOOK, TAKE STAMP, EXAMINE STONES, and the directions N/S/E/W. PUT STAMP ON CARD, then POST CARD at the castle.",
+  "rooms": {
+    "stonehenge": {
+      "name": "Stonehenge",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Stonehenge2007_07_30.jpg?width=640",
+      "desc": "Great grey sarsen stones stand in a ring on Salisbury Plain, as they have for some five thousand years. A road leads east - to a ferry, and the continent.",
+      "exits": { "east": "hallstatt" },
+      "art": [["gradient", 0, 120, "sky", "white"], ["ground", 120, "grass"], ["rect", 60, 70, 18, 60, "stone", "black"], ["rect", 100, 66, 18, 64, "stone", "black"], ["rect", 56, 62, 66, 10, "stone", "black"], ["rect", 150, 72, 18, 58, "stone", "black"], ["rect", 190, 76, 16, 54, "stone", "black"], ["rect", 146, 66, 64, 10, "stone", "black"]]
+    },
+    "hallstatt": {
+      "name": "Hallstatt",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Hallstatt_300.jpg?width=640",
+      "desc": "A tiny Austrian village clings to the shore of a mirror-still lake beneath wooded mountains. A church spire rises above the rooftops. Roads lead west and north.",
+      "exits": { "west": "stonehenge", "north": "castle" },
+      "art": [["gradient", 0, 100, "sky", "white"], ["mountains", 110, "darkgreen", 5, 70], ["water", 130, "water"], ["house", 40, 130, 30, 24, "white", "darkred"], ["house", 90, 130, 26, 20, "buff", "brown"], ["rect", 150, 70, 10, 60, "white", "black"], ["poly", [148, 70, 162, 70, 155, 46], "darkgreen", "black"]]
+    },
+    "castle": {
+      "name": "Neuschwanstein",
+      "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Neuschwanstein_Castle_LOC_print.jpg?width=640",
+      "desc": "A fairy-tale castle of white stone and slender towers perches on a crag above a gorge. Beside the gate is a bright yellow postbox. The road leads south.",
+      "exits": { "south": "hallstatt" },
+      "art": [["gradient", 0, 120, "sky", "white"], ["mountains", 120, "darkgreen", 9, 40], ["rect", 100, 50, 60, 70, "white", "black"], ["rect", 90, 30, 14, 90, "white", "black"], ["poly", [88, 30, 106, 30, 97, 10], "navy"], ["rect", 156, 40, 12, 80, "white", "black"], ["poly", [154, 40, 170, 40, 162, 20], "navy"], ["rect", 200, 150, 14, 24, "yellow", "black"]]
+    }
+  },
+  "items": {
+    "card": { "name": "postcard", "nouns": ["card", "postcard"], "at": "player", "container": true, "surface": true, "desc": "A picture postcard addressed to your aunt. It needs three stamps." },
+    "stamp1": { "name": "British stamp", "nouns": ["stamp"], "adj": ["british", "red"], "at": "stonehenge", "here": "A red British stamp is caught in the grass at the foot of a stone.", "points": 5 },
+    "stamp2": { "name": "Austrian stamp", "nouns": ["stamp"], "adj": ["austrian", "blue"], "at": "hallstatt", "here": "A blue Austrian stamp flutters on the jetty.", "points": 5 },
+    "stamp3": { "name": "German stamp", "nouns": ["stamp"], "adj": ["german", "green"], "at": "castle", "here": "A green German stamp lies by the castle gate.", "points": 5 },
+    "stones": { "name": "stones", "nouns": ["stones", "stone", "sarsens", "ring"], "at": "stonehenge", "scenery": true, "desc": "Lichen-spotted sarsens, some capped with lintels. Nobody is quite sure why they were built." },
+    "lake": { "name": "lake", "nouns": ["lake", "water", "village", "spire", "church"], "at": "hallstatt", "scenery": true, "desc": "The lake is so still the village appears twice." },
+    "postbox": { "name": "postbox", "nouns": ["postbox", "mailbox", "box"], "adj": ["yellow"], "at": "castle", "scenery": true, "desc": "A bright yellow Deutsche Post box." }
+  },
+  "actions": [
+    { "verb": "post,mail,send,put", "noun": "card", "room": "castle",
+      "if": ["at:stamp1:card", "at:stamp2:card", "at:stamp3:card"],
+      "do": [{ "destroy": "card" }, { "win": "You drop the postcard into the yellow box. Somewhere, an aunt will be very pleased. That's the end of this little demo - now try loading any adventure JSON from a URL!" }],
+      "else": "The card needs all three stamps on it first. (PUT STAMP ON CARD)" },
+    { "verb": "post,mail,send", "noun": "card", "do": "You'll need a postbox." }
+  ]
+}

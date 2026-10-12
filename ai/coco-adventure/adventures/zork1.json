@@ -1,0 +1,3302 @@
+{
+ "format": "gta-1",
+ "id": "zork1-slice",
+ "title": "ZORK I: The Great Underground Empire",
+ "author": "Infocom (1980). Zork I is open source under the MIT License (Microsoft, 2025). This is an illustrated excerpt: the house, the forest, and the first caves.",
+ "theme": "infocom",
+ "maxScore": 70,
+ "start": "west_of_house",
+ "intro": "ZORK I: The Great Underground Empire\nCopyright (c) 1981, 1982, 1983 Infocom, Inc. All rights reserved.\nZORK is a registered trademark of Infocom, Inc.\n\n[This excerpt holds three treasures. Put all three in the trophy case to win.]",
+ "help": "Type commands like OPEN MAILBOX, READ LEAFLET, GO NORTH (N), TAKE LAMP, TURN ON LAMP, MOVE RUG, OPEN TRAP DOOR, KILL TROLL WITH SWORD, PUT EGG IN CASE. Don't wander around in the dark - you are likely to be eaten by a grue.",
+ "ranks": [
+  [
+   0,
+   "Beginner"
+  ],
+  [
+   25,
+   "Amateur Adventurer"
+  ],
+  [
+   45,
+   "Novice Adventurer"
+  ],
+  [
+   60,
+   "Junior Adventurer"
+  ],
+  [
+   70,
+   "Adventurer"
+  ]
+ ],
+ "messages": {
+  "dark": "It is pitch black. You are likely to be eaten by a grue.",
+  "noExit": "You can't go that way.",
+  "won": "*** You have won (this excerpt of ZORK I) ***"
+ },
+ "artLib": {
+  "day": [
+   [
+    "gradient",
+    0,
+    110,
+    "sky",
+    "cyan"
+   ],
+   [
+    "circle",
+    220,
+    26,
+    12,
+    "yellow"
+   ],
+   [
+    "ground",
+    110,
+    "grass"
+   ]
+  ],
+  "whitehouse": [
+   [
+    "rect",
+    70,
+    50,
+    116,
+    64,
+    "white",
+    "black"
+   ],
+   [
+    "poly",
+    [
+     62,
+     50,
+     194,
+     50,
+     160,
+     22,
+     96,
+     22
+    ],
+    "darkred",
+    "black"
+   ],
+   [
+    "rect",
+    150,
+    10,
+    12,
+    18,
+    "darkred",
+    "black"
+   ]
+  ],
+  "boards": [
+   [
+    "line",
+    [
+     86,
+     66,
+     106,
+     76
+    ],
+    "brown",
+    3
+   ],
+   [
+    "line",
+    [
+     150,
+     66,
+     170,
+     76
+    ],
+    "brown",
+    3
+   ],
+   [
+    "line",
+    [
+     86,
+     76,
+     106,
+     66
+    ],
+    "brown",
+    3
+   ],
+   [
+    "line",
+    [
+     150,
+     76,
+     170,
+     66
+    ],
+    "brown",
+    3
+   ]
+  ],
+  "trees": [
+   [
+    "forest",
+    112,
+    "darkgreen",
+    11,
+    8
+   ]
+  ]
+ },
+ "rooms": {
+  "west_of_house": {
+   "name": "West of House",
+   "desc": "You are standing in an open field west of a white house, with a boarded front door.",
+   "exits": {
+    "north": "north_of_house",
+    "south": "south_of_house",
+    "west": "forest_w",
+    "east": {
+     "msg": "The door is boarded and you can't remove the boards."
+    },
+    "northeast": "north_of_house",
+    "southeast": "south_of_house"
+   },
+   "art": [
+    [
+     "use",
+     "day"
+    ],
+    [
+     "use",
+     "trees"
+    ],
+    [
+     "use",
+     "whitehouse"
+    ],
+    [
+     "rect",
+     116,
+     74,
+     24,
+     40,
+     "wood",
+     "black"
+    ],
+    [
+     "line",
+     [
+      112,
+      82,
+      144,
+      90
+     ],
+     "brown",
+     4
+    ],
+    [
+     "line",
+     [
+      112,
+      100,
+      144,
+      92
+     ],
+     "brown",
+     4
+    ],
+    [
+     "rect",
+     84,
+     66,
+     22,
+     14,
+     "navy",
+     "black"
+    ],
+    [
+     "rect",
+     150,
+     66,
+     22,
+     14,
+     "navy",
+     "black"
+    ],
+    [
+     "rect",
+     36,
+     140,
+     4,
+     30,
+     "darkgray"
+    ],
+    [
+     "rect",
+     26,
+     128,
+     26,
+     14,
+     "white",
+     "black"
+    ],
+    [
+     "rect",
+     50,
+     124,
+     3,
+     8,
+     "red"
+    ]
+   ]
+  },
+  "north_of_house": {
+   "name": "North of House",
+   "desc": "You are facing the north side of a white house. There is no door here, and all the windows are boarded up. To the north a narrow path winds through the trees.",
+   "exits": {
+    "west": "west_of_house",
+    "east": "behind_house",
+    "north": "forest_path",
+    "southwest": "west_of_house",
+    "southeast": "behind_house",
+    "south": {
+     "msg": "The windows are all boarded."
+    }
+   },
+   "art": [
+    [
+     "use",
+     "day"
+    ],
+    [
+     "use",
+     "trees"
+    ],
+    [
+     "use",
+     "whitehouse"
+    ],
+    [
+     "rect",
+     84,
+     66,
+     22,
+     14,
+     "navy",
+     "black"
+    ],
+    [
+     "rect",
+     150,
+     66,
+     22,
+     14,
+     "navy",
+     "black"
+    ],
+    [
+     "use",
+     "boards"
+    ],
+    [
+     "path",
+     "tan",
+     112,
+     30,
+     8
+    ]
+   ]
+  },
+  "south_of_house": {
+   "name": "South of House",
+   "desc": "You are facing the south side of a white house. There is no door here, and all the windows are boarded.",
+   "exits": {
+    "west": "west_of_house",
+    "east": "behind_house",
+    "south": "forest_s",
+    "northwest": "west_of_house",
+    "northeast": "behind_house",
+    "north": {
+     "msg": "The windows are all boarded."
+    }
+   },
+   "art": [
+    [
+     "use",
+     "day"
+    ],
+    [
+     "use",
+     "trees"
+    ],
+    [
+     "use",
+     "whitehouse"
+    ],
+    [
+     "rect",
+     84,
+     66,
+     22,
+     14,
+     "navy",
+     "black"
+    ],
+    [
+     "rect",
+     150,
+     66,
+     22,
+     14,
+     "navy",
+     "black"
+    ],
+    [
+     "use",
+     "boards"
+    ]
+   ]
+  },
+  "behind_house": {
+   "name": "Behind House",
+   "desc": [
+    "You are behind the white house. A path leads into the forest to the east. In one corner of the house there is a small window which is",
+    {
+     "if": "open:window",
+     "text": "open.",
+     "else": "slightly ajar."
+    }
+   ],
+   "exits": {
+    "north": "north_of_house",
+    "south": "south_of_house",
+    "east": "clearing_e",
+    "northwest": "north_of_house",
+    "southwest": "south_of_house",
+    "west": {
+     "to": "kitchen",
+     "door": "window"
+    },
+    "in": {
+     "to": "kitchen",
+     "door": "window"
+    }
+   },
+   "art": [
+    [
+     "use",
+     "day"
+    ],
+    [
+     "use",
+     "trees"
+    ],
+    [
+     "use",
+     "whitehouse"
+    ],
+    [
+     "if",
+     "open:window",
+     [
+      [
+       "rect",
+       160,
+       64,
+       20,
+       18,
+       "black",
+       "white"
+      ]
+     ],
+     [
+      [
+       "rect",
+       160,
+       64,
+       20,
+       18,
+       "navy",
+       "white"
+      ],
+      [
+       "line",
+       [
+        160,
+        66,
+        180,
+        66
+       ],
+       "black"
+      ]
+     ]
+    ],
+    [
+     "path",
+     "tan",
+     112,
+     50,
+     6
+    ]
+   ]
+  },
+  "kitchen": {
+   "name": "Kitchen",
+   "desc": [
+    "You are in the kitchen of the white house. A table seems to have been used recently for the preparation of food. A passage leads to the west and a dark staircase can be seen leading upward. A dark chimney leads down and to the east is a small window which is",
+    {
+     "if": "open:window",
+     "text": "open.",
+     "else": "slightly ajar."
+    }
+   ],
+   "exits": {
+    "west": "living_room",
+    "up": "attic",
+    "east": {
+     "to": "behind_house",
+     "door": "window"
+    },
+    "out": {
+     "to": "behind_house",
+     "door": "window"
+    },
+    "down": {
+     "msg": "Only Santa Claus climbs down chimneys."
+    }
+   },
+   "onEnter": [
+    {
+     "if": "first",
+     "do": [
+      {
+       "score": 10
+      }
+     ]
+    },
+    {
+     "if": "flag:trap_barred",
+     "do": [
+      {
+       "unset": "trap_barred"
+      }
+     ]
+    }
+   ],
+   "art": [
+    [
+     "room",
+     "buff",
+     "brown",
+     "lightgray",
+     "black"
+    ],
+    [
+     "window",
+     "right",
+     0.5,
+     0.6,
+     "sky",
+     "black",
+     0.3,
+     0.3
+    ],
+    [
+     "stairs",
+     "up",
+     "darkbrown",
+     0.35,
+     "left"
+    ],
+    [
+     "rect",
+     106,
+     86,
+     44,
+     42,
+     "darkgray",
+     "black"
+    ],
+    [
+     "rect",
+     112,
+     94,
+     32,
+     34,
+     "black"
+    ],
+    [
+     "door",
+     "left",
+     0.75,
+     "brown",
+     true,
+     0.18
+    ],
+    [
+     "table",
+     86,
+     150,
+     84,
+     26,
+     "wood"
+    ]
+   ]
+  },
+  "living_room": {
+   "name": "Living Room",
+   "desc": [
+    "You are in the living room. There is a doorway to the east, a wooden door with strange gothic lettering to the west, which appears to be nailed shut, a trophy case,",
+    {
+     "if": "!flag:rug_moved",
+     "text": "and a large oriental rug in the center of the room."
+    },
+    {
+     "if": [
+      "flag:rug_moved",
+      "!open:trap_door"
+     ],
+     "text": "and a closed trap door at your feet."
+    },
+    {
+     "if": [
+      "flag:rug_moved",
+      "open:trap_door"
+     ],
+     "text": "and a rug lying beside an open trap door."
+    }
+   ],
+   "exits": {
+    "east": "kitchen",
+    "west": {
+     "msg": "The door is nailed shut."
+    }
+   },
+   "art": [
+    [
+     "room",
+     "tan",
+     "wood",
+     "buff",
+     "black"
+    ],
+    [
+     "door",
+     "back",
+     0.5,
+     "darkbrown"
+    ],
+    [
+     "text",
+     114,
+     70,
+     "GNUSTO",
+     "gold",
+     6
+    ],
+    [
+     "arch",
+     "right",
+     0.5,
+     "black",
+     "brown",
+     0.3,
+     0.6
+    ],
+    [
+     "wall",
+     "left",
+     0.25,
+     0.7,
+     0.05,
+     0.6,
+     "darkbrown",
+     "black"
+    ],
+    [
+     "wall",
+     "left",
+     0.3,
+     0.65,
+     0.15,
+     0.55,
+     "lightgray",
+     "black"
+    ],
+    [
+     "if",
+     "!flag:rug_moved",
+     [
+      [
+       "dpoly",
+       [
+        [
+         70,
+         182
+        ],
+        [
+         186,
+         182
+        ],
+        [
+         168,
+         142
+        ],
+        [
+         88,
+         142
+        ]
+       ],
+       "darkred",
+       "gold"
+      ],
+      [
+       "poly",
+       [
+        [
+         70,
+         182
+        ],
+        [
+         186,
+         182
+        ],
+        [
+         168,
+         142
+        ],
+        [
+         88,
+         142
+        ]
+       ],
+       null,
+       "gold"
+      ]
+     ],
+     [
+      [
+       "dpoly",
+       [
+        [
+         160,
+         186
+        ],
+        [
+         240,
+         186
+        ],
+        [
+         214,
+         150
+        ],
+        [
+         168,
+         150
+        ]
+       ],
+       "darkred",
+       "gold"
+      ],
+      [
+       "if",
+       "open:trap_door",
+       [
+        [
+         "poly",
+         [
+          [
+           90,
+           176
+          ],
+          [
+           150,
+           176
+          ],
+          [
+           142,
+           148
+          ],
+          [
+           98,
+           148
+          ]
+         ],
+         "black",
+         "gray"
+        ],
+        [
+         "poly",
+         [
+          [
+           98,
+           148
+          ],
+          [
+           142,
+           148
+          ],
+          [
+           148,
+           112
+          ],
+          [
+           92,
+           112
+          ]
+         ],
+         "wood",
+         "black"
+        ]
+       ],
+       [
+        [
+         "poly",
+         [
+          [
+           90,
+           176
+          ],
+          [
+           150,
+           176
+          ],
+          [
+           142,
+           148
+          ],
+          [
+           98,
+           148
+          ]
+         ],
+         "wood",
+         "black"
+        ],
+        [
+         "rect",
+         118,
+         168,
+         6,
+         2,
+         "gray"
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  },
+  "attic": {
+   "name": "Attic",
+   "dark": true,
+   "desc": "This is the attic. The only exit is a stairway leading down.",
+   "exits": {
+    "down": "kitchen"
+   },
+   "art": [
+    [
+     "bg",
+     "darkbrown"
+    ],
+    [
+     "poly",
+     [
+      0,
+      0,
+      256,
+      0,
+      256,
+      60,
+      128,
+      110,
+      0,
+      60
+     ],
+     "wood",
+     "black"
+    ],
+    [
+     "line",
+     [
+      0,
+      60,
+      128,
+      110,
+      256,
+      60
+     ],
+     "black",
+     2
+    ],
+    [
+     "poly",
+     [
+      0,
+      192,
+      256,
+      192,
+      200,
+      130,
+      56,
+      130
+     ],
+     "brown",
+     "black"
+    ],
+    [
+     "stairs",
+     "down",
+     "gray",
+     0.2
+    ],
+    [
+     "table",
+     150,
+     130,
+     60,
+     20,
+     "darkbrown"
+    ]
+   ]
+  },
+  "cellar": {
+   "name": "Cellar",
+   "dark": true,
+   "desc": "You are in a dark and damp cellar with a narrow passageway leading north, and a crawlway to the south. On the west is the bottom of a steep metal ramp which is unclimbable.",
+   "exits": {
+    "north": "troll_room",
+    "south": "east_of_chasm",
+    "up": {
+     "to": "living_room",
+     "door": "trap_door",
+     "if": "!flag:trap_barred",
+     "msg": "The trap door is closed."
+    },
+    "west": {
+     "msg": "You try to ascend the ramp, but it is impossible, and you slide back down."
+    }
+   },
+   "onEnter": [
+    {
+     "if": "first",
+     "do": [
+      {
+       "score": 25
+      }
+     ]
+    },
+    {
+     "if": [
+      "has:sword",
+      "!flag:troll_dead"
+     ],
+     "do": [
+      "Your sword is glowing with a faint blue glow."
+     ]
+    }
+   ],
+   "art": [
+    [
+     "room",
+     "darkstone",
+     "darkstone",
+     "black",
+     "black"
+    ],
+    [
+     "arch",
+     "back",
+     0.5,
+     "black",
+     "stone",
+     0.25,
+     0.5
+    ],
+    [
+     "poly",
+     [
+      0,
+      40,
+      60,
+      110,
+      60,
+      140,
+      0,
+      192
+     ],
+     "gray",
+     "black"
+    ],
+    [
+     "line",
+     [
+      0,
+      60,
+      60,
+      120
+     ],
+     "lightgray"
+    ],
+    [
+     "wall",
+     "ceiling",
+     0.4,
+     0.6,
+     0.3,
+     0.6,
+     "wood",
+     "black"
+    ],
+    [
+     "poly",
+     [
+      100,
+      192,
+      156,
+      192,
+      146,
+      176,
+      110,
+      176
+     ],
+     "black"
+    ]
+   ]
+  },
+  "troll_room": {
+   "name": "The Troll Room",
+   "dark": true,
+   "desc": "This is a small room with passages to the east and south and a forbidding hole leading west. Bloodstains and deep scratches (perhaps made by an axe) mar the walls.",
+   "exits": {
+    "south": "cellar",
+    "west": {
+     "to": "maze_1",
+     "if": "flag:troll_dead",
+     "msg": "The troll fends you off with a menacing gesture."
+    },
+    "east": {
+     "to": "ew_passage",
+     "if": "flag:troll_dead",
+     "msg": "The troll fends you off with a menacing gesture."
+    }
+   },
+   "onEnter": [
+    {
+     "if": [
+      "!flag:troll_dead",
+      "has:sword"
+     ],
+     "do": [
+      "Your sword has begun to glow very brightly."
+     ]
+    }
+   ],
+   "art": [
+    [
+     "cave",
+     "darkstone",
+     "black",
+     "stone",
+     31
+    ],
+    [
+     "line",
+     [
+      30,
+      60,
+      40,
+      90,
+      34,
+      110
+     ],
+     "darkred",
+     3
+    ],
+    [
+     "line",
+     [
+      220,
+      70,
+      214,
+      96
+     ],
+     "darkred",
+     3
+    ],
+    [
+     "line",
+     [
+      200,
+      50,
+      230,
+      60
+     ],
+     "darkred",
+     2
+    ],
+    [
+     "line",
+     [
+      44,
+      120,
+      60,
+      116
+     ],
+     "darkred",
+     2
+    ]
+   ]
+  },
+  "ew_passage": {
+   "name": "East-West Passage",
+   "dark": true,
+   "desc": "This is a narrow east-west passageway. There is a narrow stairway leading down at the north end of the room. [The rest of the Great Underground Empire lies beyond this excerpt.]",
+   "exits": {
+    "west": "troll_room",
+    "east": {
+     "msg": "Rubble blocks the way. (The full ZORK I continues from here.)"
+    },
+    "down": {
+     "msg": "The stairway is choked with debris. (The full ZORK I continues from here.)"
+    },
+    "north": {
+     "msg": "The stairway is choked with debris. (The full ZORK I continues from here.)"
+    }
+   },
+   "art": [
+    [
+     "tunnel",
+     "stone",
+     7
+    ]
+   ]
+  },
+  "east_of_chasm": {
+   "name": "East of Chasm",
+   "dark": true,
+   "desc": "You are on the east edge of a chasm, the bottom of which cannot be seen. A narrow passage goes north, and the path you are on continues to the east.",
+   "exits": {
+    "north": "cellar",
+    "east": "gallery",
+    "down": {
+     "msg": "The chasm probably leads straight to the infernal regions."
+    },
+    "west": {
+     "msg": "The chasm probably leads straight to the infernal regions."
+    }
+   },
+   "art": [
+    [
+     "bg",
+     "darkstone"
+    ],
+    [
+     "dither",
+     0,
+     0,
+     256,
+     192,
+     "darkstone",
+     "black",
+     "sparse"
+    ],
+    [
+     "poly",
+     [
+      0,
+      192,
+      0,
+      60,
+      60,
+      70,
+      100,
+      192
+     ],
+     "black"
+    ],
+    [
+     "poly",
+     [
+      100,
+      192,
+      60,
+      70,
+      140,
+      80,
+      256,
+      120,
+      256,
+      192
+     ],
+     "stone",
+     "black"
+    ]
+   ]
+  },
+  "gallery": {
+   "name": "Gallery",
+   "desc": "This is an art gallery. Most of the paintings have been stolen by vandals with exceptional taste. The vandals left through either the north or west exits.",
+   "exits": {
+    "west": "east_of_chasm",
+    "north": "studio"
+   },
+   "art": [
+    [
+     "room",
+     "lightgray",
+     "darkred",
+     "white",
+     "black"
+    ],
+    [
+     "wall",
+     "left",
+     0.3,
+     0.6,
+     0.35,
+     0.75,
+     "none",
+     "gold"
+    ],
+    [
+     "wall",
+     "right",
+     0.3,
+     0.6,
+     0.35,
+     0.75,
+     "none",
+     "gold"
+    ],
+    [
+     "wall",
+     "left",
+     0.7,
+     0.85,
+     0.4,
+     0.7,
+     "none",
+     "gold"
+    ],
+    [
+     "arch",
+     "right",
+     0.85,
+     "black",
+     "gray",
+     0.15,
+     0.6
+    ],
+    [
+     "arch",
+     "left",
+     0.1,
+     "black",
+     "gray",
+     0.12,
+     0.6
+    ]
+   ]
+  },
+  "studio": {
+   "name": "Studio",
+   "desc": "This appears to have been an artist's studio. The walls and floors are splattered with paints of 69 different colors. Strangely enough, nothing of value is hanging here. At the south end of the room is an open door (also covered with paint). A dark and narrow chimney leads up from a fireplace; although you might be able to get up it, it seems unlikely you could get back down.",
+   "exits": {
+    "south": "gallery",
+    "up": {
+     "to": "kitchen",
+     "if": "var:carried<=2",
+     "msg": "You can't get up there with what you're carrying.",
+     "say": "You climb up the narrow chimney, squeezing past the soot, and tumble out into..."
+    }
+   },
+   "art": [
+    [
+     "room",
+     "white",
+     "lightgray",
+     "white",
+     "black"
+    ],
+    [
+     "rect",
+     100,
+     80,
+     56,
+     48,
+     "darkstone",
+     "black"
+    ],
+    [
+     "rect",
+     108,
+     88,
+     40,
+     40,
+     "black"
+    ],
+    [
+     "stars",
+     60,
+     "red",
+     1,
+     192
+    ],
+    [
+     "stars",
+     60,
+     "blue",
+     2,
+     192
+    ],
+    [
+     "stars",
+     60,
+     "green",
+     3,
+     192
+    ],
+    [
+     "stars",
+     60,
+     "orange",
+     4,
+     192
+    ],
+    [
+     "stars",
+     50,
+     "magenta",
+     5,
+     192
+    ],
+    [
+     "door",
+     "left",
+     0.4,
+     "orange",
+     true
+    ]
+   ]
+  },
+  "forest_w": {
+   "name": "Forest",
+   "desc": "This is a forest, with trees in all directions. To the east, there appears to be sunlight.",
+   "exits": {
+    "east": "west_of_house",
+    "north": "forest_path",
+    "south": "forest_s",
+    "west": {
+     "msg": "You would need a machete to go further west."
+    }
+   },
+   "art": [
+    [
+     "gradient",
+     0,
+     192,
+     "darkgreen",
+     "black"
+    ],
+    [
+     "forest",
+     60,
+     "darkgreen",
+     5,
+     18
+    ],
+    [
+     "forest",
+     110,
+     "moss",
+     6,
+     12
+    ],
+    [
+     "glow",
+     250,
+     100,
+     60,
+     "yellow",
+     0.3
+    ],
+    [
+     "ground",
+     170,
+     "darkbrown"
+    ]
+   ]
+  },
+  "forest_s": {
+   "name": "Forest",
+   "desc": "This is a dimly lit forest, with large trees all around.",
+   "exits": {
+    "north": "south_of_house",
+    "west": "forest_w",
+    "east": "clearing_e",
+    "south": {
+     "msg": "Storm-tossed trees block your way."
+    }
+   },
+   "art": [
+    [
+     "gradient",
+     0,
+     192,
+     "darkgreen",
+     "black"
+    ],
+    [
+     "forest",
+     60,
+     "darkgreen",
+     15,
+     18
+    ],
+    [
+     "forest",
+     110,
+     "moss",
+     16,
+     12
+    ],
+    [
+     "ground",
+     170,
+     "darkbrown"
+    ]
+   ]
+  },
+  "forest_path": {
+   "name": "Forest Path",
+   "desc": "This is a path winding through a dimly lit forest. The path heads north-south here. One particularly large tree with some low branches stands at the edge of the path.",
+   "exits": {
+    "south": "north_of_house",
+    "north": "clearing_n",
+    "up": "up_a_tree",
+    "east": "forest_s",
+    "west": "forest_w"
+   },
+   "art": [
+    [
+     "gradient",
+     0,
+     120,
+     "sky",
+     "darkgreen"
+    ],
+    [
+     "forest",
+     90,
+     "darkgreen",
+     21,
+     14
+    ],
+    [
+     "ground",
+     112,
+     "moss"
+    ],
+    [
+     "path",
+     "tan",
+     112,
+     120,
+     12
+    ],
+    [
+     "rect",
+     196,
+     40,
+     18,
+     140,
+     "brown",
+     "black"
+    ],
+    [
+     "line",
+     [
+      205,
+      100,
+      170,
+      80
+     ],
+     "brown",
+     5
+    ],
+    [
+     "line",
+     [
+      205,
+      70,
+      240,
+      50
+     ],
+     "brown",
+     5
+    ],
+    [
+     "circle",
+     205,
+     30,
+     40,
+     "darkgreen"
+    ],
+    [
+     "circle",
+     170,
+     50,
+     22,
+     "darkgreen"
+    ]
+   ]
+  },
+  "up_a_tree": {
+   "name": "Up a Tree",
+   "desc": "You are about 10 feet above the ground nestled among some large branches. The nearest branch above you is above your reach.",
+   "exits": {
+    "down": "forest_path",
+    "up": {
+     "msg": "You cannot climb any higher."
+    }
+   },
+   "art": [
+    [
+     "bg",
+     "sky"
+    ],
+    [
+     "circle",
+     40,
+     40,
+     60,
+     "darkgreen"
+    ],
+    [
+     "circle",
+     220,
+     30,
+     70,
+     "darkgreen"
+    ],
+    [
+     "circle",
+     128,
+     0,
+     50,
+     "moss"
+    ],
+    [
+     "line",
+     [
+      0,
+      150,
+      120,
+      140,
+      256,
+      120
+     ],
+     "brown",
+     10
+    ],
+    [
+     "line",
+     [
+      60,
+      192,
+      90,
+      144
+     ],
+     "brown",
+     12
+    ],
+    [
+     "line",
+     [
+      180,
+      192,
+      200,
+      128
+     ],
+     "brown",
+     8
+    ],
+    [
+     "ellipse",
+     140,
+     136,
+     22,
+     9,
+     "darkbrown",
+     "brown"
+    ],
+    [
+     "line",
+     [
+      122,
+      134,
+      158,
+      138
+     ],
+     "tan"
+    ],
+    [
+     "line",
+     [
+      124,
+      138,
+      156,
+      132
+     ],
+     "tan"
+    ]
+   ]
+  },
+  "clearing_n": {
+   "name": "Clearing",
+   "desc": "You are in a clearing, with a forest surrounding you on all sides. A path leads south.",
+   "exits": {
+    "south": "forest_path",
+    "east": "forest_s",
+    "west": "forest_w",
+    "north": {
+     "msg": "The forest becomes impenetrable to the north."
+    },
+    "down": {
+     "to": "grating_room",
+     "door": "grating",
+     "if": "flag:leaves_moved",
+     "msg": "You can't go that way."
+    }
+   },
+   "art": [
+    [
+     "gradient",
+     0,
+     110,
+     "sky",
+     "white"
+    ],
+    [
+     "forest",
+     90,
+     "darkgreen",
+     41,
+     18
+    ],
+    [
+     "ground",
+     110,
+     "grass"
+    ],
+    [
+     "if",
+     "!flag:leaves_moved",
+     [
+      [
+       "ellipse",
+       128,
+       160,
+       40,
+       12,
+       "orange"
+      ],
+      [
+       "dither",
+       88,
+       150,
+       80,
+       20,
+       "orange",
+       "brown",
+       "sparse"
+      ]
+     ],
+     [
+      [
+       "if",
+       "open:grating",
+       [
+        [
+         "grate",
+         108,
+         150,
+         40,
+         18,
+         "gray"
+        ],
+        [
+         "rect",
+         110,
+         152,
+         36,
+         14,
+         "black"
+        ]
+       ],
+       [
+        [
+         "grate",
+         108,
+         150,
+         40,
+         18,
+         "gray"
+        ]
+       ]
+      ],
+      [
+       "ellipse",
+       190,
+       170,
+       20,
+       6,
+       "orange"
+      ]
+     ]
+    ]
+   ]
+  },
+  "clearing_e": {
+   "name": "Clearing",
+   "desc": "You are in a small clearing in a well marked forest path that extends to the east and west.",
+   "exits": {
+    "west": "behind_house",
+    "south": "forest_s",
+    "north": "forest_path",
+    "east": {
+     "msg": "The path to the canyon is washed out. (The full ZORK I continues from here.)"
+    }
+   },
+   "art": [
+    [
+     "gradient",
+     0,
+     110,
+     "sky",
+     "white"
+    ],
+    [
+     "forest",
+     92,
+     "darkgreen",
+     51,
+     14
+    ],
+    [
+     "ground",
+     110,
+     "grass"
+    ],
+    [
+     "poly",
+     [
+      0,
+      150,
+      256,
+      140,
+      256,
+      160,
+      0,
+      172
+     ],
+     "tan"
+    ]
+   ]
+  },
+  "grating_room": {
+   "name": "Grating Room",
+   "dark": true,
+   "desc": [
+    "You are in a small room near the maze. There are twisty passages in the immediate vicinity.",
+    {
+     "if": "!open:grating",
+     "text": "Above you is a grating locked with a skull-and-crossbones lock."
+    },
+    {
+     "if": "open:grating",
+     "text": "Above you is an open grating with sunlight pouring in."
+    }
+   ],
+   "exits": {
+    "southwest": "maze_3",
+    "up": {
+     "to": "clearing_n",
+     "door": "grating",
+     "do": [
+      {
+       "unset": "trap_barred"
+      },
+      {
+       "set": "leaves_moved"
+      },
+      {
+       "prop": "grating",
+       "key": "at",
+       "value": [
+        "clearing_n",
+        "grating_room"
+       ]
+      },
+      {
+       "prop": "leaves",
+       "key": "at",
+       "value": null
+      }
+     ]
+    }
+   },
+   "art": [
+    [
+     "cave",
+     "darkstone",
+     "black",
+     "stone",
+     61
+    ],
+    [
+     "grate",
+     104,
+     4,
+     48,
+     20,
+     "gray"
+    ],
+    [
+     "if",
+     "open:grating",
+     [
+      [
+       "rect",
+       106,
+       6,
+       44,
+       16,
+       "sky"
+      ],
+      [
+       "alpha",
+       0.3
+      ],
+      [
+       "poly",
+       [
+        104,
+        24,
+        152,
+        24,
+        190,
+        192,
+        66,
+        192
+       ],
+       "yellow"
+      ],
+      [
+       "alpha",
+       1
+      ]
+     ]
+    ],
+    [
+     "skull",
+     128,
+     30,
+     3,
+     "white"
+    ]
+   ]
+  },
+  "maze_1": {
+   "name": "Maze",
+   "dark": true,
+   "desc": "This is part of a maze of twisty little passages, all alike.",
+   "exits": {
+    "east": "troll_room",
+    "north": "maze_2",
+    "south": "maze_1",
+    "west": "maze_3",
+    "up": "maze_2"
+   },
+   "art": [
+    [
+     "tunnel",
+     "darkstone",
+     5
+    ],
+    [
+     "poly",
+     [
+      0,
+      40,
+      40,
+      70,
+      40,
+      140,
+      0,
+      170
+     ],
+     "black",
+     "darkstone"
+    ],
+    [
+     "poly",
+     [
+      256,
+      40,
+      216,
+      70,
+      216,
+      140,
+      256,
+      170
+     ],
+     "black",
+     "darkstone"
+    ]
+   ]
+  },
+  "maze_2": {
+   "name": "Maze",
+   "dark": true,
+   "desc": "This is part of a maze of twisty little passages, all alike. A skeleton, probably the remains of a luckless adventurer, lies here.",
+   "exits": {
+    "south": "maze_1",
+    "down": "maze_1",
+    "north": "maze_2",
+    "east": "maze_2",
+    "west": "maze_1"
+   },
+   "art": [
+    [
+     "tunnel",
+     "darkstone",
+     5
+    ],
+    [
+     "skull",
+     100,
+     168,
+     7,
+     "bone"
+    ],
+    [
+     "bones",
+     140,
+     176,
+     10,
+     "bone",
+     77
+    ]
+   ]
+  },
+  "maze_3": {
+   "name": "Maze",
+   "dark": true,
+   "desc": "This is part of a maze of twisty little passages, all alike.",
+   "exits": {
+    "east": "maze_1",
+    "north": "maze_3",
+    "south": "maze_1",
+    "northeast": "grating_room",
+    "west": "maze_3"
+   },
+   "art": [
+    [
+     "tunnel",
+     "darkstone",
+     5
+    ],
+    [
+     "poly",
+     [
+      256,
+      30,
+      210,
+      60,
+      210,
+      130,
+      256,
+      160
+     ],
+     "black",
+     "darkstone"
+    ]
+   ]
+  }
+ },
+ "items": {
+  "house": {
+   "name": "white house",
+   "nouns": [
+    "house",
+    "home"
+   ],
+   "adj": [
+    "white",
+    "colonial"
+   ],
+   "at": [
+    "west_of_house",
+    "north_of_house",
+    "south_of_house",
+    "behind_house"
+   ],
+   "scenery": true,
+   "desc": "The house is a beautiful colonial house which is painted white. It is clear that the owners must have been extremely wealthy.",
+   "on": {
+    "enter": "You can't enter the house that way."
+   }
+  },
+  "front_door": {
+   "name": "front door",
+   "nouns": [
+    "door",
+    "boards"
+   ],
+   "adj": [
+    "front",
+    "boarded"
+   ],
+   "at": "west_of_house",
+   "scenery": true,
+   "desc": "The door is boarded and you can't remove the boards.",
+   "on": {
+    "open,pull,break": "The door cannot be opened."
+   }
+  },
+  "mailbox": {
+   "name": "small mailbox",
+   "nouns": [
+    "mailbox",
+    "box"
+   ],
+   "adj": [
+    "small"
+   ],
+   "at": "west_of_house",
+   "fixed": true,
+   "container": true,
+   "open": false,
+   "here": "There is a small mailbox here.",
+   "fixedMsg": "It is securely anchored.",
+   "art": [
+    [
+     "rect",
+     -2,
+     -2,
+     4,
+     2,
+     "none"
+    ]
+   ]
+  },
+  "leaflet": {
+   "name": "leaflet",
+   "nouns": [
+    "leaflet",
+    "mail",
+    "booklet"
+   ],
+   "at": "mailbox",
+   "desc": "\"WELCOME TO ZORK!\"",
+   "text": "\"WELCOME TO ZORK!\n\nZORK is a game of adventure, danger, and low cunning. In it you will explore some of the most amazing territory ever seen by mortals. No computer should be without one!\""
+  },
+  "window": {
+   "name": "small window",
+   "nouns": [
+    "window"
+   ],
+   "adj": [
+    "small",
+    "kitchen"
+   ],
+   "at": [
+    "behind_house",
+    "kitchen"
+   ],
+   "scenery": true,
+   "open": false,
+   "desc": [
+    {
+     "if": "open:window",
+     "text": "The window is open.",
+     "else": "The window is slightly ajar, but not enough to allow entry."
+    }
+   ],
+   "openMsg": "With great effort, you open the window far enough to allow entry."
+  },
+  "kitchen_table": {
+   "name": "kitchen table",
+   "nouns": [
+    "table"
+   ],
+   "adj": [
+    "kitchen"
+   ],
+   "at": "kitchen",
+   "scenery": true,
+   "container": true,
+   "surface": true
+  },
+  "sack": {
+   "name": "brown sack",
+   "nouns": [
+    "sack",
+    "bag"
+   ],
+   "adj": [
+    "brown",
+    "elongated"
+   ],
+   "at": "kitchen_table",
+   "container": true,
+   "open": false,
+   "desc": "An elongated brown sack, smelling of hot peppers.",
+   "art": [
+    [
+     "poly",
+     [
+      -5,
+      0,
+      5,
+      0,
+      4,
+      -12,
+      -4,
+      -12
+     ],
+     "brown",
+     "darkbrown"
+    ]
+   ]
+  },
+  "lunch": {
+   "name": "lunch",
+   "nouns": [
+    "lunch",
+    "sandwich",
+    "food"
+   ],
+   "adj": [
+    "hot",
+    "pepper"
+   ],
+   "article": "a",
+   "at": "sack",
+   "edible": true,
+   "desc": "A hot pepper sandwich.",
+   "eatMsg": "Thank you very much. It really hit the spot."
+  },
+  "garlic": {
+   "name": "clove of garlic",
+   "nouns": [
+    "garlic",
+    "clove"
+   ],
+   "at": "sack",
+   "edible": true,
+   "eatMsg": "What the heck! You won't make friends this way, but nobody around here is too friendly anyhow. Gulp!"
+  },
+  "bottle": {
+   "name": "glass bottle",
+   "nouns": [
+    "bottle"
+   ],
+   "adj": [
+    "glass",
+    "clear"
+   ],
+   "at": "kitchen_table",
+   "container": true,
+   "open": false,
+   "transparent": true,
+   "desc": "A clear glass bottle.",
+   "art": [
+    [
+     "poly",
+     [
+      -3,
+      0,
+      3,
+      0,
+      3,
+      -8,
+      1,
+      -10,
+      1,
+      -13,
+      -1,
+      -13,
+      -1,
+      -10,
+      -3,
+      -8
+     ],
+     "cyan",
+     "black"
+    ]
+   ]
+  },
+  "water": {
+   "name": "quantity of water",
+   "nouns": [
+    "water"
+   ],
+   "at": "bottle",
+   "drinkable": true,
+   "drinkMsg": "Thank you very much. I was rather thirsty (from all this talking, probably).",
+   "on": {
+    "take": {
+     "do": "The water slips through your fingers.",
+     "if": "!at:water:bottle"
+    }
+   },
+   "scenery": true
+  },
+  "trophy_case": {
+   "name": "trophy case",
+   "nouns": [
+    "case"
+   ],
+   "adj": [
+    "trophy"
+   ],
+   "at": "living_room",
+   "scenery": true,
+   "container": true,
+   "open": false,
+   "transparent": true,
+   "desc": "The trophy case is securely fastened to the wall."
+  },
+  "sword": {
+   "name": "sword",
+   "nouns": [
+    "sword",
+    "blade"
+   ],
+   "adj": [
+    "elvish",
+    "antique"
+   ],
+   "at": "living_room",
+   "here": "Above the trophy case hangs an elvish sword of great antiquity.",
+   "desc": "It's an elvish sword of great antiquity. Its blade is etched with runes.",
+   "art": [
+    [
+     "line",
+     [
+      0,
+      -42,
+      0,
+      -6
+     ],
+     "silver",
+     2
+    ],
+    [
+     "line",
+     [
+      -5,
+      -10,
+      5,
+      -10
+     ],
+     "gold",
+     2
+    ],
+    [
+     "line",
+     [
+      0,
+      -6,
+      0,
+      0
+     ],
+     "darkbrown",
+     2
+    ]
+   ],
+   "artAt": [
+    36,
+    92
+   ]
+  },
+  "lamp": {
+   "name": "brass lantern",
+   "nouns": [
+    "lamp",
+    "lantern",
+    "light"
+   ],
+   "adj": [
+    "brass",
+    "battery-powered"
+   ],
+   "at": "living_room",
+   "lightable": true,
+   "lit": false,
+   "here": "A battery-powered brass lantern is on the trophy case.",
+   "lightMsg": "The brass lantern is now on.",
+   "outMsg": "The brass lantern is now off.",
+   "desc": [
+    {
+     "if": "lit:lamp",
+     "text": "The lamp is on.",
+     "else": "The lamp is turned off."
+    }
+   ],
+   "art": [
+    [
+     "rect",
+     -4,
+     -12,
+     8,
+     10,
+     "gold",
+     "black"
+    ],
+    [
+     "rect",
+     -3,
+     -2,
+     6,
+     2,
+     "gold"
+    ],
+    [
+     "arc",
+     0,
+     -12,
+     4,
+     180,
+     360,
+     "gold",
+     1.5
+    ],
+    [
+     "if",
+     "lit:lamp",
+     [
+      [
+       "glow",
+       0,
+       -7,
+       14,
+       "yellow",
+       0.7
+      ]
+     ]
+    ]
+   ],
+   "artAt": [
+    50,
+    120
+   ]
+  },
+  "rug": {
+   "name": "oriental rug",
+   "nouns": [
+    "rug",
+    "carpet"
+   ],
+   "adj": [
+    "oriental",
+    "large"
+   ],
+   "at": "living_room",
+   "scenery": true,
+   "desc": [
+    {
+     "if": "flag:rug_moved",
+     "text": "The rug lies to one side of the room.",
+     "else": "A large oriental rug, in the center of the room."
+    }
+   ],
+   "on": {
+    "push,pull,take,lift": {
+     "if": "!flag:rug_moved",
+     "do": [
+      "With a great effort, the rug is moved to one side of the room, revealing the dusty cover of a closed trap door.",
+      {
+       "set": "rug_moved",
+       "show": "trap_door"
+      },
+      {
+       "exit": "living_room",
+       "dir": "down",
+       "to": {
+        "to": "cellar",
+        "door": "trap_door"
+       }
+      }
+     ],
+     "else": [
+      "Having moved the carpet previously, you find it impossible to move it again."
+     ]
+    },
+    "search": {
+     "if": "!flag:rug_moved",
+     "do": "Underneath the rug is a closed trap door. As you drop the corner of the rug, the trap door is once again concealed from view.",
+     "else": "There is nothing under the rug now."
+    }
+   }
+  },
+  "trap_door": {
+   "name": "trap door",
+   "nouns": [
+    "trapdoor",
+    "trap-door",
+    "door"
+   ],
+   "adj": [
+    "trap",
+    "dusty"
+   ],
+   "at": [
+    "living_room",
+    "cellar"
+   ],
+   "scenery": true,
+   "hidden": true,
+   "open": false,
+   "openMsg": "The door reluctantly opens to reveal a rickety staircase descending into darkness.",
+   "on": {
+    "open": {
+     "room": "cellar",
+     "if": "flag:trap_barred",
+     "do": "The door is locked from above."
+    }
+   }
+  },
+  "gothic_door": {
+   "name": "wooden door",
+   "nouns": [
+    "door",
+    "lettering"
+   ],
+   "adj": [
+    "wooden",
+    "gothic",
+    "strange"
+   ],
+   "at": "living_room",
+   "scenery": true,
+   "desc": "The engravings translate to \"This space intentionally left blank.\"",
+   "on": {
+    "open,pull,break": "The door cannot be opened."
+   }
+  },
+  "attic_table": {
+   "name": "table",
+   "at": "attic",
+   "scenery": true,
+   "container": true,
+   "surface": true
+  },
+  "knife": {
+   "name": "nasty knife",
+   "nouns": [
+    "knife",
+    "blade"
+   ],
+   "adj": [
+    "nasty",
+    "nasty-looking"
+   ],
+   "at": "attic_table",
+   "desc": "A nasty-looking knife.",
+   "art": [
+    [
+     "line",
+     [
+      -6,
+      -2,
+      6,
+      -2
+     ],
+     "silver",
+     2
+    ],
+    [
+     "line",
+     [
+      -10,
+      -2,
+      -6,
+      -2
+     ],
+     "darkbrown",
+     3
+    ]
+   ]
+  },
+  "rope": {
+   "name": "rope",
+   "nouns": [
+    "rope",
+    "coil"
+   ],
+   "adj": [
+    "large"
+   ],
+   "at": "attic",
+   "here": "A large coil of rope is lying in the corner.",
+   "art": [
+    [
+     "ellipse",
+     0,
+     -4,
+     10,
+     5,
+     null,
+     "tan",
+     2
+    ],
+    [
+     "ellipse",
+     0,
+     -4,
+     6,
+     3,
+     null,
+     "tan",
+     2
+    ]
+   ],
+   "artAt": [
+    60,
+    160
+   ]
+  },
+  "troll": {
+   "name": "troll",
+   "nouns": [
+    "troll"
+   ],
+   "adj": [
+    "nasty"
+   ],
+   "at": "troll_room",
+   "fixed": true,
+   "here": "A nasty-looking troll, brandishing a bloody axe, blocks all passages out of the room.",
+   "fixedMsg": "The troll spits in your face, grunting \"Better luck next time\" in a rather barbarous accent.",
+   "desc": "A nasty-looking troll, brandishing a bloody axe. He looks at you with undisguised hostility.",
+   "art": [
+    [
+     "ellipse",
+     0,
+     -36,
+     18,
+     26,
+     "olive",
+     "black"
+    ],
+    [
+     "circle",
+     0,
+     -68,
+     11,
+     "olive",
+     "black"
+    ],
+    [
+     "circle",
+     -4,
+     -70,
+     2,
+     "red"
+    ],
+    [
+     "circle",
+     4,
+     -70,
+     2,
+     "red"
+    ],
+    [
+     "rect",
+     -14,
+     -14,
+     8,
+     14,
+     "olive",
+     "black"
+    ],
+    [
+     "rect",
+     6,
+     -14,
+     8,
+     14,
+     "olive",
+     "black"
+    ],
+    [
+     "line",
+     [
+      16,
+      -40,
+      34,
+      -70
+     ],
+     "darkbrown",
+     3
+    ],
+    [
+     "poly",
+     [
+      28,
+      -78,
+      42,
+      -70,
+      34,
+      -60
+     ],
+     "silver",
+     "darkred"
+    ]
+   ],
+   "artAt": [
+    128,
+    176
+   ],
+   "on": {
+    "give,throw": {
+     "do": [
+      "The troll, who is remarkably coordinated, catches it and eats it hungrily. Poor troll, he dies from an indigestible meal... no wait, he just burps and looks hungrier."
+     ]
+    },
+    "say": "The troll isn't much of a conversationalist."
+   }
+  },
+  "axe": {
+   "name": "bloody axe",
+   "nouns": [
+    "axe",
+    "ax"
+   ],
+   "adj": [
+    "bloody"
+   ],
+   "at": null,
+   "desc": "A bloody axe.",
+   "art": [
+    [
+     "line",
+     [
+      -10,
+      0,
+      8,
+      -16
+     ],
+     "darkbrown",
+     2
+    ],
+    [
+     "poly",
+     [
+      4,
+      -22,
+      14,
+      -14,
+      8,
+      -10
+     ],
+     "silver",
+     "darkred"
+    ]
+   ]
+  },
+  "egg": {
+   "name": "jewel-encrusted egg",
+   "nouns": [
+    "egg"
+   ],
+   "adj": [
+    "jewel-encrusted",
+    "jeweled",
+    "encrusted",
+    "large"
+   ],
+   "at": "nest",
+   "points": 5,
+   "deposit": {
+    "in": "trophy_case",
+    "points": 5
+   },
+   "desc": "The egg is covered with fine gold inlay, and ornamented in lapis lazuli and mother-of-pearl. Unlike most eggs, this one is hinged and closed with a delicate looking clasp. The egg appears extremely fragile.",
+   "art": [
+    [
+     "ellipse",
+     0,
+     -7,
+     6,
+     7,
+     "gold",
+     "black"
+    ],
+    [
+     "circle",
+     -2,
+     -8,
+     1.5,
+     "blue"
+    ],
+    [
+     "circle",
+     2,
+     -5,
+     1.5,
+     "blue"
+    ],
+    [
+     "circle",
+     1,
+     -11,
+     1,
+     "white"
+    ]
+   ],
+   "on": {
+    "open": "You have neither the tools nor the expertise."
+   }
+  },
+  "nest": {
+   "name": "bird's nest",
+   "nouns": [
+    "nest"
+   ],
+   "adj": [
+    "bird's",
+    "small"
+   ],
+   "at": "up_a_tree",
+   "container": true,
+   "here": "Beside you on the branch is a small bird's nest.",
+   "art": [],
+   "artAt": [
+    140,
+    136
+   ]
+  },
+  "tree": {
+   "name": "large tree",
+   "nouns": [
+    "tree",
+    "branches",
+    "branch"
+   ],
+   "adj": [
+    "large",
+    "low"
+   ],
+   "at": [
+    "forest_path",
+    "up_a_tree"
+   ],
+   "scenery": true,
+   "desc": "One particularly large tree with some low branches.",
+   "on": {
+    "climb": {
+     "room": "forest_path",
+     "do": [
+      {
+       "goto": "up_a_tree"
+      }
+     ]
+    }
+   }
+  },
+  "painting": {
+   "name": "painting",
+   "nouns": [
+    "painting",
+    "art",
+    "masterpiece",
+    "canvas"
+   ],
+   "adj": [
+    "beautiful"
+   ],
+   "at": "gallery",
+   "points": 4,
+   "deposit": {
+    "in": "trophy_case",
+    "points": 6
+   },
+   "here": "Fortunately, there is still one chance for you to be a vandal, for on the far wall is a painting of unparalleled beauty.",
+   "desc": "A painting of unparalleled beauty.",
+   "art": [
+    [
+     "rect",
+     -18,
+     -26,
+     36,
+     26,
+     "gold"
+    ],
+    [
+     "rect",
+     -15,
+     -23,
+     30,
+     20,
+     "sky"
+    ],
+    [
+     "circle",
+     -6,
+     -14,
+     5,
+     "darkgreen"
+    ],
+    [
+     "rect",
+     -15,
+     -10,
+     30,
+     7,
+     "grass"
+    ],
+    [
+     "circle",
+     8,
+     -18,
+     3,
+     "yellow"
+    ]
+   ],
+   "artAt": [
+    128,
+    104
+   ]
+  },
+  "leaves": {
+   "name": "pile of leaves",
+   "nouns": [
+    "leaves",
+    "pile",
+    "leaf"
+   ],
+   "at": "clearing_n",
+   "fixed": true,
+   "here": "On the ground is a pile of leaves.",
+   "on": {
+    "push,pull,take,search,move": {
+     "if": "!flag:leaves_moved",
+     "do": [
+      "In disturbing the pile of leaves, a grating is revealed.",
+      {
+       "set": "leaves_moved"
+      },
+      {
+       "prop": "grating",
+       "key": "at",
+       "value": [
+        "clearing_n",
+        "grating_room"
+       ]
+      }
+     ],
+     "else": [
+      "The leaves are scattered everywhere now."
+     ]
+    }
+   }
+  },
+  "grating": {
+   "name": "grating",
+   "nouns": [
+    "grating",
+    "grate",
+    "lock"
+   ],
+   "adj": [
+    "skull-and-crossbones"
+   ],
+   "at": "grating_room",
+   "scenery": true,
+   "hidden": false,
+   "open": false,
+   "locked": true,
+   "key": "skeleton_key",
+   "desc": [
+    {
+     "if": "in:clearing_n",
+     "text": "There is a grating securely fastened into the ground.",
+     "else": "A grating, locked with a skull-and-crossbones lock."
+    }
+   ],
+   "openMsg": "The grating opens to reveal trees above you.",
+   "on": {
+    "unlock": {
+     "room": "clearing_n",
+     "do": "You can't reach the lock from here."
+    }
+   }
+  },
+  "skeleton": {
+   "name": "skeleton",
+   "nouns": [
+    "skeleton",
+    "bones",
+    "remains"
+   ],
+   "at": "maze_2",
+   "scenery": true,
+   "desc": "A skeleton, probably the remains of a luckless adventurer.",
+   "on": {
+    "take,attack,push": "Disturbing the remains of the dead is bad luck."
+   }
+  },
+  "coins": {
+   "name": "leather bag of coins",
+   "nouns": [
+    "bag",
+    "coins",
+    "money"
+   ],
+   "adj": [
+    "leather"
+   ],
+   "at": "maze_2",
+   "points": 10,
+   "deposit": {
+    "in": "trophy_case",
+    "points": 5
+   },
+   "desc": "An old leather bag, bulging with coins.",
+   "art": [
+    [
+     "poly",
+     [
+      -6,
+      0,
+      6,
+      0,
+      5,
+      -8,
+      2,
+      -10,
+      -2,
+      -10,
+      -5,
+      -8
+     ],
+     "brown",
+     "black"
+    ],
+    [
+     "line",
+     [
+      -2,
+      -10,
+      2,
+      -12
+     ],
+     "tan"
+    ]
+   ]
+  },
+  "skeleton_key": {
+   "name": "skeleton key",
+   "nouns": [
+    "key"
+   ],
+   "adj": [
+    "skeleton"
+   ],
+   "at": "maze_2",
+   "art": [
+    [
+     "circle",
+     -5,
+     -3,
+     2.5,
+     null,
+     "lightgray",
+     1.5
+    ],
+    [
+     "line",
+     [
+      -3,
+      -3,
+      6,
+      -3
+     ],
+     "lightgray",
+     1.5
+    ],
+    [
+     "line",
+     [
+      4,
+      -3,
+      4,
+      0
+     ],
+     "lightgray",
+     1.5
+    ]
+   ]
+  },
+  "rusty_knife": {
+   "name": "rusty knife",
+   "nouns": [
+    "knife"
+   ],
+   "adj": [
+    "rusty"
+   ],
+   "at": "maze_2",
+   "desc": "A rusty knife. It seems to want to be held.",
+   "art": [
+    [
+     "line",
+     [
+      -6,
+      -2,
+      6,
+      -2
+     ],
+     "rust",
+     2
+    ],
+    [
+     "line",
+     [
+      -10,
+      -2,
+      -6,
+      -2
+     ],
+     "darkbrown",
+     3
+    ]
+   ]
+  }
+ },
+ "actions": [
+  {
+   "verb": "attack",
+   "noun": "troll",
+   "if": "flag:troll_dead",
+   "do": "There's no troll left to attack."
+  },
+  {
+   "verb": "attack",
+   "noun": "troll",
+   "if": {
+    "any": [
+     "has:sword",
+     "has:knife",
+     "has:rusty_knife",
+     "has:axe"
+    ]
+   },
+   "do": [
+    {
+     "if": "has:sword",
+     "then": [
+      {
+       "var": "hitroll",
+       "value": 0
+      },
+      {
+       "random": [
+        [
+         {
+          "var": "hitroll",
+          "value": 1
+         }
+        ],
+        [
+         {
+          "var": "hitroll",
+          "value": 1
+         }
+        ],
+        [
+         {
+          "var": "hitroll",
+          "value": 0
+         }
+        ]
+       ]
+      }
+     ],
+     "else": [
+      {
+       "var": "hitroll",
+       "value": 0
+      },
+      {
+       "random": [
+        [
+         {
+          "var": "hitroll",
+          "value": 1
+         }
+        ],
+        [
+         {
+          "var": "hitroll",
+          "value": 0
+         }
+        ],
+        [
+         {
+          "var": "hitroll",
+          "value": 0
+         }
+        ]
+       ]
+      }
+     ]
+    },
+    {
+     "if": "var:hitroll==1",
+     "then": [
+      {
+       "var": "troll_hp",
+       "add": 1
+      },
+      {
+       "if": "var:troll_hp>=2",
+       "then": [
+        "The fatal blow strikes the troll square in the heart: He dies.\nAlmost as soon as the troll breathes his last breath, a cloud of sinister black fog envelops him, and when the fog lifts, the carcass has disappeared.",
+        {
+         "set": "troll_dead",
+         "destroy": "troll"
+        },
+        {
+         "move": "axe",
+         "to": "here"
+        }
+       ],
+       "else": [
+        {
+         "random": [
+          "The troll is staggered, and drops to his knees.",
+          "A good slash, and it draws first blood!",
+          "The troll is battered into near unconsciousness - but struggles back to his feet."
+         ]
+        }
+       ]
+      }
+     ],
+     "else": [
+      {
+       "random": [
+        "A good slash, but it misses the troll by a mile.",
+        "You charge, but the troll jumps nimbly aside.",
+        "The troll parries your blow with his axe.",
+        "Clang! Your blow bounces off the troll's axe."
+       ]
+      }
+     ]
+    }
+   ],
+   "else": "Attacking the troll with your bare hands is suicidal."
+  },
+  {
+   "verb": "take",
+   "noun": "water",
+   "if": "at:water:bottle",
+   "do": [
+    {
+     "if": "has:bottle",
+     "then": "You already have it, in the bottle.",
+     "else": "You can't carry water without a container. Try taking the bottle."
+    }
+   ]
+  },
+  {
+   "verb": "say",
+   "noun": [
+    "hello",
+    "sailor"
+   ],
+   "do": "Nothing happens here."
+  },
+  {
+   "verb": "say",
+   "noun": [
+    "odysseus",
+    "ulysses"
+   ],
+   "do": "Wasn't he a sailor?"
+  },
+  {
+   "verb": "pray",
+   "do": "If you pray enough, your prayers may be answered."
+  },
+  {
+   "verb": "climb",
+   "noun": "tree",
+   "room": "up_a_tree",
+   "do": "You cannot climb any higher."
+  },
+  {
+   "verb": "jump",
+   "room": "up_a_tree",
+   "do": [
+    {
+     "die": "In a feat of unaccustomed daring, you manage to land on your feet without killing yourself... no, wait. You land on your head. Ouch."
+    }
+   ]
+  },
+  {
+   "verb": "go",
+   "noun": "down",
+   "room": "living_room",
+   "if": "!flag:rug_moved",
+   "do": "You can't go that way."
+  }
+ ],
+ "events": [
+  {
+   "if": [
+    "in:living_room",
+    "flag:trap_closing"
+   ],
+   "do": [
+    {
+     "unset": "trap_closing"
+    }
+   ]
+  },
+  {
+   "if": [
+    "in:cellar",
+    "!flag:trap_used"
+   ],
+   "do": [
+    "The trap door crashes shut, and you hear someone barring it.",
+    {
+     "set": [
+      "trap_used",
+      "trap_barred"
+     ]
+    },
+    {
+     "prop": "trap_door",
+     "key": "open",
+     "value": false
+    }
+   ]
+  },
+  {
+   "if": [
+    "in:troll_room",
+    "!flag:troll_dead"
+   ],
+   "do": [
+    {
+     "if": "var:troll_attacks>=0",
+     "then": [
+      {
+       "var": "troll_attacks",
+       "add": 1
+      }
+     ]
+    },
+    {
+     "if": "var:troll_attacks>=2",
+     "then": [
+      {
+       "random": [
+        [
+         "The troll swings his axe, but it misses."
+        ],
+        [
+         "The axe sweeps past as you jump aside."
+        ],
+        [
+         "The troll's axe barely misses your ear."
+        ],
+        [
+         {
+          "var": "wounds",
+          "add": 1
+         },
+         "The axe gets you right in the side. Ouch!"
+        ],
+        [
+         {
+          "var": "wounds",
+          "add": 1
+         },
+         "The flat of the troll's axe hits you delicately on the head, knocking you briefly senseless."
+        ]
+       ]
+      },
+      {
+       "if": "var:wounds>=3",
+       "then": [
+        {
+         "die": "The troll's mighty blow drops you to your knees.\nThe troll lands a deadly blow. It appears that that last blow was too much for you. I'm afraid you are dead."
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "if": "!in:troll_room",
+   "do": [
+    {
+     "var": "troll_attacks",
+     "value": 0
+    }
+   ]
+  },
+  {
+   "if": "dark",
+   "do": [
+    {
+     "var": "darkturns",
+     "add": 1
+    },
+    {
+     "if": [
+      "var:darkturns>=2",
+      "chance:60"
+     ],
+     "then": [
+      {
+       "die": "Oh, no! You have walked into the slavering fangs of a lurking grue!"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "if": "!dark",
+   "do": [
+    {
+     "var": "darkturns",
+     "value": 0
+    }
+   ]
+  },
+  {
+   "if": [
+    "at:egg:trophy_case",
+    "at:painting:trophy_case",
+    "at:coins:trophy_case"
+   ],
+   "once": true,
+   "do": [
+    {
+     "win": "An almost inaudible voice whispers in your ear, \"Look to your treasures for the final secret.\"\n\nYou have gathered every treasure in this excerpt of the Great Underground Empire. The full ZORK I - with the thief, the dam, the Land of the Dead and nineteen treasures in all - is free to play and study under the MIT License."
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,7 @@
+[
+  { "file": "black-sanctum.json", "title": "Black Sanctum", "year": 1982, "description": "Mark Data Products' CoCo classic, rebuilt from the original map and walkthroughs: a snowbound cabin, a mirror, and the coven beyond it." },
+  { "file": "zork1.json", "title": "Zork I (excerpt)", "year": 1980, "description": "The white house, the forest, the troll and the first caves of the Great Underground Empire. MIT-licensed since 2025." },
+  { "file": "colossal-cave.json", "title": "Colossal Cave Adventure (excerpt)", "year": 1977, "description": "Crowther & Woods' original: the well house, XYZZY, the little bird and the snake in the Hall of the Mountain King." },
+  { "file": "st-hilarion.json", "title": "The Abbey of St. Hilarion", "year": 2026, "description": "An original gothic adventure: an abandoned 18th-century monastery and the black magic beneath its chapel." },
+  { "file": "postcard-tour.json", "title": "The Postcard Tour (image demo)", "year": 2026, "description": "Three rooms drawn from photographs loaded by URL, with vector fallbacks." }
+]

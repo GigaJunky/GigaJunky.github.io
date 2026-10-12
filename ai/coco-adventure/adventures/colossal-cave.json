@@ -1,0 +1,1746 @@
+{
+ "format": "gta-1",
+ "id": "colossal-cave-excerpt",
+ "title": "COLOSSAL CAVE ADVENTURE",
+ "author": "After Will Crowther (1976) and Don Woods (1977). An illustrated excerpt: the surface, the upper cave and the Hall of the Mountain King.",
+ "theme": "phosphor",
+ "maxScore": 70,
+ "start": "road",
+ "intro": "Somewhere nearby is Colossal Cave, where others have found fortunes in treasure and gold, though it is rumored that some who enter are never seen again. Magic is said to work in the cave.\n\n[This excerpt has one treasure: bring the gold nugget back to the well house. Type HELP for instructions.]",
+ "help": "I know of places, actions, and things. Most of my vocabulary describes places and is used to move you there: try words like FOREST, BUILDING, DOWNSTREAM, ENTER, EAST, WEST, NORTH, SOUTH, UP, or DOWN. I know about a few special objects, like a black rod hidden in the cave. These objects can be manipulated using some of the action words that I know. Usually you will need to give both the object and action words, as in TAKE LAMP or LIGHT LAMP. Some magic words will work too.",
+ "ranks": [
+  [
+   0,
+   "Rank Amateur"
+  ],
+  [
+   20,
+   "Novice"
+  ],
+  [
+   40,
+   "Experienced Adventurer"
+  ],
+  [
+   60,
+   "Seasoned Adventurer"
+  ],
+  [
+   70,
+   "Junior Master"
+  ]
+ ],
+ "messages": {
+  "dark": "It is now pitch dark. If you proceed you will likely fall into a pit.",
+  "noExit": "There is no way to go that direction.",
+  "dontKnowVerb": "I don't know that word."
+ },
+ "artLib": {
+  "woods": [
+   [
+    "gradient",
+    0,
+    120,
+    "sky",
+    "white"
+   ],
+   [
+    "forest",
+    96,
+    "darkgreen",
+    7,
+    16
+   ],
+   [
+    "ground",
+    120,
+    "grass"
+   ]
+  ],
+  "cavern": [
+   [
+    "cave",
+    "darkstone",
+    "black",
+    "stone",
+    3
+   ]
+  ]
+ },
+ "rooms": {
+  "road": {
+   "name": "End of Road",
+   "desc": "You are standing at the end of a road before a small brick building. Around you is a forest. A small stream flows out of the building and down a gully.",
+   "exits": {
+    "east": "building",
+    "in": "building",
+    "west": "hill",
+    "up": "hill",
+    "south": "valley",
+    "down": "valley",
+    "north": "forest",
+    "upstream": "building"
+   },
+   "art": [
+    [
+     "use",
+     "woods"
+    ],
+    [
+     "path",
+     "gray",
+     120,
+     60,
+     16
+    ],
+    [
+     "rect",
+     150,
+     70,
+     60,
+     50,
+     "red",
+     "black"
+    ],
+    [
+     "dither",
+     150,
+     70,
+     60,
+     50,
+     "red",
+     "darkred",
+     "brick"
+    ],
+    [
+     "poly",
+     [
+      144,
+      70,
+      216,
+      70,
+      180,
+      50
+     ],
+     "darkgray",
+     "black"
+    ],
+    [
+     "rect",
+     172,
+     92,
+     14,
+     28,
+     "black"
+    ],
+    [
+     "poly",
+     [
+      180,
+      120,
+      190,
+      120,
+      120,
+      192,
+      90,
+      192
+     ],
+     "water"
+    ]
+   ]
+  },
+  "building": {
+   "name": "Inside Building",
+   "desc": "You are inside a building, a well house for a large spring.",
+   "exits": {
+    "west": "road",
+    "out": "road",
+    "downstream": "road"
+   },
+   "art": [
+    [
+     "room",
+     "red",
+     "gray",
+     "darkgray",
+     "black"
+    ],
+    [
+     "dither",
+     72,
+     40,
+     112,
+     88,
+     "red",
+     "darkred",
+     "brick"
+    ],
+    [
+     "texture",
+     "left",
+     "red",
+     "darkred",
+     "brick"
+    ],
+    [
+     "texture",
+     "right",
+     "red",
+     "darkred",
+     "brick"
+    ],
+    [
+     "ellipse",
+     128,
+     160,
+     40,
+     14,
+     "water",
+     "lightgray",
+     3
+    ],
+    [
+     "ellipse",
+     128,
+     160,
+     30,
+     9,
+     "cyan"
+    ],
+    [
+     "door",
+     "left",
+     0.5,
+     "black",
+     true
+    ]
+   ]
+  },
+  "hill": {
+   "name": "Hill in Road",
+   "desc": "You have walked up a hill, still in the forest. The road slopes back down the other side of the hill. There is a building in the distance.",
+   "exits": {
+    "east": "road",
+    "down": "road",
+    "west": "forest",
+    "north": "forest",
+    "south": "forest"
+   },
+   "art": [
+    [
+     "use",
+     "woods"
+    ],
+    [
+     "hills",
+     140,
+     "grass",
+     4,
+     20
+    ],
+    [
+     "path",
+     "gray",
+     100,
+     80,
+     6
+    ],
+    [
+     "rect",
+     40,
+     92,
+     14,
+     10,
+     "red",
+     "black"
+    ]
+   ]
+  },
+  "forest": {
+   "name": "Forest",
+   "desc": "You are in open forest, with a deep valley to one side.",
+   "exits": {
+    "east": "valley",
+    "down": "valley",
+    "north": "forest",
+    "west": "forest",
+    "south": "road"
+   },
+   "art": [
+    [
+     "gradient",
+     0,
+     192,
+     "darkgreen",
+     "black"
+    ],
+    [
+     "forest",
+     60,
+     "darkgreen",
+     8,
+     16
+    ],
+    [
+     "forest",
+     110,
+     "moss",
+     9,
+     10
+    ],
+    [
+     "ground",
+     170,
+     "darkbrown"
+    ]
+   ]
+  },
+  "valley": {
+   "name": "In a Valley",
+   "desc": "You are in a valley in the forest beside a stream tumbling along a rocky bed.",
+   "exits": {
+    "north": "road",
+    "upstream": "road",
+    "east": "forest",
+    "west": "forest",
+    "up": "forest",
+    "south": "slit",
+    "downstream": "slit",
+    "down": "slit"
+   },
+   "art": [
+    [
+     "use",
+     "woods"
+    ],
+    [
+     "hills",
+     110,
+     "darkgreen",
+     12,
+     30
+    ],
+    [
+     "poly",
+     [
+      100,
+      120,
+      140,
+      120,
+      200,
+      192,
+      40,
+      192
+     ],
+     "water"
+    ],
+    [
+     "rocks",
+     160,
+     "stone",
+     13,
+     10
+    ]
+   ]
+  },
+  "slit": {
+   "name": "Slit in Streambed",
+   "desc": "At your feet all the water of the stream splashes into a 2-inch slit in the rock. Downstream the streambed is bare rock.",
+   "exits": {
+    "north": "valley",
+    "upstream": "valley",
+    "south": "depression",
+    "downstream": "depression",
+    "down": {
+     "msg": "You don't fit through a two-inch slit!"
+    }
+   },
+   "art": [
+    [
+     "use",
+     "woods"
+    ],
+    [
+     "rect",
+     0,
+     120,
+     256,
+     72,
+     "stone"
+    ],
+    [
+     "dither",
+     0,
+     120,
+     256,
+     72,
+     "stone",
+     "darkstone",
+     "sparse"
+    ],
+    [
+     "poly",
+     [
+      100,
+      120,
+      140,
+      120,
+      132,
+      160,
+      108,
+      160
+     ],
+     "water"
+    ],
+    [
+     "line",
+     [
+      104,
+      162,
+      136,
+      162
+     ],
+     "black",
+     2
+    ]
+   ]
+  },
+  "depression": {
+   "name": "Outside Grate",
+   "desc": [
+    "You are in a 20-foot depression floored with bare dirt. Set into the dirt is a strong steel grate mounted in concrete. A dry streambed leads into the depression.",
+    {
+     "if": "open:grate",
+     "text": "The grate is open.",
+     "else": "The grate is locked."
+    }
+   ],
+   "exits": {
+    "north": "slit",
+    "upstream": "slit",
+    "down": {
+     "to": "below_grate",
+     "door": "grate"
+    },
+    "in": {
+     "to": "below_grate",
+     "door": "grate"
+    }
+   },
+   "art": [
+    [
+     "use",
+     "woods"
+    ],
+    [
+     "ellipse",
+     128,
+     160,
+     120,
+     40,
+     "darkbrown"
+    ],
+    [
+     "rect",
+     96,
+     146,
+     64,
+     28,
+     "lightgray",
+     "black"
+    ],
+    [
+     "if",
+     "open:grate",
+     [
+      [
+       "rect",
+       102,
+       150,
+       52,
+       20,
+       "black"
+      ],
+      [
+       "grate",
+       160,
+       140,
+       40,
+       18,
+       "gray"
+      ]
+     ],
+     [
+      [
+       "grate",
+       102,
+       150,
+       52,
+       20,
+       "gray"
+      ]
+     ]
+    ]
+   ]
+  },
+  "below_grate": {
+   "name": "Below the Grate",
+   "desc": "You are in a small chamber beneath a 3x3 steel grate to the surface. A low crawl over cobbles leads inward to the west.",
+   "exits": {
+    "up": {
+     "to": "depression",
+     "door": "grate"
+    },
+    "out": {
+     "to": "depression",
+     "door": "grate"
+    },
+    "west": "cobble"
+   },
+   "onEnter": [
+    {
+     "if": "first",
+     "do": [
+      {
+       "score": 15
+      }
+     ]
+    }
+   ],
+   "art": [
+    [
+     "use",
+     "cavern"
+    ],
+    [
+     "grate",
+     104,
+     2,
+     48,
+     18,
+     "gray"
+    ],
+    [
+     "if",
+     "open:grate",
+     [
+      [
+       "rect",
+       106,
+       4,
+       44,
+       14,
+       "sky"
+      ]
+     ]
+    ],
+    [
+     "alpha",
+     0.25
+    ],
+    [
+     "poly",
+     [
+      104,
+      20,
+      152,
+      20,
+      180,
+      192,
+      76,
+      192
+     ],
+     "yellow"
+    ],
+    [
+     "alpha",
+     1
+    ]
+   ]
+  },
+  "cobble": {
+   "name": "In Cobble Crawl",
+   "desc": "You are crawling over cobbles in a low passage. There is a dim light at the east end of the passage.",
+   "exits": {
+    "east": "below_grate",
+    "west": "debris"
+   },
+   "art": [
+    [
+     "bg",
+     "darkstone"
+    ],
+    [
+     "poly",
+     [
+      0,
+      0,
+      256,
+      0,
+      256,
+      70,
+      0,
+      70
+     ],
+     "black"
+    ],
+    [
+     "rect",
+     0,
+     120,
+     256,
+     72,
+     "stone"
+    ],
+    [
+     "dither",
+     0,
+     120,
+     256,
+     72,
+     "stone",
+     "darkgray"
+    ],
+    [
+     "glow",
+     250,
+     100,
+     40,
+     "yellow",
+     0.3
+    ]
+   ]
+  },
+  "debris": {
+   "name": "In Debris Room",
+   "dark": true,
+   "desc": "You are in a debris room filled with stuff washed in from the surface. A low wide passage with cobbles becomes plugged with mud and debris here, but an awkward canyon leads upward and west. A note on the wall says, \"MAGIC WORD XYZZY\".",
+   "exits": {
+    "east": "cobble",
+    "up": "canyon",
+    "west": "canyon"
+   },
+   "art": [
+    [
+     "use",
+     "cavern"
+    ],
+    [
+     "rocks",
+     150,
+     "darkbrown",
+     22,
+     12
+    ],
+    [
+     "text",
+     30,
+     60,
+     "XYZZY",
+     "white",
+     10
+    ]
+   ]
+  },
+  "canyon": {
+   "name": "Sloping E/W Canyon",
+   "dark": true,
+   "desc": "You are in an awkward sloping east/west canyon.",
+   "exits": {
+    "east": "debris",
+    "down": "debris",
+    "west": "bird_chamber",
+    "up": "bird_chamber"
+   },
+   "art": [
+    [
+     "bg",
+     "black"
+    ],
+    [
+     "poly",
+     [
+      0,
+      0,
+      110,
+      0,
+      60,
+      192,
+      0,
+      192
+     ],
+     "darkstone",
+     "stone"
+    ],
+    [
+     "poly",
+     [
+      256,
+      0,
+      146,
+      0,
+      196,
+      192,
+      256,
+      192
+     ],
+     "darkstone",
+     "stone"
+    ],
+    [
+     "poly",
+     [
+      60,
+      192,
+      196,
+      192,
+      150,
+      60,
+      106,
+      60
+     ],
+     "stone"
+    ]
+   ]
+  },
+  "bird_chamber": {
+   "name": "Orange River Chamber",
+   "dark": true,
+   "desc": "You are in a splendid chamber thirty feet high. The walls are frozen rivers of orange stone. An awkward canyon and a good passage exit from east and west sides of the chamber.",
+   "exits": {
+    "east": "canyon",
+    "west": "small_pit"
+   },
+   "art": [
+    [
+     "bg",
+     "orange"
+    ],
+    [
+     "dither",
+     0,
+     0,
+     256,
+     192,
+     "orange",
+     "rust",
+     "lines"
+    ],
+    [
+     "poly",
+     [
+      60,
+      192,
+      196,
+      192,
+      170,
+      120,
+      86,
+      120
+     ],
+     "stone"
+    ],
+    [
+     "arch",
+     "back",
+     0.5,
+     "black",
+     "rust",
+     0.3,
+     0.6
+    ]
+   ]
+  },
+  "small_pit": {
+   "name": "At Top of Small Pit",
+   "dark": true,
+   "desc": "At your feet is a small pit breathing traces of white mist. An east passage ends here except for a small crack leading on. Rough stone steps lead down the pit.",
+   "exits": {
+    "east": "bird_chamber",
+    "down": "hall_of_mists",
+    "west": {
+     "msg": "The crack is far too small for you to follow."
+    }
+   },
+   "art": [
+    [
+     "use",
+     "cavern"
+    ],
+    [
+     "ellipse",
+     128,
+     160,
+     50,
+     16,
+     "black",
+     "stone"
+    ],
+    [
+     "alpha",
+     0.4
+    ],
+    [
+     "ellipse",
+     128,
+     150,
+     40,
+     10,
+     "white"
+    ],
+    [
+     "alpha",
+     1
+    ]
+   ]
+  },
+  "hall_of_mists": {
+   "name": "In Hall of Mists",
+   "dark": true,
+   "desc": "You are at one end of a vast hall stretching forward out of sight to the west. There are openings to either side. Nearby, a wide stone staircase leads downward. The hall is filled with wisps of white mist swaying to and fro almost as if alive. A cold wind blows up the staircase. There is a passage at the top of a dome behind you.",
+   "exits": {
+    "up": {
+     "to": "small_pit",
+     "if": "!has:nugget",
+     "msg": "The dome is unclimbable."
+    },
+    "south": "nugget_room",
+    "left": "nugget_room",
+    "down": "mountain_king",
+    "west": {
+     "msg": "A wide fissure blocks the way west. (The rest of the cave lies beyond this excerpt.)"
+    }
+   },
+   "art": [
+    [
+     "bg",
+     "black"
+    ],
+    [
+     "tunnel",
+     "darkstone",
+     5
+    ],
+    [
+     "alpha",
+     0.35
+    ],
+    [
+     "ellipse",
+     60,
+     120,
+     60,
+     12,
+     "white"
+    ],
+    [
+     "ellipse",
+     180,
+     90,
+     70,
+     10,
+     "white"
+    ],
+    [
+     "ellipse",
+     120,
+     150,
+     80,
+     8,
+     "white"
+    ],
+    [
+     "alpha",
+     1
+    ],
+    [
+     "stairs",
+     "down",
+     "lightgray",
+     0.5
+    ]
+   ]
+  },
+  "nugget_room": {
+   "name": "Low Room",
+   "dark": true,
+   "desc": "This is a low room with a crude note on the wall. The note says, \"You won't get it up the steps\".",
+   "exits": {
+    "north": "hall_of_mists",
+    "out": "hall_of_mists"
+   },
+   "art": [
+    [
+     "bg",
+     "darkstone"
+    ],
+    [
+     "poly",
+     [
+      0,
+      0,
+      256,
+      0,
+      256,
+      60,
+      0,
+      80
+     ],
+     "black"
+    ],
+    [
+     "rect",
+     0,
+     140,
+     256,
+     52,
+     "stone"
+    ],
+    [
+     "text",
+     70,
+     100,
+     "YOU WON'T GET IT UP THE STEPS",
+     "white",
+     7
+    ]
+   ]
+  },
+  "mountain_king": {
+   "name": "Hall of the Mountain King",
+   "dark": true,
+   "desc": "You are in the Hall of the Mountain King, with passages off in all directions.",
+   "exits": {
+    "up": "hall_of_mists",
+    "east": "hall_of_mists",
+    "north": {
+     "to": "y2",
+     "if": "flag:snake_gone",
+     "msg": "You can't get by the snake."
+    },
+    "south": {
+     "if": "flag:snake_gone",
+     "msg": "You can't get by the snake."
+    },
+    "west": {
+     "if": "flag:snake_gone",
+     "msg": "You can't get by the snake."
+    }
+   },
+   "art": [
+    [
+     "use",
+     "cavern"
+    ],
+    [
+     "arch",
+     "left",
+     0.5,
+     "black",
+     "stone",
+     0.25,
+     0.5
+    ],
+    [
+     "arch",
+     "right",
+     0.5,
+     "black",
+     "stone",
+     0.25,
+     0.5
+    ]
+   ]
+  },
+  "y2": {
+   "name": "At \"Y2\"",
+   "dark": true,
+   "desc": "You are in a large room, with a passage to the south, a passage to the west, and a wall of broken rock to the east. There is a large \"Y2\" on a rock in the room's center.",
+   "exits": {
+    "south": "mountain_king",
+    "west": {
+     "msg": "The passage west is blocked by fallen rock. (This excerpt ends here.)"
+    },
+    "east": {
+     "msg": "The wall of broken rock is impassable."
+    }
+   },
+   "art": [
+    [
+     "use",
+     "cavern"
+    ],
+    [
+     "poly",
+     [
+      100,
+      170,
+      156,
+      170,
+      150,
+      130,
+      106,
+      130
+     ],
+     "lightgray",
+     "black"
+    ],
+    [
+     "text",
+     116,
+     158,
+     "Y2",
+     "black",
+     18
+    ]
+   ]
+  }
+ },
+ "items": {
+  "keys": {
+   "name": "set of keys",
+   "nouns": [
+    "keys",
+    "key"
+   ],
+   "at": "building",
+   "here": "There are some keys on the ground here.",
+   "art": [
+    [
+     "circle",
+     0,
+     -4,
+     3,
+     null,
+     "lightgray",
+     1.5
+    ],
+    [
+     "line",
+     [
+      2,
+      -3,
+      8,
+      0
+     ],
+     "lightgray",
+     1.5
+    ],
+    [
+     "line",
+     [
+      -2,
+      -3,
+      -7,
+      0
+     ],
+     "gold",
+     1.5
+    ]
+   ]
+  },
+  "lamp": {
+   "name": "brass lantern",
+   "nouns": [
+    "lamp",
+    "lantern",
+    "headlamp"
+   ],
+   "adj": [
+    "brass",
+    "shiny"
+   ],
+   "at": "building",
+   "lightable": true,
+   "lit": false,
+   "here": "There is a shiny brass lamp nearby.",
+   "lightMsg": "Your lamp is now on.",
+   "outMsg": "Your lamp is now off.",
+   "art": [
+    [
+     "rect",
+     -4,
+     -12,
+     8,
+     10,
+     "gold",
+     "black"
+    ],
+    [
+     "arc",
+     0,
+     -12,
+     4,
+     180,
+     360,
+     "gold",
+     1.5
+    ],
+    [
+     "if",
+     "lit:lamp",
+     [
+      [
+       "glow",
+       0,
+       -7,
+       14,
+       "yellow",
+       0.7
+      ]
+     ]
+    ]
+   ]
+  },
+  "food": {
+   "name": "tasty food",
+   "nouns": [
+    "food",
+    "rations"
+   ],
+   "adj": [
+    "tasty"
+   ],
+   "article": "some",
+   "at": "building",
+   "edible": true,
+   "here": "There is food here.",
+   "eatMsg": "Thank you, it was delicious!",
+   "art": [
+    [
+     "rect",
+     -5,
+     -4,
+     10,
+     4,
+     "tan",
+     "brown"
+    ]
+   ]
+  },
+  "bottle": {
+   "name": "small bottle",
+   "nouns": [
+    "bottle",
+    "water"
+   ],
+   "adj": [
+    "small"
+   ],
+   "at": "building",
+   "here": "There is a bottle of water here.",
+   "on": {
+    "drink": "The bottle of water is now empty. You were thirsty."
+   },
+   "art": [
+    [
+     "poly",
+     [
+      -3,
+      0,
+      3,
+      0,
+      3,
+      -8,
+      1,
+      -10,
+      1,
+      -13,
+      -1,
+      -13,
+      -1,
+      -10,
+      -3,
+      -8
+     ],
+     "cyan",
+     "black"
+    ]
+   ]
+  },
+  "spring": {
+   "name": "spring",
+   "nouns": [
+    "spring",
+    "stream",
+    "water"
+   ],
+   "at": [
+    "building",
+    "road",
+    "valley",
+    "slit"
+   ],
+   "scenery": true,
+   "desc": "Cold, clear water.",
+   "on": {
+    "drink": "You have taken a drink from the stream. The water tastes strongly of minerals, but is not unpleasant. It is extremely cold."
+   }
+  },
+  "building_s": {
+   "name": "building",
+   "nouns": [
+    "building",
+    "house",
+    "wellhouse"
+   ],
+   "adj": [
+    "brick",
+    "small",
+    "well"
+   ],
+   "at": [
+    "road",
+    "hill"
+   ],
+   "scenery": true,
+   "goes": "in",
+   "desc": "A small brick building."
+  },
+  "grate": {
+   "name": "steel grate",
+   "nouns": [
+    "grate",
+    "grating"
+   ],
+   "adj": [
+    "steel",
+    "strong"
+   ],
+   "at": [
+    "depression",
+    "below_grate"
+   ],
+   "scenery": true,
+   "open": false,
+   "locked": true,
+   "key": "keys",
+   "lockedMsg": "The grate is locked.",
+   "unlockMsg": "The grate is now unlocked.",
+   "desc": "It just looks like an ordinary grate mounted in concrete."
+  },
+  "cage": {
+   "name": "wicker cage",
+   "nouns": [
+    "cage"
+   ],
+   "adj": [
+    "wicker",
+    "small"
+   ],
+   "at": "cobble",
+   "container": true,
+   "transparent": true,
+   "here": "There is a small wicker cage discarded nearby.",
+   "art": [
+    [
+     "rect",
+     -7,
+     -12,
+     14,
+     12,
+     "none",
+     "tan"
+    ],
+    [
+     "line",
+     [
+      -3,
+      -12,
+      -3,
+      0
+     ],
+     "tan"
+    ],
+    [
+     "line",
+     [
+      1,
+      -12,
+      1,
+      0
+     ],
+     "tan"
+    ],
+    [
+     "line",
+     [
+      5,
+      -12,
+      5,
+      0
+     ],
+     "tan"
+    ],
+    [
+     "arc",
+     0,
+     -12,
+     7,
+     180,
+     360,
+     "tan"
+    ]
+   ]
+  },
+  "rod": {
+   "name": "black rod",
+   "nouns": [
+    "rod",
+    "star"
+   ],
+   "adj": [
+    "black",
+    "rusty"
+   ],
+   "at": "debris",
+   "here": "A three foot black rod with a rusty star on an end lies nearby.",
+   "art": [
+    [
+     "line",
+     [
+      -14,
+      0,
+      14,
+      -8
+     ],
+     "darkgray",
+     2
+    ],
+    [
+     "circle",
+     14,
+     -8,
+     2,
+     "rust"
+    ]
+   ],
+   "on": {
+    "wave": "Nothing happens. (Perhaps it would do something at the fissure - but that lies beyond this excerpt.)"
+   }
+  },
+  "bird": {
+   "name": "little bird",
+   "nouns": [
+    "bird"
+   ],
+   "adj": [
+    "little",
+    "cheerful"
+   ],
+   "at": "bird_chamber",
+   "here": "A cheerful little bird is sitting here singing.",
+   "art": [
+    [
+     "ellipse",
+     0,
+     -5,
+     5,
+     4,
+     "yellow",
+     "black"
+    ],
+    [
+     "circle",
+     4,
+     -9,
+     3,
+     "yellow",
+     "black"
+    ],
+    [
+     "poly",
+     [
+      6,
+      -9,
+      10,
+      -8,
+      6,
+      -7
+     ],
+     "orange"
+    ]
+   ],
+   "desc": [
+    {
+     "if": "at:bird:cage",
+     "text": "The little bird is in the cage, looking unhappy.",
+     "else": "A cheerful little bird."
+    }
+   ]
+  },
+  "nugget": {
+   "name": "large gold nugget",
+   "nouns": [
+    "nugget",
+    "gold"
+   ],
+   "adj": [
+    "large",
+    "sparkling"
+   ],
+   "at": "nugget_room",
+   "points": 10,
+   "here": "There is a large sparkling nugget of gold here!",
+   "art": [
+    [
+     "poly",
+     [
+      -6,
+      0,
+      6,
+      0,
+      7,
+      -5,
+      2,
+      -9,
+      -4,
+      -7
+     ],
+     "gold",
+     "darkbrown"
+    ],
+    [
+     "circle",
+     2,
+     -5,
+     1,
+     "white"
+    ]
+   ]
+  },
+  "snake": {
+   "name": "huge green snake",
+   "nouns": [
+    "snake"
+   ],
+   "adj": [
+    "huge",
+    "green",
+    "fierce"
+   ],
+   "at": "mountain_king",
+   "fixed": true,
+   "here": "A huge green fierce snake bars the way!",
+   "desc": "I wouldn't mess with it if I were you.",
+   "fixedMsg": "That's not something you can pick up.",
+   "art": [
+    [
+     "line",
+     [
+      -50,
+      0,
+      -30,
+      -10,
+      -10,
+      0,
+      10,
+      -10,
+      30,
+      0,
+      40,
+      -16
+     ],
+     "green",
+     6
+    ],
+    [
+     "circle",
+     42,
+     -18,
+     6,
+     "green"
+    ],
+    [
+     "circle",
+     44,
+     -20,
+     1.5,
+     "red"
+    ],
+    [
+     "line",
+     [
+      48,
+      -18,
+      54,
+      -16
+     ],
+     "red"
+    ]
+   ],
+   "artAt": [
+    128,
+    170
+   ],
+   "on": {
+    "attack": "Attacking the snake both doesn't work and is very dangerous."
+   }
+  },
+  "note": {
+   "name": "note",
+   "nouns": [
+    "note",
+    "wall",
+    "writing"
+   ],
+   "at": [
+    "debris",
+    "nugget_room"
+   ],
+   "scenery": true,
+   "desc": "The note is scrawled on the wall.",
+   "text": [
+    {
+     "if": "in:debris",
+     "text": "\"MAGIC WORD XYZZY\"",
+     "else": "\"You won't get it up the steps\""
+    }
+   ]
+  }
+ },
+ "actions": [
+  {
+   "verb": "xyzzy",
+   "room": "building",
+   "do": [
+    {
+     "goto": "debris"
+    }
+   ]
+  },
+  {
+   "verb": "xyzzy",
+   "room": "debris",
+   "do": [
+    {
+     "goto": "building"
+    }
+   ]
+  },
+  {
+   "verb": "say",
+   "noun": "xyzzy",
+   "room": "building",
+   "do": [
+    {
+     "goto": "debris"
+    }
+   ]
+  },
+  {
+   "verb": "say",
+   "noun": "xyzzy",
+   "room": "debris",
+   "do": [
+    {
+     "goto": "building"
+    }
+   ]
+  },
+  {
+   "verb": "xyzzy",
+   "do": "Nothing happens."
+  },
+  {
+   "verb": "plugh",
+   "room": "building",
+   "if": "visited:y2",
+   "do": [
+    {
+     "goto": "y2"
+    }
+   ]
+  },
+  {
+   "verb": "plugh",
+   "room": "y2",
+   "do": [
+    {
+     "goto": "building"
+    }
+   ]
+  },
+  {
+   "verb": "say",
+   "noun": "plugh",
+   "room": "y2",
+   "do": [
+    {
+     "goto": "building"
+    }
+   ]
+  },
+  {
+   "verb": "plugh",
+   "do": "Nothing happens."
+  },
+  {
+   "verb": "say",
+   "noun": "plugh",
+   "do": "Nothing happens."
+  },
+  {
+   "verb": "take,catch",
+   "noun": "bird",
+   "if": "at:bird:cage",
+   "do": "You already have the little bird. If you take it out of the cage it will likely fly away from you."
+  },
+  {
+   "verb": "take,catch",
+   "noun": "bird",
+   "if": "here:bird",
+   "do": [
+    {
+     "if": "has:rod",
+     "then": "As you approach the bird, it becomes disturbed and you cannot catch it.",
+     "else": [
+      {
+       "if": "has:cage",
+       "then": [
+        "You catch the bird in the wicker cage.",
+        {
+         "move": "bird",
+         "to": "cage"
+        },
+        {
+         "if": "!flag:bird_scored",
+         "then": [
+          {
+           "set": "bird_scored",
+           "score": 10
+          }
+         ]
+        }
+       ],
+       "else": "You can catch the bird, but you cannot carry it."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "verb": "drop,free",
+   "noun": "bird",
+   "if": "at:bird:cage",
+   "do": [
+    {
+     "if": "here:snake",
+     "then": [
+      "The little bird attacks the green snake, and in an astounding flurry drives the snake away.",
+      {
+       "destroy": "snake",
+       "set": "snake_gone",
+       "score": 15
+      },
+      {
+       "move": "bird",
+       "to": "here"
+      }
+     ],
+     "else": [
+      "The little bird flies free.",
+      {
+       "move": "bird",
+       "to": "here"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "verb": "attack",
+   "noun": "bird",
+   "do": "Oh, leave the poor unhappy bird alone."
+  },
+  {
+   "verb": "go",
+   "noun": [
+    "building",
+    "house"
+   ],
+   "room": "road",
+   "do": [
+    {
+     "goto": "building"
+    }
+   ]
+  },
+  {
+   "verb": "go",
+   "noun": [
+    "building",
+    "house"
+   ],
+   "room": "hill",
+   "do": [
+    {
+     "goto": "road"
+    }
+   ]
+  },
+  {
+   "verb": "go",
+   "noun": "forest",
+   "room": [
+    "road",
+    "hill",
+    "valley"
+   ],
+   "do": [
+    {
+     "goto": "forest"
+    }
+   ]
+  }
+ ],
+ "events": [
+  {
+   "if": "dark",
+   "do": [
+    {
+     "var": "darkturns",
+     "add": 1
+    },
+    {
+     "if": [
+      "var:darkturns>=2",
+      "chance:35"
+     ],
+     "then": [
+      {
+       "die": "You fell into a pit and broke every bone in your body!"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "if": "!dark",
+   "do": [
+    {
+     "var": "darkturns",
+     "value": 0
+    }
+   ]
+  },
+  {
+   "if": "at:nugget:building",
+   "once": true,
+   "do": [
+    {
+     "score": 20
+    },
+    {
+     "win": "You have brought the gold nugget safely back to the well house. Deep below, the Hall of the Mountain King keeps its other secrets - for now.\n\nThe full Colossal Cave holds fifteen treasures, a pirate, a dragon and a troll bridge. Its source has been freely shared since 1977."
+    }
+   ]
+  }
+ ],
+ "directions": {
+  "downstream": "downstream",
+  "upstream": "upstream",
+  "left": "left",
+  "right": "right"
+ }
+}

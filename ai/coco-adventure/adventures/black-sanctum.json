@@ -1,0 +1,4464 @@
+{
+ "format": "gta-1",
+ "id": "black-sanctum",
+ "title": "BLACK SANCTUM",
+ "author": "Recreation of the Mark Data Products adventure (TRS-80 Color Computer). Map and puzzle structure follow the original; room text is newly written.",
+ "theme": "coco",
+ "maxScore": 100,
+ "maxCarry": 10,
+ "start": "mt_country",
+ "intro": "Snow. Wind. Night coming on fast in the high country.\n\nYou took shelter from the storm in an old cabin you remembered from your boyhood hunting trips... but tonight there is a light burning in its window, and a terrible quiet all around.\n\nDuring the game you will discover what you must do. Save often - this is a dangerous place.\n\n(Type HELP for instructions.)",
+ "help": "Use VERB NOUN commands: GO CABIN, GET SHOVEL, OPEN DOOR, GO DOOR, GO STAIRS, GO MIRROR, LOOK MANTLE, READ NOTE, LIGHT LANTERN, PLAY FUGUE, PULL NAILS, CUT HAIR... Directions: N S E W U D. LOOK (L) describes the room; INVENTORY (I) lists what you carry. GET ALL and DROP ALL work. You can carry only 10 things. SAVE, RESTORE, UNDO and SCORE work any time.",
+ "ranks": [
+  [
+   0,
+   "Lost Traveller"
+  ],
+  [
+   25,
+   "Seeker"
+  ],
+  [
+   50,
+   "Initiate"
+  ],
+  [
+   75,
+   "Exorcist"
+  ],
+  [
+   100,
+   "Bishop's Champion"
+  ]
+ ],
+ "colors": {
+  "ablue": "#2f6bff",
+  "aorange": "#ff7a1a",
+  "snow": "#f2f2ff"
+ },
+ "messages": {
+  "dark": "It is pitch dark. You can't see a thing - but you can hear something scraping in the blackness.",
+  "noExit": "You can't go that way.",
+  "won": "*** THE BLACK SANCTUM IS DESTROYED ***"
+ },
+ "darkArt": [
+  [
+   "bg",
+   "black"
+  ]
+ ],
+ "artLib": {
+  "snowy": [
+   [
+    "bg",
+    "black"
+   ],
+   [
+    "stars",
+    40,
+    "white",
+    17,
+    60
+   ],
+   [
+    "mountains",
+    100,
+    "ablue",
+    4,
+    50
+   ],
+   [
+    "mountains",
+    120,
+    "white",
+    8,
+    30
+   ],
+   [
+    "ground",
+    130,
+    "snow"
+   ],
+   [
+    "dither",
+    0,
+    130,
+    256,
+    62,
+    "snow",
+    "ablue",
+    "sparse"
+   ]
+  ],
+  "wire": [
+   [
+    "room",
+    "black",
+    "black",
+    "black",
+    "white"
+   ]
+  ],
+  "corridor": [
+   [
+    "room",
+    "black",
+    "black",
+    "black",
+    "white"
+   ],
+   [
+    "dither",
+    0,
+    186,
+    256,
+    6,
+    "black",
+    "ablue"
+   ],
+   [
+    "line",
+    [
+     72,
+     40,
+     72,
+     128
+    ],
+    "white"
+   ],
+   [
+    "line",
+    [
+     184,
+     40,
+     184,
+     128
+    ],
+    "white"
+   ]
+  ],
+  "boardsdoor": [
+   [
+    "line",
+    [
+     -18,
+     -40,
+     18,
+     -24
+    ],
+    "aorange",
+    3
+   ],
+   [
+    "line",
+    [
+     -18,
+     -24,
+     18,
+     -40
+    ],
+    "aorange",
+    3
+   ],
+   [
+    "line",
+    [
+     -18,
+     -12,
+     18,
+     -12
+    ],
+    "aorange",
+    3
+   ]
+  ]
+ },
+ "rooms": {
+  "mt_country": {
+   "name": "Rugged mountain country",
+   "desc": "You stand in rugged mountain country, knee-deep in snow. Pine trees crowd the slopes around you, their needles dusted with white. Just to the east, smoke rises from the chimney of a small log cabin.",
+   "exits": {
+    "north": "pines_1",
+    "south": "pines_1",
+    "west": "pines_1",
+    "east": "outside_cabin"
+   },
+   "art": [
+    [
+     "use",
+     "snowy"
+    ],
+    [
+     "pine",
+     30,
+     160,
+     70,
+     "darkgreen",
+     "darkbrown"
+    ],
+    [
+     "pine",
+     64,
+     150,
+     50,
+     "darkgreen",
+     "darkbrown"
+    ],
+    [
+     "pine",
+     236,
+     168,
+     80,
+     "darkgreen",
+     "darkbrown"
+    ],
+    [
+     "dither",
+     18,
+     104,
+     20,
+     50,
+     "darkgreen",
+     "snow",
+     "sparse"
+    ],
+    [
+     "rect",
+     150,
+     110,
+     50,
+     30,
+     "darkbrown",
+     "black"
+    ],
+    [
+     "poly",
+     [
+      144,
+      110,
+      206,
+      110,
+      175,
+      92
+     ],
+     "snow",
+     "black"
+    ],
+    [
+     "rect",
+     188,
+     90,
+     6,
+     14,
+     "darkstone"
+    ],
+    [
+     "rect",
+     170,
+     122,
+     8,
+     18,
+     "black"
+    ],
+    [
+     "rect",
+     156,
+     118,
+     8,
+     6,
+     "aorange"
+    ],
+    [
+     "glow",
+     160,
+     120,
+     12,
+     "aorange",
+     0.4
+    ],
+    [
+     "alpha",
+     0.5
+    ],
+    [
+     "circle",
+     192,
+     82,
+     4,
+     "lightgray"
+    ],
+    [
+     "circle",
+     196,
+     72,
+     5,
+     "lightgray"
+    ],
+    [
+     "circle",
+     202,
+     60,
+     6,
+     "lightgray"
+    ],
+    [
+     "alpha",
+     1
+    ]
+   ]
+  },
+  "pines_1": {
+   "name": "Pine forest",
+   "desc": "Pine trees, snow, and more pine trees. Every direction looks exactly the same, and the wind has already filled in your tracks.",
+   "exits": {
+    "north": "pines_1",
+    "east": "pines_1",
+    "west": "pines_1",
+    "south": "pines_2"
+   },
+   "art": [
+    [
+     "use",
+     "snowy"
+    ],
+    [
+     "forest",
+     110,
+     "darkgreen",
+     31,
+     20
+    ],
+    [
+     "dither",
+     0,
+     0,
+     256,
+     192,
+     "none",
+     "white",
+     "sparse"
+    ]
+   ]
+  },
+  "pines_2": {
+   "name": "Pine forest",
+   "desc": "More pines, bowed under the weight of the snow. Through a gap in the trees to the east you glimpse a warm orange light.",
+   "exits": {
+    "north": "pines_1",
+    "south": "pines_1",
+    "west": "pines_1",
+    "east": "outside_cabin"
+   },
+   "art": [
+    [
+     "use",
+     "snowy"
+    ],
+    [
+     "forest",
+     110,
+     "darkgreen",
+     37,
+     14
+    ],
+    [
+     "glow",
+     240,
+     130,
+     30,
+     "aorange",
+     0.5
+    ]
+   ]
+  },
+  "outside_cabin": {
+   "name": "Outside the cabin",
+   "desc": [
+    "You are standing before the door of a rough log cabin. Light flickers behind its frosted window. Snow is drifted high against the walls.",
+    {
+     "if": "open:cabin_door",
+     "text": "The cabin door is open.",
+     "else": "The cabin door is closed."
+    },
+    "The mountains lie west."
+   ],
+   "exits": {
+    "west": "mt_country",
+    "in": {
+     "to": "living_room",
+     "door": "cabin_door"
+    },
+    "east": {
+     "to": "living_room",
+     "door": "cabin_door"
+    }
+   },
+   "art": [
+    [
+     "bg",
+     "black"
+    ],
+    [
+     "stars",
+     20,
+     "white",
+     3,
+     40
+    ],
+    [
+     "rect",
+     20,
+     30,
+     216,
+     130,
+     "darkbrown"
+    ],
+    [
+     "dither",
+     20,
+     30,
+     216,
+     130,
+     "darkbrown",
+     "black",
+     "lines"
+    ],
+    [
+     "poly",
+     [
+      8,
+      34,
+      248,
+      34,
+      128,
+      0
+     ],
+     "snow",
+     "black"
+    ],
+    [
+     "rect",
+     34,
+     70,
+     40,
+     34,
+     "aorange",
+     "black"
+    ],
+    [
+     "line",
+     [
+      54,
+      70,
+      54,
+      104
+     ],
+     "black",
+     2
+    ],
+    [
+     "line",
+     [
+      34,
+      87,
+      74,
+      87
+     ],
+     "black",
+     2
+    ],
+    [
+     "glow",
+     54,
+     86,
+     30,
+     "aorange",
+     0.4
+    ],
+    [
+     "if",
+     "open:cabin_door",
+     [
+      [
+       "rect",
+       120,
+       70,
+       50,
+       90,
+       "aorange"
+      ],
+      [
+       "glow",
+       145,
+       120,
+       40,
+       "yellow",
+       0.4
+      ]
+     ],
+     [
+      [
+       "rect",
+       120,
+       70,
+       50,
+       90,
+       "wood",
+       "black"
+      ],
+      [
+       "circle",
+       160,
+       118,
+       3,
+       "gold"
+      ]
+     ]
+    ],
+    [
+     "ground",
+     160,
+     "snow"
+    ],
+    [
+     "poly",
+     [
+      0,
+      160,
+      0,
+      120,
+      30,
+      150,
+      60,
+      160
+     ],
+     "snow"
+    ],
+    [
+     "poly",
+     [
+      256,
+      160,
+      256,
+      110,
+      220,
+      150,
+      200,
+      160
+     ],
+     "snow"
+    ]
+   ]
+  },
+  "living_room": {
+   "name": "Living room",
+   "desc": [
+    "The cabin's living room is warm and smells of woodsmoke. A fire crackles in a stone fireplace beneath a heavy wooden mantle. Rough stairs climb to the floor above.",
+    {
+     "if": "open:cabin_door",
+     "text": "The front door stands open, and snow is blowing in across the floorboards.",
+     "else": "The front door is shut against the cold."
+    }
+   ],
+   "exits": {
+    "out": {
+     "to": "outside_cabin",
+     "door": "cabin_door"
+    },
+    "west": {
+     "to": "outside_cabin",
+     "door": "cabin_door"
+    },
+    "up": "bedroom"
+   },
+   "art": [
+    [
+     "room",
+     "darkbrown",
+     "wood",
+     "black",
+     "black"
+    ],
+    [
+     "dither",
+     72,
+     40,
+     112,
+     88,
+     "darkbrown",
+     "black",
+     "lines"
+    ],
+    [
+     "rect",
+     100,
+     66,
+     56,
+     62,
+     "stone",
+     "black"
+    ],
+    [
+     "rect",
+     110,
+     88,
+     36,
+     40,
+     "black"
+    ],
+    [
+     "rect",
+     92,
+     62,
+     72,
+     6,
+     "wood",
+     "black"
+    ],
+    [
+     "poly",
+     [
+      116,
+      128,
+      140,
+      128,
+      136,
+      112,
+      128,
+      100,
+      120,
+      112
+     ],
+     "aorange"
+    ],
+    [
+     "poly",
+     [
+      122,
+      128,
+      134,
+      128,
+      130,
+      116,
+      128,
+      108,
+      126,
+      116
+     ],
+     "yellow"
+    ],
+    [
+     "glow",
+     128,
+     116,
+     40,
+     "aorange",
+     0.35
+    ],
+    [
+     "if",
+     "open:cabin_door",
+     [
+      [
+       "door",
+       "left",
+       0.45,
+       "black",
+       true
+      ],
+      [
+       "dither",
+       0,
+       150,
+       70,
+       42,
+       "none",
+       "snow",
+       "sparse"
+      ]
+     ],
+     [
+      [
+       "door",
+       "left",
+       0.45,
+       "wood"
+      ]
+     ]
+    ],
+    [
+     "stairs",
+     "up",
+     "wood",
+     0.55,
+     "right"
+    ]
+   ]
+  },
+  "bedroom": {
+   "name": "Dimly lit bedroom",
+   "desc": "A dimly lit bedroom under the eaves. A young woman lies upon the bed, deathly pale and perfectly still. She is breathing - barely. There is a closet in the far wall. Stairs lead down.",
+   "exits": {
+    "down": "living_room",
+    "in": "closet"
+   },
+   "art": [
+    [
+     "room",
+     "darkbrown",
+     "wood",
+     "black",
+     "black"
+    ],
+    [
+     "dither",
+     72,
+     40,
+     112,
+     88,
+     "darkbrown",
+     "black",
+     "lines"
+    ],
+    [
+     "door",
+     "back",
+     0.75,
+     "wood",
+     true,
+     0.24,
+     0.8
+    ],
+    [
+     "stairs",
+     "down",
+     "wood",
+     0.15
+    ],
+    [
+     "poly",
+     [
+      40,
+      170,
+      170,
+      150,
+      200,
+      170,
+      70,
+      192
+     ],
+     "white",
+     "black"
+    ],
+    [
+     "rect",
+     40,
+     150,
+     6,
+     30,
+     "wood"
+    ],
+    [
+     "if",
+     "here:sheet",
+     [
+      [
+       "poly",
+       [
+        80,
+        168,
+        160,
+        156,
+        186,
+        168,
+        104,
+        184
+       ],
+       "ablue"
+      ]
+     ]
+    ],
+    [
+     "ellipse",
+     74,
+     160,
+     10,
+     6,
+     "skin"
+    ],
+    [
+     "if",
+     "flag:hair_cut",
+     [
+      [
+       "ellipse",
+       70,
+       158,
+       8,
+       4,
+       "aorange"
+      ]
+     ],
+     [
+      [
+       "poly",
+       [
+        64,
+        156,
+        84,
+        154,
+        96,
+        170,
+        66,
+        176
+       ],
+       "aorange"
+      ]
+     ]
+    ],
+    [
+     "candle",
+     220,
+     150,
+     12,
+     "white"
+    ]
+   ]
+  },
+  "closet": {
+   "name": "Large closet",
+   "desc": "A walk-in closet, far larger than the cabin ought to hold. Mothballs and old furs. On the back wall hangs a tall mirror in a black frame - and your reflection in it is a little too slow to follow you.",
+   "exits": {
+    "out": "bedroom",
+    "north": {
+     "to": "corridor_8",
+     "if": "has:robe",
+     "msg": "Your hand meets cold, hard glass. Your reflection shakes its head at you - as if you were missing something.",
+     "say": "The emblem on the hooded robe flares with a dull red light. The glass goes soft as water, and you step through..."
+    }
+   },
+   "art": [
+    [
+     "room",
+     "darkbrown",
+     "wood",
+     "black",
+     "black"
+    ],
+    [
+     "ellipse",
+     128,
+     84,
+     32,
+     46,
+     "black",
+     "white",
+     3
+    ],
+    [
+     "dither",
+     100,
+     44,
+     56,
+     80,
+     "black",
+     "ablue",
+     "sparse"
+    ],
+    [
+     "ellipse",
+     128,
+     84,
+     32,
+     46,
+     null,
+     "darkgray",
+     2
+    ],
+    [
+     "line",
+     [
+      20,
+      40,
+      60,
+      46
+     ],
+     "white",
+     2
+    ],
+    [
+     "poly",
+     [
+      24,
+      44,
+      34,
+      44,
+      40,
+      130,
+      18,
+      130
+     ],
+     "darkgray",
+     "black"
+    ],
+    [
+     "poly",
+     [
+      42,
+      46,
+      52,
+      46,
+      58,
+      126,
+      38,
+      126
+     ],
+     "brown",
+     "black"
+    ],
+    [
+     "line",
+     [
+      196,
+      46,
+      236,
+      40
+     ],
+     "white",
+     2
+    ],
+    [
+     "poly",
+     [
+      222,
+      44,
+      232,
+      44,
+      240,
+      130,
+      216,
+      130
+     ],
+     "darkgray",
+     "black"
+    ]
+   ]
+  },
+  "corridor_8": {
+   "name": "Long narrow corridor",
+   "desc": "A long narrow corridor of black stone. Behind you, the mirror shimmers like the surface of a pond - the way back to the cabin. The corridor leads south. The air here is cold, and very old.",
+   "exits": {
+    "south": "corridor_9",
+    "north": {
+     "to": "closet",
+     "say": "You step back through the rippling glass..."
+    }
+   },
+   "art": [
+    [
+     "use",
+     "corridor"
+    ],
+    [
+     "ellipse",
+     128,
+     84,
+     18,
+     30,
+     "black",
+     "white",
+     2
+    ],
+    [
+     "dither",
+     112,
+     58,
+     32,
+     52,
+     "black",
+     "ablue",
+     "sparse"
+    ]
+   ]
+  },
+  "corridor_9": {
+   "name": "Long narrow corridor",
+   "desc": [
+    "A long narrow corridor. A bronze plaque is set into the wall beside a heavy wooden door,",
+    {
+     "if": "open:wooden_door",
+     "text": "which stands open.",
+     "else": "which is closed."
+    },
+    "Passages lead north, east and west."
+   ],
+   "exits": {
+    "north": "corridor_8",
+    "east": "corridor_19",
+    "west": "corridor_14",
+    "in": {
+     "to": "organ_room",
+     "door": "wooden_door"
+    }
+   },
+   "art": [
+    [
+     "use",
+     "corridor"
+    ],
+    [
+     "if",
+     "open:wooden_door",
+     [
+      [
+       "door",
+       "left",
+       0.5,
+       "black",
+       true
+      ]
+     ],
+     [
+      [
+       "door",
+       "left",
+       0.5,
+       "wood"
+      ]
+     ]
+    ],
+    [
+     "wall",
+     "right",
+     0.45,
+     0.65,
+     0.45,
+     0.6,
+     "aorange",
+     "white"
+    ]
+   ]
+  },
+  "organ_room": {
+   "name": "Impressive room",
+   "desc": [
+    "An impressive, vaulted hall. A great pipe organ fills the far wall, its pipes soaring up into darkness. Stone statues of robed and hooded figures stand along the walls, heads bowed.",
+    {
+     "if": "flag:fugue",
+     "text": "A section of the wall beside the organ has swung away to reveal a passage."
+    },
+    "A wooden door leads out."
+   ],
+   "exits": {
+    "out": {
+     "to": "corridor_9",
+     "door": "wooden_door"
+    },
+    "north": {
+     "to": "corridor_9",
+     "door": "wooden_door"
+    },
+    "in": {
+     "to": "strange_room",
+     "if": "flag:fugue",
+     "msg": "You can't go that way."
+    }
+   },
+   "art": [
+    [
+     "room",
+     "black",
+     "black",
+     "black",
+     "white"
+    ],
+    [
+     "rect",
+     84,
+     40,
+     88,
+     88,
+     "black"
+    ],
+    [
+     "rect",
+     88,
+     46,
+     6,
+     64,
+     "white"
+    ],
+    [
+     "rect",
+     98,
+     40,
+     6,
+     70,
+     "white"
+    ],
+    [
+     "rect",
+     108,
+     34,
+     6,
+     76,
+     "aorange"
+    ],
+    [
+     "rect",
+     118,
+     28,
+     6,
+     82,
+     "white"
+    ],
+    [
+     "rect",
+     128,
+     24,
+     6,
+     86,
+     "aorange"
+    ],
+    [
+     "rect",
+     138,
+     28,
+     6,
+     82,
+     "white"
+    ],
+    [
+     "rect",
+     148,
+     34,
+     6,
+     76,
+     "aorange"
+    ],
+    [
+     "rect",
+     158,
+     40,
+     6,
+     70,
+     "white"
+    ],
+    [
+     "rect",
+     166,
+     46,
+     4,
+     64,
+     "white"
+    ],
+    [
+     "rect",
+     96,
+     110,
+     64,
+     18,
+     "ablue",
+     "white"
+    ],
+    [
+     "line",
+     [
+      100,
+      116,
+      156,
+      116
+     ],
+     "white"
+    ],
+    [
+     "statue",
+     26,
+     170,
+     60,
+     "lightgray"
+    ],
+    [
+     "statue",
+     230,
+     170,
+     60,
+     "lightgray"
+    ],
+    [
+     "statue",
+     56,
+     146,
+     36,
+     "gray"
+    ],
+    [
+     "statue",
+     200,
+     146,
+     36,
+     "gray"
+    ],
+    [
+     "if",
+     "flag:fugue",
+     [
+      [
+       "arch",
+       "back",
+       0.92,
+       "black",
+       "aorange",
+       0.14,
+       0.6
+      ]
+     ]
+    ]
+   ]
+  },
+  "strange_room": {
+   "name": "Strange room",
+   "desc": "A strange, many-sided room. A circle of white salt has been poured on the floor, and within it stands a tall lectern. The candles here burn with a cold, colourless flame. A passage leads back to the organ hall, and a narrow opening - an old air vent - is set low in one wall.",
+   "exits": {
+    "out": "organ_room",
+    "south": "organ_room",
+    "down": "arched_passage"
+   },
+   "art": [
+    [
+     "room",
+     "black",
+     "black",
+     "black",
+     "aorange"
+    ],
+    [
+     "ellipse",
+     128,
+     162,
+     70,
+     20,
+     null,
+     "white",
+     3
+    ],
+    [
+     "rect",
+     120,
+     112,
+     16,
+     48,
+     "wood",
+     "black"
+    ],
+    [
+     "poly",
+     [
+      110,
+      112,
+      146,
+      112,
+      140,
+      102,
+      116,
+      102
+     ],
+     "wood",
+     "black"
+    ],
+    [
+     "rect",
+     16,
+     172,
+     30,
+     14,
+     "black",
+     "white"
+    ],
+    [
+     "line",
+     [
+      20,
+      176,
+      42,
+      176
+     ],
+     "white"
+    ],
+    [
+     "line",
+     [
+      20,
+      180,
+      42,
+      180
+     ],
+     "white"
+    ],
+    [
+     "candle",
+     60,
+     130,
+     14,
+     "white"
+    ],
+    [
+     "candle",
+     196,
+     130,
+     14,
+     "white"
+    ]
+   ]
+  },
+  "arched_passage": {
+   "name": "Arched passage",
+   "dark": true,
+   "desc": [
+    "A low arched passage of dripping stone. Worn stone steps lead north, down into the crypt. The vent you crawled through is above you.",
+    {
+     "if": "flag:nails_pulled",
+     "text": "A doorway in the east wall stands open.",
+     "else": "There is a doorway in the east wall, boarded up from the other side."
+    }
+   ],
+   "exits": {
+    "up": "strange_room",
+    "north": "crypt",
+    "east": {
+     "to": "alcove",
+     "if": "flag:nails_pulled",
+     "msg": "The doorway is boarded up from the other side."
+    }
+   },
+   "art": [
+    [
+     "bg",
+     "black"
+    ],
+    [
+     "dither",
+     0,
+     0,
+     256,
+     192,
+     "darkstone",
+     "black",
+     "sparse"
+    ],
+    [
+     "arch",
+     "back",
+     0.5,
+     "black",
+     "white",
+     0.6,
+     0.6
+    ],
+    [
+     "line",
+     [
+      96,
+      150,
+      160,
+      150
+     ],
+     "white"
+    ],
+    [
+     "line",
+     [
+      104,
+      140,
+      152,
+      140
+     ],
+     "white"
+    ],
+    [
+     "line",
+     [
+      110,
+      132,
+      146,
+      132
+     ],
+     "white"
+    ],
+    [
+     "if",
+     "flag:nails_pulled",
+     [
+      [
+       "rect",
+       210,
+       70,
+       30,
+       90,
+       "black",
+       "white"
+      ]
+     ],
+     [
+      [
+       "rect",
+       210,
+       70,
+       30,
+       90,
+       "wood",
+       "white"
+      ],
+      [
+       "line",
+       [
+        210,
+        90,
+        240,
+        100
+       ],
+       "black",
+       2
+      ],
+      [
+       "line",
+       [
+        210,
+        130,
+        240,
+        120
+       ],
+       "black",
+       2
+      ]
+     ]
+    ]
+   ]
+  },
+  "crypt": {
+   "name": "Underground crypt",
+   "dark": true,
+   "desc": [
+    "An underground crypt, low and airless. A heavy stone coffin rests in the centre of the floor,",
+    {
+     "if": "open:coffin",
+     "text": "its lid pushed aside.",
+     "else": "its lid firmly closed."
+    },
+    {
+     "if": "flag:altar_built",
+     "text": "Beside it stands the altar you built, scorched black."
+    },
+    "Steps lead south."
+   ],
+   "exits": {
+    "south": "arched_passage"
+   },
+   "art": [
+    [
+     "room",
+     "black",
+     "black",
+     "black",
+     "white"
+    ],
+    [
+     "poly",
+     [
+      70,
+      176,
+      186,
+      176,
+      170,
+      140,
+      86,
+      140
+     ],
+     "darkstone",
+     "white"
+    ],
+    [
+     "if",
+     "open:coffin",
+     [
+      [
+       "poly",
+       [
+        90,
+        168,
+        166,
+        168,
+        156,
+        146,
+        100,
+        146
+       ],
+       "black",
+       "white"
+      ],
+      [
+       "skull",
+       110,
+       158,
+       5,
+       "white"
+      ],
+      [
+       "poly",
+       [
+        170,
+        150,
+        220,
+        136,
+        230,
+        150,
+        180,
+        164
+       ],
+       "darkstone",
+       "white"
+      ]
+     ],
+     [
+      [
+       "poly",
+       [
+        86,
+        140,
+        170,
+        140,
+        160,
+        128,
+        96,
+        128
+       ],
+       "stone",
+       "white"
+      ]
+     ]
+    ],
+    [
+     "if",
+     "flag:altar_built",
+     [
+      [
+       "rect",
+       196,
+       120,
+       46,
+       40,
+       "darkbrown",
+       "white"
+      ],
+      [
+       "alpha",
+       0.6
+      ],
+      [
+       "glow",
+       218,
+       116,
+       30,
+       "ablue",
+       0.5
+      ],
+      [
+       "alpha",
+       1
+      ]
+     ]
+    ]
+   ]
+  },
+  "corridor_14": {
+   "name": "Long narrow corridor",
+   "desc": "A long narrow corridor. The stone walls sweat with cold. Passages branch north, south and east.",
+   "exits": {
+    "east": "corridor_9",
+    "south": "corridor_21",
+    "north": "small_room"
+   },
+   "art": [
+    [
+     "use",
+     "corridor"
+    ],
+    [
+     "arch",
+     "left",
+     0.5,
+     "black",
+     "white",
+     0.25,
+     0.6
+    ],
+    [
+     "arch",
+     "right",
+     0.5,
+     "black",
+     "white",
+     0.25,
+     0.6
+    ]
+   ]
+  },
+  "small_room": {
+   "name": "Small room",
+   "desc": "A small, bare room with whitewashed walls. Someone has scratched tally marks into the plaster - hundreds of them. Exits lead south and west.",
+   "exits": {
+    "south": "corridor_14",
+    "west": "corridor_16"
+   },
+   "art": [
+    [
+     "room",
+     "white",
+     "lightgray",
+     "white",
+     "black"
+    ],
+    [
+     "text",
+     86,
+     80,
+     "IIII IIII IIII",
+     "black",
+     8
+    ],
+    [
+     "text",
+     86,
+     90,
+     "IIII IIII IIII",
+     "black",
+     8
+    ],
+    [
+     "text",
+     86,
+     100,
+     "IIII IIII II",
+     "black",
+     8
+    ]
+   ]
+  },
+  "corridor_16": {
+   "name": "Long narrow corridor",
+   "desc": "A long narrow corridor. Somewhere above you, floorboards creak. Passages lead north, south and east.",
+   "exits": {
+    "north": "corridor_19",
+    "south": "corridor_17",
+    "east": "small_room"
+   },
+   "art": [
+    [
+     "use",
+     "corridor"
+    ],
+    [
+     "arch",
+     "right",
+     0.4,
+     "black",
+     "white",
+     0.25,
+     0.6
+    ]
+   ]
+  },
+  "corridor_17": {
+   "name": "End of corridor",
+   "desc": "The corridor ends at the foot of a steep, narrow stair leading up. You can hear someone muttering above. The corridor runs back north.",
+   "exits": {
+    "north": "corridor_16",
+    "up": "loft"
+   },
+   "art": [
+    [
+     "use",
+     "wire"
+    ],
+    [
+     "stairs",
+     "up",
+     "darkgray",
+     0.5,
+     "back"
+    ],
+    [
+     "line",
+     [
+      72,
+      128,
+      184,
+      128
+     ],
+     "white"
+    ]
+   ]
+  },
+  "loft": {
+   "name": "Upstairs loft",
+   "desc": "A cramped loft under a steeply pitched roof. Cobwebs, broken chairs, old trunks. A hole in the floor leads down to the stair.",
+   "exits": {
+    "down": "corridor_17"
+   },
+   "art": [
+    [
+     "bg",
+     "black"
+    ],
+    [
+     "poly",
+     [
+      0,
+      0,
+      128,
+      0,
+      0,
+      110
+     ],
+     "darkbrown",
+     "white"
+    ],
+    [
+     "poly",
+     [
+      256,
+      0,
+      128,
+      0,
+      256,
+      110
+     ],
+     "darkbrown",
+     "white"
+    ],
+    [
+     "line",
+     [
+      0,
+      40,
+      70,
+      0
+     ],
+     "white"
+    ],
+    [
+     "line",
+     [
+      256,
+      40,
+      186,
+      0
+     ],
+     "white"
+    ],
+    [
+     "poly",
+     [
+      0,
+      192,
+      256,
+      192,
+      220,
+      120,
+      36,
+      120
+     ],
+     "wood",
+     "white"
+    ],
+    [
+     "rect",
+     180,
+     130,
+     50,
+     30,
+     "darkbrown",
+     "white"
+    ],
+    [
+     "rect",
+     30,
+     140,
+     40,
+     26,
+     "darkbrown",
+     "white"
+    ],
+    [
+     "line",
+     [
+      100,
+      0,
+      112,
+      30,
+      130,
+      20,
+      150,
+      40
+     ],
+     "lightgray"
+    ]
+   ]
+  },
+  "corridor_19": {
+   "name": "Long narrow corridor",
+   "desc": "A long narrow corridor. To the north a doorway spills dusty yellow light. Passages lead west and south.",
+   "exits": {
+    "west": "corridor_9",
+    "north": "study",
+    "south": "corridor_16"
+   },
+   "art": [
+    [
+     "use",
+     "corridor"
+    ],
+    [
+     "rect",
+     108,
+     64,
+     40,
+     64,
+     "aorange",
+     "white"
+    ],
+    [
+     "glow",
+     128,
+     100,
+     40,
+     "yellow",
+     0.3
+    ]
+   ]
+  },
+  "study": {
+   "name": "Old study",
+   "desc": "An old study. Bookcases stuffed with crumbling books cover the walls from floor to ceiling. A reading desk is buried under papers and loose sheet music. Exits lead south and west.",
+   "exits": {
+    "south": "corridor_19",
+    "west": "corridor_21"
+   },
+   "art": [
+    [
+     "room",
+     "darkbrown",
+     "darkred",
+     "black",
+     "white"
+    ],
+    [
+     "bookcase",
+     74,
+     42,
+     108,
+     86,
+     "darkbrown"
+    ],
+    [
+     "texture",
+     "left",
+     "darkbrown",
+     "aorange",
+     "lines"
+    ],
+    [
+     "texture",
+     "right",
+     "darkbrown",
+     "ablue",
+     "lines"
+    ],
+    [
+     "table",
+     96,
+     150,
+     64,
+     28,
+     "wood"
+    ],
+    [
+     "rect",
+     104,
+     144,
+     14,
+     6,
+     "white"
+    ],
+    [
+     "rect",
+     126,
+     142,
+     18,
+     8,
+     "white"
+    ],
+    [
+     "line",
+     [
+      128,
+      146,
+      142,
+      146
+     ],
+     "black"
+    ]
+   ]
+  },
+  "corridor_21": {
+   "name": "Long narrow corridor",
+   "desc": "A long narrow corridor. From the south comes a faint draught carrying the smell of lamp oil. Passages lead north, south and east.",
+   "exits": {
+    "north": "corridor_14",
+    "south": "corridor_22",
+    "east": "study"
+   },
+   "art": [
+    [
+     "use",
+     "corridor"
+    ],
+    [
+     "arch",
+     "right",
+     0.5,
+     "black",
+     "white",
+     0.25,
+     0.6
+    ]
+   ]
+  },
+  "corridor_22": {
+   "name": "End of corridor",
+   "desc": "The corridor ends here at a blank stone wall. A small alcove opens to the east. The way back is north.",
+   "exits": {
+    "north": "corridor_21",
+    "east": "alcove"
+   },
+   "art": [
+    [
+     "use",
+     "wire"
+    ],
+    [
+     "rect",
+     72,
+     40,
+     112,
+     88,
+     "darkstone",
+     "white"
+    ],
+    [
+     "dither",
+     72,
+     40,
+     112,
+     88,
+     "darkstone",
+     "black",
+     "brick"
+    ],
+    [
+     "arch",
+     "right",
+     0.5,
+     "black",
+     "white",
+     0.3,
+     0.6
+    ]
+   ]
+  },
+  "alcove": {
+   "name": "Small alcove",
+   "desc": [
+    "A small alcove.",
+    {
+     "if": "flag:nails_pulled",
+     "text": "In the back wall is an open doorway leading into darkness.",
+     "else": "In the back wall is a doorway, boarded up with planks nailed firmly across it."
+    },
+    "The corridor is west."
+   ],
+   "exits": {
+    "west": "corridor_22",
+    "in": {
+     "to": "arched_passage",
+     "if": "flag:nails_pulled",
+     "msg": "The doorway is boarded up."
+    },
+    "east": {
+     "to": "arched_passage",
+     "if": "flag:nails_pulled",
+     "msg": "The doorway is boarded up."
+    }
+   },
+   "art": [
+    [
+     "room",
+     "darkstone",
+     "darkstone",
+     "black",
+     "white"
+    ],
+    [
+     "rect",
+     106,
+     56,
+     44,
+     72,
+     "black",
+     "white"
+    ],
+    [
+     "if",
+     "!flag:nails_pulled",
+     [
+      [
+       "group",
+       128,
+       112,
+       1.1,
+       [
+        [
+         "use",
+         "boardsdoor"
+        ]
+       ]
+      ],
+      [
+       "rect",
+       108,
+       76,
+       40,
+       4,
+       "aorange"
+      ],
+      [
+       "rect",
+       108,
+       92,
+       40,
+       4,
+       "aorange"
+      ]
+     ]
+    ]
+   ]
+  }
+ },
+ "items": {
+  "cabin": {
+   "name": "cabin",
+   "nouns": [
+    "cabin",
+    "smoke",
+    "chimney"
+   ],
+   "adj": [
+    "log",
+    "small"
+   ],
+   "at": "mt_country",
+   "scenery": true,
+   "desc": "A small log cabin. Smoke curls from its chimney, and its window glows. Someone is home.",
+   "goes": "east"
+  },
+  "trees": {
+   "name": "pine trees",
+   "nouns": [
+    "trees",
+    "tree",
+    "pines",
+    "pine",
+    "forest"
+   ],
+   "at": [
+    "mt_country",
+    "pines_1",
+    "pines_2",
+    "outside_cabin"
+   ],
+   "scenery": true,
+   "desc": "Tall pines, heavy with snow."
+  },
+  "needles": {
+   "name": "pine needles",
+   "nouns": [
+    "needles",
+    "needle",
+    "sprig",
+    "pine"
+   ],
+   "adj": [
+    "pine"
+   ],
+   "article": "some",
+   "at": "mt_country",
+   "here": "Fallen pine needles lie scattered on the snow.",
+   "desc": "A handful of fragrant pine needles. Evergreen - the tree that does not die.",
+   "art": [
+    [
+     "line",
+     [
+      -6,
+      0,
+      6,
+      -6
+     ],
+     "darkgreen",
+     2
+    ],
+    [
+     "line",
+     [
+      -2,
+      -2,
+      -4,
+      -7
+     ],
+     "darkgreen"
+    ],
+    [
+     "line",
+     [
+      2,
+      -4,
+      1,
+      -9
+     ],
+     "darkgreen"
+    ],
+    [
+     "line",
+     [
+      4,
+      -5,
+      8,
+      -9
+     ],
+     "darkgreen"
+    ]
+   ]
+  },
+  "shovel": {
+   "name": "shovel",
+   "nouns": [
+    "spade"
+   ],
+   "at": "outside_cabin",
+   "here": "A snow shovel leans against the cabin wall.",
+   "desc": "A broad wooden snow shovel.",
+   "art": [
+    [
+     "line",
+     [
+      -10,
+      0,
+      8,
+      -26
+     ],
+     "wood",
+     2
+    ],
+    [
+     "poly",
+     [
+      -16,
+      2,
+      -9,
+      -6,
+      -2,
+      0,
+      -10,
+      6
+     ],
+     "lightgray",
+     "black"
+    ]
+   ]
+  },
+  "cabin_door": {
+   "name": "cabin door",
+   "nouns": [
+    "door"
+   ],
+   "adj": [
+    "cabin",
+    "front",
+    "wooden"
+   ],
+   "at": [
+    "outside_cabin",
+    "living_room"
+   ],
+   "scenery": true,
+   "open": false,
+   "desc": [
+    {
+     "if": "open:cabin_door",
+     "text": "The door is open.",
+     "else": "A sturdy plank door. It's closed, but not locked."
+    }
+   ]
+  },
+  "fireplace": {
+   "name": "fireplace",
+   "nouns": [
+    "fireplace",
+    "fire",
+    "hearth"
+   ],
+   "adj": [
+    "stone"
+   ],
+   "at": "living_room",
+   "scenery": true,
+   "desc": "A fieldstone fireplace with a cheerful fire. Somebody built it up not long ago. Above it is a heavy wooden mantle."
+  },
+  "mantle": {
+   "name": "mantle",
+   "nouns": [
+    "mantle",
+    "mantel",
+    "shelf"
+   ],
+   "adj": [
+    "wooden",
+    "heavy"
+   ],
+   "at": "living_room",
+   "scenery": true,
+   "container": true,
+   "surface": true,
+   "desc": "A heavy beam of old oak.",
+   "on": {
+    "examine,search": {
+     "do": [
+      {
+       "if": "hidden:matches",
+       "then": [
+        "Running your hand along the dusty mantle, you find a box of matches.",
+        {
+         "show": "matches"
+        }
+       ],
+       "else": "A heavy beam of old oak."
+      }
+     ]
+    }
+   }
+  },
+  "matches": {
+   "name": "box of matches",
+   "nouns": [
+    "matches",
+    "match",
+    "box"
+   ],
+   "at": "mantle",
+   "hidden": true,
+   "desc": "A box of wooden kitchen matches.",
+   "art": [
+    [
+     "rect",
+     -5,
+     -4,
+     10,
+     4,
+     "aorange",
+     "black"
+    ],
+    [
+     "rect",
+     -5,
+     -4,
+     3,
+     4,
+     "white"
+    ]
+   ]
+  },
+  "wine": {
+   "name": "bottle of wine",
+   "nouns": [
+    "wine",
+    "bottle"
+   ],
+   "adj": [
+    "red"
+   ],
+   "at": "living_room",
+   "here": "A bottle of wine stands on a small table by the fire.",
+   "desc": "A dusty bottle of strong red wine.",
+   "art": [
+    [
+     "rect",
+     -3,
+     -12,
+     6,
+     12,
+     "darkred",
+     "black"
+    ],
+    [
+     "rect",
+     -1,
+     -17,
+     2,
+     5,
+     "darkred"
+    ]
+   ],
+   "on": {
+    "drink": "You'd better not. You need your wits about you tonight."
+   }
+  },
+  "net": {
+   "name": "butterfly net",
+   "nouns": [
+    "net"
+   ],
+   "adj": [
+    "butterfly"
+   ],
+   "at": "living_room",
+   "here": "A butterfly net hangs on a hook by the door.",
+   "desc": "A butterfly net on a long cane handle. Odd thing to keep in a mountain cabin.",
+   "art": [
+    [
+     "line",
+     [
+      -12,
+      0,
+      6,
+      -18
+     ],
+     "wood",
+     2
+    ],
+    [
+     "ellipse",
+     10,
+     -22,
+     7,
+     5,
+     null,
+     "white"
+    ],
+    [
+     "dither",
+     4,
+     -26,
+     12,
+     8,
+     "none",
+     "white",
+     "sparse"
+    ]
+   ]
+  },
+  "snow": {
+   "name": "snow",
+   "nouns": [
+    "snow",
+    "snowdrift",
+    "drift"
+   ],
+   "at": [
+    "living_room",
+    "outside_cabin",
+    "mt_country",
+    "pines_1",
+    "pines_2"
+   ],
+   "scenery": true,
+   "desc": "Clean, deep mountain snow.",
+   "on": {
+    "take,fill,put": {
+     "if": {
+      "any": [
+       "!in:living_room",
+       "open:cabin_door"
+      ]
+     },
+     "do": [
+      {
+       "if": "has:jug",
+       "then": [
+        "You scoop up handfuls of clean snow and pack the jug full.",
+        {
+         "destroy": "jug",
+         "give": "snow_jug",
+         "score": 5
+        }
+       ],
+       "else": "You scoop up some snow, but it melts through your fingers. You need something to carry it in."
+      }
+     ],
+     "else": [
+      "The door is shut. There's no snow in here."
+     ]
+    }
+   }
+  },
+  "stairs": {
+   "name": "stairs",
+   "nouns": [
+    "stairs",
+    "staircase",
+    "steps",
+    "stair"
+   ],
+   "at": [
+    "living_room",
+    "bedroom",
+    "corridor_17",
+    "loft",
+    "arched_passage"
+   ],
+   "scenery": true,
+   "desc": "Steep, worn steps."
+  },
+  "bed": {
+   "name": "bed",
+   "nouns": [
+    "bed"
+   ],
+   "at": "bedroom",
+   "scenery": true,
+   "desc": [
+    {
+     "if": "here:sheet",
+     "text": "A narrow bed, made up with a clean white sheet.",
+     "else": "A narrow bed with a bare straw mattress."
+    }
+   ]
+  },
+  "sheet": {
+   "name": "white sheet",
+   "nouns": [
+    "sheet",
+    "linen",
+    "cloth"
+   ],
+   "adj": [
+    "white",
+    "clean"
+   ],
+   "at": "bedroom",
+   "scenery": false,
+   "here": "The bed is made up with a clean white sheet.",
+   "desc": "A clean white linen sheet. It would make a fine altar cloth.",
+   "art": [
+    [
+     "poly",
+     [
+      -10,
+      0,
+      10,
+      0,
+      8,
+      -4,
+      -8,
+      -4
+     ],
+     "white",
+     "lightgray"
+    ]
+   ],
+   "takeMsg": "You gently draw the sheet from beneath the woman. She does not stir."
+  },
+  "woman": {
+   "name": "woman",
+   "nouns": [
+    "woman",
+    "girl",
+    "lady",
+    "body",
+    "hair"
+   ],
+   "adj": [
+    "young",
+    "pale"
+   ],
+   "at": "bedroom",
+   "scenery": true,
+   "desc": [
+    "She is young, and very beautiful, and very cold. Her lips move faintly as though she is trying to speak a word she cannot remember.",
+    {
+     "if": "!flag:hair_cut",
+     "text": "Her long red hair spills across the pillow."
+    },
+    {
+     "if": "flag:hair_cut",
+     "text": "A lock of her red hair has been cut away."
+    },
+    {
+     "if": "hidden:note",
+     "text": "Clutched in her hand is a folded note."
+    }
+   ],
+   "on": {
+    "wake,kiss,touch": "She doesn't respond. Whatever holds her is stronger than sleep.",
+    "cut": {
+     "if": [
+      "has:shears",
+      "!flag:hair_cut"
+     ],
+     "do": [
+      "With the shears you carefully snip away a long lock of her red hair. Forgive me, you whisper.",
+      {
+       "set": "hair_cut",
+       "give": "hair",
+       "score": 5
+      }
+     ],
+     "else": [
+      {
+       "if": "flag:hair_cut",
+       "then": "You've already taken a lock of her hair.",
+       "else": "You have nothing to cut with."
+      }
+     ]
+    }
+   }
+  },
+  "note": {
+   "name": "note",
+   "nouns": [
+    "note",
+    "paper",
+    "letter"
+   ],
+   "adj": [
+    "folded"
+   ],
+   "at": "bedroom",
+   "hidden": true,
+   "desc": "A folded note, written in a firm, educated hand.",
+   "text": "\"Whoever finds this - my sister is held by the Black Sanctum, the coven that meets beyond the glass. I have tried to break them and failed. The rite is written in the old study, on the other side. Raise the white altar in their crypt, scatter its ashes in their circle, and call upon the Bishop in the old tongue: INVOCARE EPISCOPUS. God keep you. - J.\"",
+   "art": [
+    [
+     "rect",
+     -5,
+     -2,
+     10,
+     3,
+     "white",
+     "black"
+    ]
+   ]
+  },
+  "closet_door": {
+   "name": "closet",
+   "nouns": [
+    "closet",
+    "wardrobe"
+   ],
+   "at": "bedroom",
+   "scenery": true,
+   "desc": "A closet door in the far wall, standing ajar.",
+   "goes": "in"
+  },
+  "mirror": {
+   "name": "mirror",
+   "nouns": [
+    "mirror",
+    "glass",
+    "reflection",
+    "frame"
+   ],
+   "adj": [
+    "tall",
+    "black"
+   ],
+   "at": [
+    "closet",
+    "corridor_8"
+   ],
+   "scenery": true,
+   "desc": [
+    {
+     "if": "in:closet",
+     "text": "A tall mirror in a black frame. Your reflection is wrong somehow - slow, and smiling when you are not. The glass looks almost... liquid."
+    },
+    {
+     "if": "in:corridor_8",
+     "text": "From this side the mirror shows the closet, and the cabin beyond it. It ripples like water."
+    }
+   ],
+   "goes": "in",
+   "on": {
+    "enter,go,climb,touch,push": {
+     "if": "in:closet",
+     "do": [
+      {
+       "if": "has:robe",
+       "then": [
+        "The emblem on the hooded robe flares with a dull red light. The glass goes soft as water, and you step through...",
+        {
+         "goto": "corridor_8"
+        }
+       ],
+       "else": "Your hand meets cold, hard glass. Your reflection shakes its head at you - as if you were missing something."
+      }
+     ],
+     "else": [
+      "You step back through the rippling glass...",
+      {
+       "goto": "closet"
+      }
+     ]
+    }
+   }
+  },
+  "robe": {
+   "name": "hooded robe",
+   "nouns": [
+    "robe",
+    "hood",
+    "cloak",
+    "emblem"
+   ],
+   "adj": [
+    "hooded",
+    "black"
+   ],
+   "at": "closet",
+   "wearable": true,
+   "here": "A black hooded robe hangs on a hook.",
+   "desc": "A black hooded robe of heavy wool. Over the heart is stitched an emblem: a raven within a circle, worked in red thread.",
+   "art": [
+    [
+     "poly",
+     [
+      -6,
+      0,
+      6,
+      0,
+      4,
+      -20,
+      0,
+      -24,
+      -4,
+      -20
+     ],
+     "darkgray",
+     "white"
+    ],
+    [
+     "circle",
+     0,
+     -14,
+     2,
+     "red"
+    ]
+   ]
+  },
+  "plaque": {
+   "name": "bronze plaque",
+   "nouns": [
+    "plaque",
+    "sign"
+   ],
+   "adj": [
+    "bronze"
+   ],
+   "at": "corridor_9",
+   "scenery": true,
+   "desc": "A bronze plaque, green with age, engraved with a raven within a circle.",
+   "text": "The engraving reads: \"HE WHO WOULD ENTER THE SANCTUM MUST FIRST PLAY THE MASTER'S FUGUE.\""
+  },
+  "wooden_door": {
+   "name": "wooden door",
+   "nouns": [
+    "door"
+   ],
+   "adj": [
+    "wooden",
+    "heavy"
+   ],
+   "at": [
+    "corridor_9",
+    "organ_room"
+   ],
+   "scenery": true,
+   "open": false,
+   "locked": true,
+   "key": "keys",
+   "desc": [
+    {
+     "if": "open:wooden_door",
+     "text": "A heavy wooden door, standing open.",
+     "else": "A heavy wooden door bound with iron. There's a large keyhole."
+    }
+   ],
+   "unlockMsg": "One of the old man's keys turns in the lock with a heavy clunk."
+  },
+  "bookcases": {
+   "name": "bookcases",
+   "nouns": [
+    "bookcases",
+    "bookcase",
+    "books",
+    "book",
+    "shelves",
+    "shelf"
+   ],
+   "at": "study",
+   "scenery": true,
+   "desc": "Floor-to-ceiling bookcases, stuffed with crumbling volumes.",
+   "on": {
+    "examine,search,read": {
+     "do": [
+      {
+       "var": "bookcase",
+       "add": 1
+      },
+      {
+       "if": "var:bookcase==1",
+       "then": "Dusty books on alchemy, demonology, plainsong. Nothing that leaps out at you. There are a great many books."
+      },
+      {
+       "if": "var:bookcase==2",
+       "then": "You pull out armfuls of books. Mildew, mouse droppings, more mildew... but behind the third shelf something has been pushed to the back."
+      },
+      {
+       "if": "var:bookcase==3",
+       "then": [
+        "Behind the books you find a bundle of handwritten pages - a manuscript - and a sheet of old parchment covered in musical notation.",
+        {
+         "show": [
+          "manuscript",
+          "parchment"
+         ]
+        }
+       ]
+      },
+      {
+       "if": "var:bookcase>3",
+       "then": "You've searched these bookcases thoroughly."
+      }
+     ]
+    }
+   }
+  },
+  "papers": {
+   "name": "papers",
+   "nouns": [
+    "papers",
+    "desk",
+    "music"
+   ],
+   "adj": [
+    "reading",
+    "loose",
+    "sheet"
+   ],
+   "at": "study",
+   "scenery": true,
+   "desc": "Loose sheet music, most of it ordinary hymns. Nothing special - whatever is worth hiding here would be better hidden than this."
+  },
+  "manuscript": {
+   "name": "manuscript",
+   "nouns": [
+    "manuscript",
+    "pages",
+    "bundle"
+   ],
+   "adj": [
+    "handwritten"
+   ],
+   "at": "study",
+   "hidden": true,
+   "points": 5,
+   "desc": "A bundle of handwritten pages, tied with black ribbon.",
+   "text": "\"THE RITE OF UNMAKING. To break the Sanctum, raise an altar in its own crypt: of BOARDS joined with NAILS by HAMMER and SAW, dressed in a WHITE CLOTH. Upon it lay the living green that does not die (the PINE), a FEATHER of the coven's raven, a lock of HAIR from the one they hold, SALT from their own circle, and pure SNOW in an earthen vessel. Speak the word BUILD and the altar shall consume itself. Bear its ASHES into their circle and call upon the Bishop: INVOCARE EPISCOPUS.\"",
+   "art": [
+    [
+     "rect",
+     -6,
+     -3,
+     12,
+     3,
+     "white",
+     "black"
+    ],
+    [
+     "line",
+     [
+      -6,
+      -1,
+      6,
+      -1
+     ],
+     "black"
+    ]
+   ]
+  },
+  "parchment": {
+   "name": "parchment",
+   "nouns": [
+    "parchment",
+    "music",
+    "fugue",
+    "score"
+   ],
+   "adj": [
+    "sheet",
+    "old"
+   ],
+   "at": "study",
+   "hidden": true,
+   "points": 5,
+   "desc": "A sheet of yellowed parchment, closely written with musical notation. Across the top is written: \"Fuga in Tenebris\" - the Fugue in Darkness.",
+   "text": "It is organ music: a fugue, dense and strange. You can read music well enough to play it, if you had an organ.",
+   "art": [
+    [
+     "rect",
+     -5,
+     -4,
+     10,
+     4,
+     "buff",
+     "black"
+    ],
+    [
+     "line",
+     [
+      -4,
+      -3,
+      4,
+      -3
+     ],
+     "black"
+    ],
+    [
+     "line",
+     [
+      -4,
+      -1,
+      4,
+      -1
+     ],
+     "black"
+    ]
+   ]
+  },
+  "old_man": {
+   "name": "old man",
+   "nouns": [
+    "man",
+    "hermit",
+    "oldman"
+   ],
+   "adj": [
+    "old"
+   ],
+   "at": "loft",
+   "fixed": true,
+   "here": "A wild-eyed old man sits on a trunk, clutching a ring of keys and muttering to himself.",
+   "desc": [
+    {
+     "if": "flag:man_drunk",
+     "text": "The old man is snoring happily, an empty wine bottle cradled in his arms.",
+     "else": "A ragged old man with wild eyes and a long dirty beard. He clutches a ring of keys and licks his cracked lips. \"Thirsty,\" he mutters. \"So very thirsty...\""
+    }
+   ],
+   "fixedMsg": "The old man swats your hands away.",
+   "art": [
+    [
+     "ellipse",
+     0,
+     -18,
+     10,
+     16,
+     "darkgray",
+     "white"
+    ],
+    [
+     "circle",
+     0,
+     -38,
+     7,
+     "skin",
+     "white"
+    ],
+    [
+     "poly",
+     [
+      -5,
+      -36,
+      5,
+      -36,
+      0,
+      -24
+     ],
+     "white"
+    ],
+    [
+     "circle",
+     -3,
+     -40,
+     1,
+     "black"
+    ],
+    [
+     "circle",
+     3,
+     -40,
+     1,
+     "black"
+    ]
+   ],
+   "artAt": [
+    205,
+    132
+   ],
+   "on": {
+    "say,wake": {
+     "if": "!flag:man_drunk",
+     "do": "\"Thirsty,\" he croaks. \"Got anything to drink, friend?\"",
+     "else": "He just snores."
+    }
+   }
+  },
+  "keys": {
+   "name": "ring of keys",
+   "nouns": [
+    "keys",
+    "key",
+    "ring"
+   ],
+   "adj": [
+    "iron"
+   ],
+   "at": "loft",
+   "points": 5,
+   "hidden": false,
+   "desc": "A heavy iron ring of old keys.",
+   "art": [
+    [
+     "circle",
+     0,
+     -5,
+     4,
+     null,
+     "lightgray",
+     1.5
+    ],
+    [
+     "line",
+     [
+      3,
+      -3,
+      8,
+      0
+     ],
+     "lightgray",
+     1.5
+    ],
+    [
+     "line",
+     [
+      -3,
+      -3,
+      -7,
+      1
+     ],
+     "lightgray",
+     1.5
+    ]
+   ],
+   "here": [
+    {
+     "if": "flag:man_drunk",
+     "text": "A ring of keys lies on the floor where the old man dropped it.",
+     "else": ""
+    }
+   ]
+  },
+  "shears": {
+   "name": "shears",
+   "nouns": [
+    "shears",
+    "scissors"
+   ],
+   "adj": [
+    "pair"
+   ],
+   "article": "some",
+   "at": "loft",
+   "desc": "A pair of sharp sheep shears.",
+   "art": [
+    [
+     "line",
+     [
+      -8,
+      0,
+      6,
+      -10
+     ],
+     "lightgray",
+     2
+    ],
+    [
+     "line",
+     [
+      -8,
+      -10,
+      6,
+      0
+     ],
+     "lightgray",
+     2
+    ]
+   ]
+  },
+  "saw": {
+   "name": "hand saw",
+   "nouns": [
+    "saw",
+    "handsaw"
+   ],
+   "adj": [
+    "hand"
+   ],
+   "at": "loft",
+   "desc": "A carpenter's hand saw.",
+   "art": [
+    [
+     "poly",
+     [
+      -12,
+      0,
+      8,
+      -4,
+      8,
+      -10,
+      -12,
+      -4
+     ],
+     "lightgray",
+     "black"
+    ],
+    [
+     "rect",
+     8,
+     -11,
+     5,
+     8,
+     "wood"
+    ]
+   ]
+  },
+  "jug": {
+   "name": "earthen jug",
+   "nouns": [
+    "jug",
+    "vessel",
+    "pitcher"
+   ],
+   "adj": [
+    "earthen",
+    "clay",
+    "empty"
+   ],
+   "at": "small_room",
+   "desc": "An empty earthenware jug.",
+   "art": [
+    [
+     "ellipse",
+     0,
+     -6,
+     6,
+     7,
+     "aorange",
+     "black"
+    ],
+    [
+     "rect",
+     -2,
+     -15,
+     4,
+     4,
+     "aorange",
+     "black"
+    ]
+   ]
+  },
+  "snow_jug": {
+   "name": "jug of snow",
+   "nouns": [
+    "jug",
+    "snow",
+    "vessel"
+   ],
+   "adj": [
+    "earthen",
+    "clay"
+   ],
+   "at": null,
+   "desc": "The earthen jug, packed with clean mountain snow. It doesn't seem to melt.",
+   "art": [
+    [
+     "ellipse",
+     0,
+     -6,
+     6,
+     7,
+     "aorange",
+     "black"
+    ],
+    [
+     "ellipse",
+     0,
+     -13,
+     4,
+     2,
+     "white"
+    ]
+   ]
+  },
+  "organ": {
+   "name": "pipe organ",
+   "nouns": [
+    "organ",
+    "pipes",
+    "keyboard",
+    "keys"
+   ],
+   "adj": [
+    "pipe",
+    "great"
+   ],
+   "at": "organ_room",
+   "scenery": true,
+   "desc": "A magnificent pipe organ. The keys are yellowed ivory; the stops are carved in the shape of ravens' heads."
+  },
+  "statues": {
+   "name": "statues",
+   "nouns": [
+    "statues",
+    "statue",
+    "figures",
+    "monks"
+   ],
+   "adj": [
+    "stone",
+    "hooded"
+   ],
+   "at": "organ_room",
+   "scenery": true,
+   "desc": "Life-size stone figures in hooded robes - the same robe you found in the cabin. Their faces are hidden. Every one of them is turned slightly toward the organ, as if listening."
+  },
+  "raven": {
+   "name": "black raven",
+   "nouns": [
+    "raven",
+    "bird",
+    "crow"
+   ],
+   "adj": [
+    "black"
+   ],
+   "at": "strange_room",
+   "here": "A huge black raven perches on the lectern, watching you.",
+   "desc": "An enormous black raven with eyes like drops of blood. It does not blink.",
+   "art": [
+    [
+     "ellipse",
+     0,
+     -8,
+     7,
+     6,
+     "black",
+     "white"
+    ],
+    [
+     "circle",
+     6,
+     -14,
+     4,
+     "black",
+     "white"
+    ],
+    [
+     "poly",
+     [
+      9,
+      -15,
+      15,
+      -13,
+      9,
+      -12
+     ],
+     "lightgray"
+    ],
+    [
+     "circle",
+     7,
+     -15,
+     1,
+     "red"
+    ],
+    [
+     "poly",
+     [
+      -6,
+      -8,
+      -14,
+      -4,
+      -6,
+      -4
+     ],
+     "black",
+     "white"
+    ]
+   ],
+   "artAt": [
+    128,
+    100
+   ]
+  },
+  "feather": {
+   "name": "raven feather",
+   "nouns": [
+    "feather",
+    "quill"
+   ],
+   "adj": [
+    "raven",
+    "black"
+   ],
+   "at": null,
+   "desc": "A long, glossy black feather from the coven's raven.",
+   "art": [
+    [
+     "line",
+     [
+      -8,
+      0,
+      8,
+      -12
+     ],
+     "white"
+    ],
+    [
+     "poly",
+     [
+      -6,
+      -2,
+      6,
+      -11,
+      8,
+      -12,
+      -4,
+      0
+     ],
+     "black",
+     "white"
+    ]
+   ]
+  },
+  "lectern": {
+   "name": "lectern",
+   "nouns": [
+    "lectern",
+    "stand"
+   ],
+   "at": "strange_room",
+   "scenery": true,
+   "desc": "A tall wooden lectern carved with ravens. The book it once held is gone."
+  },
+  "circle": {
+   "name": "circle of salt",
+   "nouns": [
+    "circle",
+    "salt",
+    "ring"
+   ],
+   "at": "strange_room",
+   "scenery": true,
+   "desc": [
+    {
+     "if": "here:ashes",
+     "text": "A wide circle of coarse white salt. Grey ashes are scattered within it.",
+     "else": "A wide circle of coarse white salt, poured with great care."
+    }
+   ],
+   "on": {
+    "take": {
+     "if": "hidden:salt",
+     "do": [
+      "You scrape up a handful of salt from the circle.",
+      {
+       "show": "salt",
+       "give": "salt",
+       "score": 5
+      }
+     ],
+     "else": "You already have some of the salt."
+    }
+   }
+  },
+  "salt": {
+   "name": "handful of salt",
+   "nouns": [
+    "salt"
+   ],
+   "adj": [
+    "handful",
+    "coarse"
+   ],
+   "at": "strange_room",
+   "hidden": true,
+   "desc": "A handful of coarse white salt from the coven's circle.",
+   "art": [
+    [
+     "ellipse",
+     0,
+     -2,
+     6,
+     3,
+     "white",
+     "lightgray"
+    ]
+   ]
+  },
+  "vent": {
+   "name": "vent",
+   "nouns": [
+    "vent",
+    "opening",
+    "hole",
+    "shaft"
+   ],
+   "adj": [
+    "air",
+    "narrow"
+   ],
+   "at": [
+    "strange_room",
+    "arched_passage"
+   ],
+   "scenery": true,
+   "desc": "A narrow opening, just wide enough to crawl through.",
+   "goes": "down",
+   "on": {
+    "enter,go,climb": {
+     "do": [
+      {
+       "if": "in:strange_room",
+       "then": [
+        {
+         "goto": "arched_passage"
+        }
+       ],
+       "else": [
+        {
+         "goto": "strange_room"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "passage": {
+   "name": "passage",
+   "nouns": [
+    "passage",
+    "opening"
+   ],
+   "at": "organ_room",
+   "scenery": true,
+   "hidden": true,
+   "desc": "A dark passage where the wall swung open.",
+   "on": {
+    "enter,go": [
+     {
+      "goto": "strange_room"
+     }
+    ]
+   }
+  },
+  "coffin": {
+   "name": "stone coffin",
+   "nouns": [
+    "coffin",
+    "lid",
+    "sarcophagus"
+   ],
+   "adj": [
+    "stone",
+    "heavy",
+    "closed"
+   ],
+   "at": "crypt",
+   "scenery": true,
+   "container": true,
+   "open": false,
+   "desc": [
+    {
+     "if": "open:coffin",
+     "text": "The coffin is open. Inside lies a skeleton in the rags of a bishop's vestments.",
+     "else": "A heavy stone coffin. Carved on its lid is a bishop's mitre."
+    }
+   ],
+   "openMsg": "You strain against the stone lid. It grinds aside to reveal a skeleton dressed in the rotted vestments of a bishop."
+  },
+  "skeleton": {
+   "name": "skeleton",
+   "nouns": [
+    "skeleton",
+    "bishop",
+    "bones",
+    "vestments"
+   ],
+   "at": "coffin",
+   "scenery": true,
+   "desc": "The bones of a bishop, his hands folded on his breast. The coven must have murdered him and laid him here in mockery. A faint warmth rises from him, even now."
+  },
+  "hammer": {
+   "name": "claw hammer",
+   "nouns": [
+    "hammer"
+   ],
+   "adj": [
+    "claw"
+   ],
+   "at": "crypt",
+   "points": 5,
+   "desc": "A heavy claw hammer.",
+   "art": [
+    [
+     "line",
+     [
+      -8,
+      0,
+      6,
+      -12
+     ],
+     "wood",
+     2
+    ],
+    [
+     "poly",
+     [
+      2,
+      -16,
+      12,
+      -10,
+      10,
+      -8,
+      0,
+      -14
+     ],
+     "lightgray",
+     "black"
+    ]
+   ]
+  },
+  "lantern": {
+   "name": "lantern",
+   "nouns": [
+    "lantern",
+    "lamp",
+    "light"
+   ],
+   "adj": [
+    "oil"
+   ],
+   "at": "alcove",
+   "points": 5,
+   "lightable": true,
+   "lit": false,
+   "lightWith": "matches",
+   "needMsg": "You need something to light it with.",
+   "lightMsg": "You strike a match and light the lantern's wick. A warm glow spreads around you.",
+   "outMsg": "You turn down the wick. The lantern goes out.",
+   "desc": [
+    {
+     "if": "lit:lantern",
+     "text": "An oil lantern, burning brightly.",
+     "else": "An old oil lantern. It still has oil in it."
+    }
+   ],
+   "art": [
+    [
+     "rect",
+     -4,
+     -12,
+     8,
+     10,
+     "darkgray",
+     "white"
+    ],
+    [
+     "rect",
+     -3,
+     -2,
+     6,
+     2,
+     "darkgray"
+    ],
+    [
+     "if",
+     "lit:lantern",
+     [
+      [
+       "glow",
+       0,
+       -7,
+       14,
+       "yellow",
+       0.7
+      ]
+     ]
+    ]
+   ]
+  },
+  "boarded_door": {
+   "name": "boarded doorway",
+   "nouns": [
+    "door",
+    "doorway"
+   ],
+   "adj": [
+    "boarded"
+   ],
+   "at": [
+    "alcove",
+    "arched_passage"
+   ],
+   "scenery": true,
+   "desc": [
+    {
+     "if": "flag:nails_pulled",
+     "text": "An open doorway.",
+     "else": "Planks nailed firmly across a doorway."
+    }
+   ],
+   "on": {
+    "pull,remove,take,open,break": {
+     "if": [
+      "in:alcove",
+      "!flag:nails_pulled"
+     ],
+     "do": [
+      {
+       "if": "has:hammer",
+       "then": [
+        "You hook the claw of the hammer under each nail and lever it out with a long screech. One by one the planks come free, and the doorway stands open.",
+        {
+         "set": "nails_pulled",
+         "score": 5
+        },
+        {
+         "move": [
+          "boards",
+          "nails"
+         ],
+         "to": "here"
+        }
+       ],
+       "else": "The nails are driven in deep. You can't pull them out with your fingers."
+      }
+     ],
+     "else": [
+      {
+       "if": "flag:nails_pulled",
+       "then": "The doorway is already open.",
+       "else": "The boards are nailed from the other side."
+      }
+     ]
+    }
+   }
+  },
+  "boards": {
+   "name": "boards",
+   "nouns": [
+    "boards",
+    "planks",
+    "board",
+    "plank",
+    "wood"
+   ],
+   "article": "some",
+   "at": null,
+   "desc": "Several stout wooden planks.",
+   "art": [
+    [
+     "rect",
+     -12,
+     -3,
+     24,
+     3,
+     "wood",
+     "black"
+    ],
+    [
+     "rect",
+     -10,
+     -6,
+     22,
+     3,
+     "wood",
+     "black"
+    ]
+   ]
+  },
+  "nails": {
+   "name": "nails",
+   "nouns": [
+    "nails",
+    "nail"
+   ],
+   "adj": [
+    "iron",
+    "bent"
+   ],
+   "article": "some",
+   "at": null,
+   "desc": "A handful of long iron nails, only slightly bent.",
+   "art": [
+    [
+     "line",
+     [
+      -4,
+      0,
+      -2,
+      -6
+     ],
+     "lightgray"
+    ],
+    [
+     "line",
+     [
+      0,
+      0,
+      1,
+      -6
+     ],
+     "lightgray"
+    ],
+    [
+     "line",
+     [
+      3,
+      0,
+      5,
+      -5
+     ],
+     "lightgray"
+    ]
+   ]
+  },
+  "hair": {
+   "name": "lock of hair",
+   "nouns": [
+    "hair",
+    "lock"
+   ],
+   "adj": [
+    "red"
+   ],
+   "at": null,
+   "desc": "A long lock of red hair, tied with a thread.",
+   "art": [
+    [
+     "line",
+     [
+      -6,
+      0,
+      -2,
+      -4,
+      2,
+      -2,
+      6,
+      -6
+     ],
+     "aorange",
+     2
+    ]
+   ]
+  },
+  "altar": {
+   "name": "altar",
+   "nouns": [
+    "altar"
+   ],
+   "adj": [
+    "white",
+    "scorched"
+   ],
+   "at": "crypt",
+   "scenery": true,
+   "hidden": true,
+   "desc": "The altar you built, scorched black by holy fire."
+  },
+  "ashes": {
+   "name": "ashes",
+   "nouns": [
+    "ashes",
+    "ash",
+    "dust"
+   ],
+   "adj": [
+    "grey",
+    "gray",
+    "holy"
+   ],
+   "article": "some",
+   "at": null,
+   "desc": "A double handful of fine grey ash, still faintly warm. It seems to glow when you aren't looking directly at it.",
+   "art": [
+    [
+     "ellipse",
+     0,
+     -2,
+     7,
+     3,
+     "lightgray"
+    ],
+    [
+     "glow",
+     0,
+     -3,
+     10,
+     "ablue",
+     0.4
+    ]
+   ]
+  }
+ },
+ "actions": [
+  {
+   "verb": "go,enter",
+   "noun": [
+    "cabin"
+   ],
+   "room": "mt_country",
+   "do": [
+    {
+     "goto": "outside_cabin"
+    }
+   ]
+  },
+  {
+   "verb": "go,enter",
+   "noun": [
+    "door"
+   ],
+   "room": "outside_cabin",
+   "do": [
+    {
+     "if": "open:cabin_door",
+     "then": [
+      {
+       "goto": "living_room"
+      }
+     ],
+     "else": "The door is closed."
+    }
+   ]
+  },
+  {
+   "verb": "go,enter,exit",
+   "noun": [
+    "door",
+    "outside"
+   ],
+   "room": "living_room",
+   "do": [
+    {
+     "if": "open:cabin_door",
+     "then": [
+      {
+       "goto": "outside_cabin"
+      }
+     ],
+     "else": "The door is closed."
+    }
+   ]
+  },
+  {
+   "verb": "go,climb",
+   "noun": [
+    "stairs",
+    "steps",
+    "stair"
+   ],
+   "room": "living_room",
+   "do": [
+    {
+     "goto": "bedroom"
+    }
+   ]
+  },
+  {
+   "verb": "go,climb",
+   "noun": [
+    "stairs",
+    "steps",
+    "stair"
+   ],
+   "room": "bedroom",
+   "do": [
+    {
+     "goto": "living_room"
+    }
+   ]
+  },
+  {
+   "verb": "go,climb",
+   "noun": [
+    "stairs",
+    "steps",
+    "stair"
+   ],
+   "room": "corridor_17",
+   "do": [
+    {
+     "goto": "loft"
+    }
+   ]
+  },
+  {
+   "verb": "go,climb",
+   "noun": [
+    "stairs",
+    "steps",
+    "stair",
+    "hole"
+   ],
+   "room": "loft",
+   "do": [
+    {
+     "goto": "corridor_17"
+    }
+   ]
+  },
+  {
+   "verb": "go,climb",
+   "noun": [
+    "stairs",
+    "steps",
+    "stair"
+   ],
+   "room": "arched_passage",
+   "do": [
+    {
+     "goto": "crypt"
+    }
+   ]
+  },
+  {
+   "verb": "go,enter",
+   "noun": [
+    "closet"
+   ],
+   "room": "bedroom",
+   "do": [
+    {
+     "goto": "closet"
+    }
+   ]
+  },
+  {
+   "verb": "go,enter,exit",
+   "noun": [
+    "closet",
+    "bedroom"
+   ],
+   "room": "closet",
+   "do": [
+    {
+     "goto": "bedroom"
+    }
+   ]
+  },
+  {
+   "verb": "go,enter",
+   "noun": [
+    "door"
+   ],
+   "room": "corridor_9",
+   "do": [
+    {
+     "if": "open:wooden_door",
+     "then": [
+      {
+       "goto": "organ_room"
+      }
+     ],
+     "else": "The wooden door is closed."
+    }
+   ]
+  },
+  {
+   "verb": "go,enter,exit",
+   "noun": [
+    "door"
+   ],
+   "room": "organ_room",
+   "do": [
+    {
+     "goto": "corridor_9"
+    }
+   ]
+  },
+  {
+   "verb": "go,enter",
+   "noun": [
+    "door",
+    "doorway"
+   ],
+   "room": "alcove",
+   "do": [
+    {
+     "if": "flag:nails_pulled",
+     "then": [
+      {
+       "goto": "arched_passage"
+      }
+     ],
+     "else": "The doorway is boarded up."
+    }
+   ]
+  },
+  {
+   "verb": "go,enter",
+   "noun": [
+    "door",
+    "doorway"
+   ],
+   "room": "arched_passage",
+   "do": [
+    {
+     "if": "flag:nails_pulled",
+     "then": [
+      {
+       "goto": "alcove"
+      }
+     ],
+     "else": "The doorway is boarded up from the other side."
+    }
+   ]
+  },
+  {
+   "verb": "go,enter,exit",
+   "noun": [
+    "passage"
+   ],
+   "room": "strange_room",
+   "do": [
+    {
+     "goto": "organ_room"
+    }
+   ]
+  },
+  {
+   "verb": "take,examine",
+   "noun": [
+    "note"
+   ],
+   "room": "bedroom",
+   "if": "hidden:note",
+   "do": [
+    "You gently pry the note from the woman's cold fingers.",
+    {
+     "show": "note",
+     "give": "note"
+    }
+   ]
+  },
+  {
+   "verb": "take",
+   "noun": [
+    "hair"
+   ],
+   "room": "bedroom",
+   "if": "!flag:hair_cut",
+   "do": [
+    {
+     "if": "has:shears",
+     "then": [
+      "With the shears you carefully snip away a long lock of her red hair.",
+      {
+       "set": "hair_cut",
+       "give": "hair",
+       "score": 5
+      }
+     ],
+     "else": "You'd need something sharp to cut it."
+    }
+   ]
+  },
+  {
+   "verb": "cut",
+   "noun": [
+    "hair",
+    "woman",
+    "lock"
+   ],
+   "room": "bedroom",
+   "if": [
+    "has:shears",
+    "!flag:hair_cut"
+   ],
+   "do": [
+    "With the shears you carefully snip away a long lock of her red hair. Forgive me, you whisper.",
+    {
+     "set": "hair_cut",
+     "give": "hair",
+     "score": 5
+    }
+   ]
+  },
+  {
+   "verb": "cut",
+   "noun": [
+    "hair",
+    "woman",
+    "lock"
+   ],
+   "room": "bedroom",
+   "if": "!has:shears",
+   "do": "You have nothing to cut with."
+  },
+  {
+   "verb": "give",
+   "noun": "wine",
+   "if": "here:old_man",
+   "do": [
+    "The old man's eyes light up. He snatches the bottle, pulls the cork with his teeth and drains it in one long swallow. \"Ahhhh... bless you, friend,\" he sighs, and topples backwards, snoring. The ring of keys slips from his fingers.",
+    {
+     "destroy": "wine",
+     "set": "man_drunk"
+    }
+   ]
+  },
+  {
+   "verb": "give",
+   "noun": "*",
+   "if": "here:old_man",
+   "do": "The old man shakes his head. \"Can't drink that,\" he mutters."
+  },
+  {
+   "verb": "take",
+   "noun": "keys",
+   "if": [
+    "here:old_man",
+    "!flag:man_drunk"
+   ],
+   "do": "The old man snarls and clutches the keys to his chest. \"Mine! Thirsty work, guarding keys...\""
+  },
+  {
+   "verb": "play",
+   "noun": [
+    "fugue",
+    "parchment",
+    "music"
+   ],
+   "if": "in:organ_room",
+   "do": [
+    {
+     "if": "!has:parchment",
+     "then": "You don't know the fugue by heart. You'd need the music.",
+     "else": [
+      {
+       "if": "flag:fugue",
+       "then": "You play the fugue again. The statues seem to sway.",
+       "else": [
+        "You spread the parchment on the music stand, pull out the stops, and begin to play. The Fugue in Darkness thunders through the hall - dissonant, tremendous, wrong. The statues seem to lean closer. As the last chord dies, stone grinds on stone, and a section of the wall beside the organ swings inward, revealing a passage.",
+        {
+         "set": "fugue",
+         "score": 10,
+         "show": "passage"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "verb": "play",
+   "noun": [
+    "organ"
+   ],
+   "if": "in:organ_room",
+   "do": [
+    {
+     "if": "has:parchment",
+     "then": "Perhaps you should play the FUGUE.",
+     "else": "You pick out a hymn on the organ. The great pipes groan, but nothing else happens. The statues seem... disappointed."
+    }
+   ]
+  },
+  {
+   "verb": "play",
+   "do": "There's nothing here to play."
+  },
+  {
+   "verb": "take,catch",
+   "noun": "raven",
+   "if": "here:raven",
+   "do": [
+    {
+     "if": "has:net",
+     "then": [
+      "You swing the butterfly net. The raven shrieks and flaps, but it's caught fast in the mesh!",
+      {
+       "set": "raven_caught",
+       "give": "raven"
+      }
+     ],
+     "else": "You lunge for the raven. It slashes the back of your hand with its beak and hops out of reach, cackling."
+    }
+   ]
+  },
+  {
+   "verb": "take,pull,pluck",
+   "noun": [
+    "feather"
+   ],
+   "if": [
+    "has:raven",
+    "!flag:feather_taken"
+   ],
+   "do": [
+    "You pluck a long black feather from the struggling raven's tail. It screams curses at you in a voice almost human.",
+    {
+     "set": "feather_taken",
+     "give": "feather",
+     "score": 10
+    }
+   ]
+  },
+  {
+   "verb": "pluck",
+   "noun": "raven",
+   "if": [
+    "has:raven",
+    "!flag:feather_taken"
+   ],
+   "do": [
+    "You pluck a long black feather from the struggling raven's tail. It screams curses at you in a voice almost human.",
+    {
+     "set": "feather_taken",
+     "give": "feather",
+     "score": 10
+    }
+   ]
+  },
+  {
+   "verb": "drop,free",
+   "noun": "raven",
+   "if": "has:raven",
+   "do": [
+    "You open the net. The raven explodes into the air, circles the room once, and settles back on the lectern, glaring.",
+    {
+     "move": "raven",
+     "to": "strange_room"
+    }
+   ]
+  },
+  {
+   "verb": "take",
+   "noun": [
+    "salt"
+   ],
+   "room": "strange_room",
+   "if": "hidden:salt",
+   "do": [
+    "You scrape up a handful of salt from the circle.",
+    {
+     "show": "salt",
+     "give": "salt",
+     "score": 5
+    }
+   ]
+  },
+  {
+   "verb": "pull,remove,take",
+   "noun": [
+    "nails",
+    "boards",
+    "planks",
+    "nail"
+   ],
+   "room": "alcove",
+   "if": "!flag:nails_pulled",
+   "do": [
+    {
+     "if": "has:hammer",
+     "then": [
+      "You hook the claw of the hammer under each nail and lever it out with a long screech. One by one the planks come free, and the doorway stands open.",
+      {
+       "set": "nails_pulled",
+       "score": 5
+      },
+      {
+       "move": [
+        "boards",
+        "nails"
+       ],
+       "to": "here"
+      }
+     ],
+     "else": "The nails are driven in deep. You'd need a tool to pull them."
+    }
+   ]
+  },
+  {
+   "verb": "dig",
+   "noun": [
+    "snow"
+   ],
+   "do": [
+    {
+     "if": "has:shovel",
+     "then": "You shovel snow for a while. It feels good to do something ordinary.",
+     "else": "You'd need a shovel."
+    }
+   ]
+  },
+  {
+   "verb": "build,make,raise,construct",
+   "noun": [
+    "altar"
+   ],
+   "if": "in:crypt",
+   "do": [
+    {
+     "if": "flag:altar_built",
+     "then": "The altar has already been built.",
+     "else": [
+      {
+       "if": [
+        "near:boards",
+        "near:nails",
+        "near:hammer",
+        "near:saw",
+        "near:sheet",
+        "near:needles",
+        "near:feather",
+        "near:hair",
+        "near:salt",
+        "near:snow_jug"
+       ],
+       "then": [
+        "You saw the boards to length and nail them into a rough table, and drape the white sheet across it. Upon it you lay the pine needles, the raven's feather, the lock of red hair, the salt, and the jug of snow.\n\nFor a moment nothing happens. Then the open coffin breathes out a sigh of warm air - and the altar bursts into a silent blue-white flame. In the space of three heartbeats everything upon it is consumed. When the fire dies, only a little heap of grey ashes remains on the scorched wood.",
+        {
+         "set": "altar_built",
+         "show": "altar",
+         "score": 15
+        },
+        {
+         "destroy": [
+          "boards",
+          "nails",
+          "sheet",
+          "needles",
+          "feather",
+          "hair",
+          "salt",
+          "snow_jug"
+         ]
+        },
+        {
+         "move": "ashes",
+         "to": "here"
+        }
+       ],
+       "else": [
+        "You don't yet have everything the rite requires here. According to the manuscript you still need:",
+        {
+         "if": "!near:boards",
+         "then": "  - boards"
+        },
+        {
+         "if": "!near:nails",
+         "then": "  - nails"
+        },
+        {
+         "if": "!near:hammer",
+         "then": "  - a hammer"
+        },
+        {
+         "if": "!near:saw",
+         "then": "  - a saw"
+        },
+        {
+         "if": "!near:sheet",
+         "then": "  - a white cloth"
+        },
+        {
+         "if": "!near:needles",
+         "then": "  - the living green (pine)"
+        },
+        {
+         "if": "!near:feather",
+         "then": "  - a feather of the raven"
+        },
+        {
+         "if": "!near:hair",
+         "then": "  - a lock of hair"
+        },
+        {
+         "if": "!near:salt",
+         "then": "  - salt from the circle"
+        },
+        {
+         "if": "!near:snow_jug",
+         "then": "  - pure snow in an earthen vessel"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "verb": "build,make,raise,construct",
+   "noun": [
+    "altar"
+   ],
+   "do": "The manuscript says the altar must be raised in the Sanctum's own crypt."
+  },
+  {
+   "verb": "throw,drop,pour,sprinkle,put",
+   "noun": "ashes",
+   "if": [
+    "has:ashes",
+    "in:strange_room"
+   ],
+   "do": [
+    "You step into the circle and scatter the grey ashes across the salt. Where they fall, the salt hisses and smokes, and the cold candle-flames lean toward you as though a great wind were blowing. The raven begins to scream.",
+    {
+     "move": "ashes",
+     "to": "strange_room",
+     "set": "ashes_scattered"
+    }
+   ]
+  },
+  {
+   "verb": "say,invocare,invoke,call",
+   "noun": [
+    "invocare",
+    "episcopus",
+    "bishop"
+   ],
+   "if": [
+    "flag:ashes_scattered",
+    "in:strange_room"
+   ],
+   "do": [
+    "\"INVOCARE EPISCOPUS!\"\n\nYour voice booms like the organ. The ashes rise from the circle in a spinning column of light, and within it stands a tall figure in white and gold, a crozier in his hand - the murdered Bishop, his face terrible and kind.\n\nHe strikes the crozier once upon the stone. The salt circle bursts into white fire. Far away you hear a chorus of screams as every hooded statue in the organ hall cracks from crown to foot. The raven bursts into black smoke. The walls of the Sanctum groan and run like wax...\n\n...and you are standing in the cabin bedroom. Dawn light is pouring through the window. On the bed, the young woman opens her eyes, and smiles, and speaks one word: \"Thank you.\"",
+    {
+     "score": 20
+    },
+    {
+     "win": "The coven is broken. The Black Sanctum is no more."
+    }
+   ]
+  },
+  {
+   "verb": "say,invocare,invoke,call",
+   "noun": [
+    "invocare",
+    "episcopus",
+    "bishop"
+   ],
+   "if": "in:bedroom",
+   "do": "You speak the words over the sleeping woman. Her lips move, as if repeating them... but she does not wake. The words need the rite behind them."
+  },
+  {
+   "verb": "say,invocare,invoke,call",
+   "noun": [
+    "invocare",
+    "episcopus",
+    "bishop"
+   ],
+   "do": "Your words echo strangely, then fade. Nothing happens - not here, not yet."
+  },
+  {
+   "verb": "listen",
+   "room": "crypt",
+   "if": "open:coffin",
+   "do": "In the silence you hear - or imagine - a dry old voice from the coffin: \"Here. Build it here, my child, beside me. And then call me.\""
+  },
+  {
+   "verb": "listen",
+   "room": "crypt",
+   "do": "Something shifts inside the stone coffin. Just settling, surely."
+  },
+  {
+   "verb": "listen",
+   "room": "corridor_17",
+   "do": "From the loft above, an old man's voice: \"Thirsty... so thirsty...\""
+  },
+  {
+   "verb": "listen",
+   "room": "corridor_21",
+   "do": "You hear a faint creak of hinges somewhere to the south."
+  },
+  {
+   "verb": "listen",
+   "room": "organ_room",
+   "do": "The silence here has a waiting quality. Like an audience before a concert."
+  }
+ ],
+ "events": [
+  {
+   "if": "dark",
+   "do": [
+    {
+     "var": "darkturns",
+     "add": 1
+    },
+    {
+     "if": "var:darkturns==2",
+     "then": "Something scrapes across the stone close by. You'd better find some light."
+    },
+    {
+     "if": "var:darkturns>=4",
+     "then": [
+      {
+       "die": "Something in the dark finds you first. Cold fingers close around your throat..."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "if": "!dark",
+   "do": [
+    {
+     "var": "darkturns",
+     "value": 0
+    }
+   ]
+  },
+  {
+   "if": [
+    "in:pines_1",
+    "chance:15"
+   ],
+   "do": [
+    "Somewhere in the forest a wolf howls. Another answers it - closer."
+   ]
+  }
+ ]
+}

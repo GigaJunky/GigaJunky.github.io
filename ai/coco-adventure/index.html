@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graphic Adventure Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000; --panel: #0b0b0b; --text: #33ff66; --dim: #1c9c40; --accent: #f8f870;
+    --room: #f8f870; --border: #1c5c2c; --input: #33ff66; --danger: #ff5050; --win: #f8f870;
+    --font: "VT323", ui-monospace, monospace; --size: 22px;
+  }
+  body[data-theme="coco"]   { --bg:#0d1f0d; --panel:#1ed31e; --text:#032a03; --dim:#0b5a0b; --accent:#000; --room:#000; --border:#0a4a0a; --input:#000; --danger:#7a0000; --win:#2a2aff; }
+  body[data-theme="amber"]  { --bg:#0a0700; --panel:#100b00; --text:#ffb000; --dim:#a06a00; --accent:#ffd27a; --room:#ffe0a0; --border:#4a3200; --input:#ffb000; }
+  body[data-theme="infocom"]{ --bg:#000044; --panel:#000066; --text:#e8e8ff; --dim:#9a9ad0; --accent:#ffff66; --room:#ffffff; --border:#3a3aa0; --input:#ffffff; }
+  body[data-theme="paper"]  { --bg:#d8d2c0; --panel:#f4efe0; --text:#222; --dim:#666; --accent:#7a1010; --room:#000; --border:#a89e86; --input:#000; --danger:#a00; --win:#06608a; }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: var(--size); line-height: 1.15; display: flex; flex-direction: column; align-items: center; }
+  .wrap { width: 100%; max-width: 820px; height: 100%; display: flex; flex-direction: column; padding: 8px 16px; gap: 8px; }
+  header { display: flex; gap: 12px; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 4px; }
+  header .room { flex: 1; color: var(--room); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; }
+  header .stat { color: var(--dim); white-space: nowrap; }
+  body[data-theme="coco"] header .stat, body[data-theme="coco"] form label { color: var(--panel); }
+  body[data-theme="coco"] header .room { color: var(--panel); }
+  button { font-family: var(--font); font-size: 20px; background: var(--panel); color: var(--text); border: 2px solid var(--border); padding: 2px 10px; cursor: pointer; }
+  button:hover, button:focus-visible { border-color: var(--text); outline: none; }
+  .screen { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: 46vh; background: #000; border: 2px solid var(--border); display: flex; justify-content: center; }
+  .screen canvas { height: 100%; aspect-ratio: 4 / 3; max-width: 100%; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  body.nopic .screen { display: none; }
+  .scan { pointer-events: none; position: absolute; inset: 0; background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.18) 2px 3px); }
+  body.noscan .scan { display: none; }
+  #log { flex: 1; min-height: 120px; overflow-y: auto; background: var(--panel); border: 2px solid var(--border); padding: 8px 10px; white-space: pre-wrap; word-wrap: break-word; }
+  #log p { margin: 0 0 4px; }
+  #log .cmd { color: var(--dim); margin-top: 10px; }
+  #log .room { color: var(--room); text-transform: uppercase; margin-top: 4px; }
+  #log .title { color: var(--accent); font-size: 1.6em; text-align: center; margin-top: 6px; }
+  #log .byline, #log .hint { color: var(--dim); text-align: center; }
+  #log .hint { text-align: left; }
+  #log .intro { margin: 10px 0; }
+  #log .exits, #log .item { color: var(--dim); }
+  body[data-theme="coco"] #log .exits, body[data-theme="coco"] #log .item { color: #04400a; }
+  #log .death, #log .error { color: var(--danger); }
+  #log .win { color: var(--win); }
+  #log .read { border-left: 3px solid var(--border); padding-left: 8px; font-style: italic; }
+  form { display: flex; gap: 6px; align-items: center; }
+  form label { color: var(--accent); }
+  #cmd { flex: 1; font-family: var(--font); font-size: var(--size); background: var(--panel); color: var(--input); border: 2px solid var(--border); padding: 4px 8px; caret-color: var(--input); min-width: 0; }
+  #cmd:focus { outline: none; border-color: var(--text); }
+  .quick { display: flex; flex-wrap: wrap; gap: 4px; }
+  .quick button { font-size: 18px; padding: 0 8px; min-width: 36px; }
+  .quick button.off { opacity: .35; }
+
+  dialog { background: var(--panel); color: var(--text); border: 2px solid var(--text); font-family: var(--font); font-size: 20px; width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 16px; }
+  dialog::backdrop { background: rgba(0,0,0,.7); }
+  dialog h2 { margin: 0 0 8px; color: var(--accent); font-weight: normal; font-size: 1.5em; }
+  dialog h3 { margin: 14px 0 6px; color: var(--room); font-weight: normal; border-bottom: 1px solid var(--border); }
+  .lib { display: grid; gap: 8px; }
+  .lib button { text-align: left; display: block; width: 100%; padding: 6px 10px; }
+  .lib button b { color: var(--room); font-weight: normal; }
+  .lib button span { display: block; color: var(--dim); font-size: 18px; }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .row input[type=url], .row input[type=text] { flex: 1; min-width: 200px; font-family: var(--font); font-size: 20px; background: var(--bg); color: var(--text); border: 2px solid var(--border); padding: 2px 6px; }
+  select { font-family: var(--font); font-size: 20px; background: var(--bg); color: var(--text); border: 2px solid var(--border); }
+  .note { color: var(--dim); font-size: 18px; }
+  .drop { outline: 3px dashed var(--accent); outline-offset: -8px; }
+  @media (max-width: 560px) {
+    :root { --size: 19px; }
+    .wrap { padding: 6px 16px; }
+    header .stat.moves { display: none; }
+  }
+</style>
+</head>
+<body data-theme="phosphor">
+<div class="wrap">
+  <header>
+    <span class="room" id="roomName">Graphic Adventure Engine</span>
+    <span class="stat" id="score"></span>
+    <span class="stat moves" id="moves"></span>
+    <button id="menuBtn" title="Menu (Esc)">MENU</button>
+  </header>
+  <div class="screen"><canvas id="pic" width="256" height="192" aria-label="Room picture"></canvas><div class="scan"></div></div>
+  <div id="log" role="log" aria-live="polite"></div>
+  <form id="form" autocomplete="off">
+    <label for="cmd">&gt;</label>
+    <input id="cmd" autocapitalize="off" spellcheck="false" placeholder="What now?" enterkeyhint="send">
+  </form>
+  <div class="quick" id="quick"></div>
+</div>
+
+<dialog id="menu">
+  <h2>Adventure Library</h2>
+  <div class="lib" id="lib"><p class="note">Loading library...</p></div>
+
+  <h3>Load from anywhere</h3>
+  <div class="row">
+    <input type="url" id="url" placeholder="https://example.com/my-adventure.json">
+    <button id="loadUrl">LOAD URL</button>
+  </div>
+  <div class="row" style="margin-top:6px">
+    <button id="loadFile">OPEN FILE...</button>
+    <span class="note">or drop a .json adventure anywhere on the page</span>
+    <input type="file" id="file" accept=".json,application/json" hidden>
+  </div>
+  <p class="note" id="loadErr"></p>
+
+  <h3>Game</h3>
+  <div class="row">
+    <button data-cmd="save">SAVE</button><button data-cmd="restore">RESTORE</button>
+    <button data-cmd="undo">UNDO</button><button data-cmd="restart">RESTART</button>
+    <button id="exportSave">EXPORT SAVE</button><button id="importSave">IMPORT SAVE</button>
+    <input type="file" id="saveFile" accept=".json" hidden>
+  </div>
+
+  <h3>Display</h3>
+  <div class="row">
+    <label>Theme <select id="theme">
+      <option value="phosphor">Green phosphor</option><option value="coco">CoCo green screen</option>
+      <option value="amber">Amber</option><option value="infocom">Infocom blue</option><option value="paper">Paper</option>
+    </select></label>
+    <label>Drawing <select id="speed">
+      <option value="0">Instant</option><option value="25">Slow (retro)</option><option value="60">Medium</option><option value="140">Fast</option>
+    </select></label>
+    <label><input type="checkbox" id="showPic" checked> Pictures</label>
+    <label><input type="checkbox" id="scan" checked> Scanlines</label>
+  </div>
+  <div class="row" style="margin-top:14px; justify-content:flex-end"><button id="closeMenu">CLOSE</button></div>
+</dialog>
+
+<script src="engine.js"></script>
+<script src="render.js"></script>
+<script src="adventures/bundle.js" onerror="void 0"></script>
+<script src="app.js"></script>
+</body>
+</html>
