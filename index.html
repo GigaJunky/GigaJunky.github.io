@@ -30,6 +30,10 @@ h2{font:700 1.5rem Orbitron,sans-serif;margin:0 0 20px;color:#fff;letter-spacing
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
 .card{background:var(--panel);border:1px solid var(--line);padding:18px;backdrop-filter:blur(3px);display:flex;flex-direction:column;gap:10px;transition:.2s;position:relative}
 .card:hover{border-color:var(--pink);box-shadow:0 0 22px rgba(255,45,149,.35);transform:translateY(-3px)}
+.grp{font:700 .95rem Orbitron,sans-serif;color:var(--cyan);margin:26px 0 12px;letter-spacing:.08em}
+.card.featured{grid-column:1/-1;border-color:var(--cyan);padding:24px}
+.card.hl{border-color:var(--cyan)}
+.card.featured h3{font-size:1.4rem}
 .card h3{margin:0;font:700 1.05rem Orbitron,sans-serif;color:var(--yellow)}
 .card p{margin:0;color:var(--text);font-size:.95rem;flex:1}
 .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:.82rem;color:var(--dim)}
@@ -71,7 +75,7 @@ html.ship body{user-select:none;-webkit-user-select:none}
 </header>
 
 <main>
-  <section id="projects"><h2>Projects</h2><div class="cards" id="cards"></div></section>
+  <section id="projects"></section>
   <section id="updates"><h2>Updates</h2><div class="feed" id="feed"></div></section>
   <section id="messages">
     <h2>Messages</h2>
@@ -90,12 +94,16 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 $('tagline').textContent = CONFIG.tagline;
 $('ghlink').href = "https://github.com/" + CONFIG.github;
 $('foot').textContent = "© " + new Date().getFullYear() + " BitJunky's · hosted on GitHub Pages";
-$('cards').innerHTML = CONFIG.projects.map(p => `
-  <a class="card" href="${esc(p.url)}" target="_blank" rel="noopener">
+const card = p => `
+  <a class="card${p.featured?' featured':''}${p.hl?' hl':''}" href="${esc(p.url)}" target="_blank" rel="noopener">
     <h3>${esc(p.name)}</h3><p>${esc(p.desc)}</p>
     <div class="meta">${p.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}
     <span class="status ${p.status==='live'?'live':''}">${esc(p.status)}</span></div>
-  </a>`).join('');
+  </a>`;
+$('projects').innerHTML = '<h2>Projects</h2>' + (CONFIG.groups || [null]).map(g => {
+  const ps = CONFIG.projects.filter(p => !g || p.group === g);
+  return ps.length ? (g ? `<h3 class="grp">${esc(g)}</h3>` : '') + `<div class="cards">${ps.map(card).join('')}</div>` : '';
+}).join('');
 $('feed').innerHTML = CONFIG.updates.map(u => `
   <div class="post"><time>${esc(u.date)}</time><h3>${esc(u.title)}</h3><p>${esc(u.text)}</p></div>`).join('');
 $('msgs').innerHTML = CONFIG.messages.map(m => `<div class="msg"><b>${esc(m.from)}:</b> ${esc(m.text)}</div>`).join('');
