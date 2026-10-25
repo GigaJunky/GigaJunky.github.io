@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en"><head>
+<script src="vr.js"></script><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Endless Gauntlet P2P</title>
 <meta name="category" content="Games">
@@ -11,7 +12,7 @@ details{margin-top:6px}textarea{width:280px;height:70px;background:#111;color:#c
 button{background:#3a2a6a;color:#fff;border:0;padding:5px 8px;margin:2px 2px 0 0;border-radius:4px;cursor:pointer}
 </style></head><body>
 <canvas id="c"></canvas>
-<div id="hud"><b>ENDLESS GAUNTLET</b> · WASD/arrows move, SPACE fire<br>
+<div id="hud"><b>ENDLESS GAUNTLET</b> · WASD/arrows move, SPACE fire · gamepad: sticks move/aim, any button fires<br>
 <span id="st"></span>
 <details><summary>Connect peers (remote)</summary>
 Same browser: just open more tabs, they auto-link.<br>
@@ -74,8 +75,14 @@ let cool=0,last=performance.now();
 function ownerOf(gx,gy){let best=id;players.forEach((p,k)=>{if(Math.hypot(p.x-gx,p.y-gy)<20&&k<best)best=k});return best==id}
 function tick(){const now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;
  let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
- if(dx||dy){const l=Math.hypot(dx,dy);dx/=l;dy/=l;me.fx=dx;me.fy=dy;step(me,dx*5*dt,dy*5*dt,.3)}
- cool-=dt;if(keys[' ']&&cool<=0){cool=.25;const s={x:me.x,y:me.y,vx:me.fx*12,vy:me.fy*12,life:1.2,own:true};shots.push(s);send({t:'s',x:s.x,y:s.y,vx:s.vx,vy:s.vy})}
+ // gamepad: left stick / d-pad move, right stick aims and fires, face buttons or triggers fire
+ let pfire=false,aim=false;const gp=[...(navigator.getGamepads?navigator.getGamepads():[])].find(p=>p&&p.connected);
+ if(gp){const ax=i=>Math.abs(gp.axes[i]||0)>.25?gp.axes[i]:0,bt=i=>gp.buttons[i]&&gp.buttons[i].pressed;
+  if(!dx&&!dy){dx=ax(0)+(bt(15)?1:0)-(bt(14)?1:0);dy=ax(1)+(bt(13)?1:0)-(bt(12)?1:0)}
+  const rx=ax(2),ry=ax(3);if(rx||ry){const l=Math.hypot(rx,ry);me.fx=rx/l;me.fy=ry/l;aim=pfire=true}
+  if([0,1,2,3,5,6,7].some(bt))pfire=true}
+ if(dx||dy){const m=Math.hypot(dx,dy),l=Math.max(1,m);if(!aim){me.fx=dx/m;me.fy=dy/m}dx/=l;dy/=l;step(me,dx*5*dt,dy*5*dt,.3)}
+ cool-=dt;if((keys[' ']||pfire)&&cool<=0){cool=.25;const s={x:me.x,y:me.y,vx:me.fx*12,vy:me.fy*12,life:1.2,own:true};shots.push(s);send({t:'s',x:s.x,y:s.y,vx:s.vx,vy:s.vy})}
  me.hp-=dt*1.2; // gauntlet-style: life drains constantly
  const ccx=Math.floor(me.x/C),ccy=Math.floor(me.y/C);
  for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++)cellItems(ccx+a,ccy+b).forEach(it=>{

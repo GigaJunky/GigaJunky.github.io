@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="vr.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Georoids</title>
@@ -25,7 +26,7 @@ body.touch #tz,body.touch #stick{display:block}body.touch #act{display:grid}body
 </head>
 <body>
 <canvas id="c" width="800" height="600"></canvas>
-<div id="hint">P1: mouse aim · L-click fire · R-click thrust · Mid shield — or ←→↑ Space fire · ↓ shield · H warp · B nova · N well — P2: A D W F fire · S shield · G warp · E nova · Q well — 1/2 players · M mute</div>
+<div id="hint">P1: mouse aim · L-click fire · R-click thrust · Mid shield — or ←→↑ Space fire · ↓ shield · H warp · B nova · N well — gamepad: stick ←→ turn · ↑ or RT thrust · ↓ shield · A/RB fire · B warp · Y nova · X well — P2: A D W F fire · S shield · G warp · E nova · Q well — 1/2 players · M mute · U music</div>
 <div id="tz"></div>
 <div id="stick"><div id="knob"></div></div>
 <div id="act">
@@ -43,7 +44,7 @@ function fit(){
 }
 fit();addEventListener('resize',fit);
 const keys={};
-addEventListener('keydown',e=>{initAudio();if(e.code==='KeyM'&&master){muted=!muted;master.gain.value=muted?0:.4;}keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
+addEventListener('keydown',e=>{initAudio();if(e.code==='KeyM'&&master){muted=!muted;master.gain.value=muted?0:.4;}if(e.code==='KeyU'&&musicG){musicOn=!musicOn;musicG.gain.value=musicOn?.5:0;try{localStorage.setItem('georoids-music',musicOn?'on':'off');}catch(e){}}keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
   if(state!=='play'){if(e.code==='Enter')start();if(e.code==='Digit1')start(1);if(e.code==='Digit2')start(2);}else if(e.code==='Digit2'&&players.length===1)joinP2();});
 addEventListener('keyup',e=>keys[e.code]=false);
 // Reveal touch controls on hybrid devices once a finger touches the screen.
@@ -101,12 +102,15 @@ function readMouse(P){
   return{turn:Math.max(-1,Math.min(1,diff/.075)),t:!!(mouse.b&2),f:!!(mouse.b&1),s:!!(mouse.b&4),w:false,b:false,g:false};
 }
 
-let AC,master,thrustG,noiseBuf,muted=false;
+let AC,master,thrustG,noiseBuf,muted=false,musicG,bassF,musicOn=true;
+try{musicOn=localStorage.getItem('georoids-music')!=='off';}catch(e){}
 function initAudio(){
   if(AC){if(AC.state==='suspended')AC.resume();return;}
   try{
     AC=new (window.AudioContext||window.webkitAudioContext)();
     master=AC.createGain();master.gain.value=muted?0:.4;master.connect(AC.destination);
+    musicG=AC.createGain();musicG.gain.value=musicOn?.5:0;musicG.connect(master);
+    bassF=AC.createBiquadFilter();bassF.type='lowpass';bassF.frequency.value=700;bassF.Q.value=6;bassF.connect(musicG);
     const len=AC.sampleRate,buf=AC.createBuffer(1,len,AC.sampleRate),d=buf.getChannelData(0);
     for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
     noiseBuf=buf;
@@ -129,6 +133,31 @@ function noise(dur,vol,freq){
   s.buffer=noiseBuf;f.type='lowpass';f.frequency.setValueAtTime(freq,t);f.frequency.exponentialRampToValueAtTime(60,t+dur);
   g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);
   s.connect(f);f.connect(g);g.connect(master);s.start(t);s.stop(t+dur);
+}
+
+// Background music: a looping synthwave groove (Am F C G), scheduled a little ahead of the audio clock.
+const PROG=[[57,60,64],[53,57,60],[48,52,55],[55,59,62]],mtof=m=>440*Math.pow(2,(m-69)/12);
+let mStep=0,mNext=0;
+function note(f,t,dur,type,vol,dest){
+  const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  o.connect(g);g.connect(dest);o.start(t);o.stop(t+dur+.02);
+}
+function music(){
+  if(!AC||!musicG||!musicOn)return;
+  const sp=60/116/4,now=AC.currentTime;
+  if(mNext<now)mNext=now+.05;
+  while(mNext<now+.2){
+    const ch=PROG[Math.floor(mStep/32)%4],s=mStep%16,t=mNext;
+    if(s%2===0)note(mtof(ch[0]-24+(s%4===2?12:0)),t,sp*1.7,'sawtooth',.22,bassF);
+    note(mtof(ch[(s*2)%3]+12+(s%8>=4?12:0)),t,sp*.8,'square',.03,musicG);
+    if(mStep%32===0)ch.forEach(m=>note(mtof(m),t,sp*32,'triangle',.045,musicG));
+    if(s%4===0){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(40,t+.15);
+      g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);o.connect(g);g.connect(musicG);o.start(t);o.stop(t+.22);}
+    if(s%4===2){const n=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();n.buffer=noiseBuf;f.type='highpass';f.frequency.value=7000;
+      g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.05);n.connect(f);f.connect(g);g.connect(musicG);n.start(t,Math.random()*.5);n.stop(t+.06);}
+    mStep++;mNext+=sp;
+  }
 }
 
 let players=[],rocks=[],bullets=[],parts=[],enemies=[],ebul=[],ores=[],wells=[],flash=0,score=0,level=1,state='title',mode=1,best=0;
@@ -171,7 +200,7 @@ function readMap(m,k){return{turn:(k[m.r]?1:0)-(k[m.l]?1:0),t:!!k[m.t],f:!!k[m.f
 function readPad(g){
   const b=i=>!!(g.buttons[i]&&g.buttons[i].pressed),ax=g.axes[0]||0,ay=g.axes[1]||0;
   let turn=Math.abs(ax)>.2?ax:0;if(b(14))turn=-1;if(b(15))turn=1;
-  return{turn,t:b(7)||b(12)||ay<-.5,f:b(0)||b(5),s:b(4)||b(6)||b(13)||ay>.5,w:b(1),b:b(3),g:b(2)};
+  return{turn,t:b(7)||b(12)||ay<-.5,f:b(0)||b(5),s:b(4)||b(6)||b(13)||ay>.5,w:b(1),b:b(3)||b(9),g:b(2)};
 }
 const merge=(a,c)=>({turn:Math.abs(c.turn)>Math.abs(a.turn)?c.turn:a.turn,t:a.t||c.t,f:a.f||c.f,s:a.s||c.s,w:a.w||c.w,b:a.b||c.b,g:a.g||c.g});
 function poll(){
@@ -180,6 +209,8 @@ function poll(){
   players.forEach((P,i)=>{
     let inp=mode>1?readMap(KM[i],keys):merge(readMap(KM[0],keys),readMap(KM[1],keys));
     const g=pads[i];
+    // touching the pad hands control back from the mouse, like the arrow keys do
+    if(i===0&&g&&(g.axes.some(v=>Math.abs(v)>.3)||g.buttons.some(x=>x.pressed)))mouse.on=false;
     if(i===0){const ts=readStick(P);inp=merge(inp,{turn:ts.turn,t:ts.t,f:false,s:false,w:false,b:false,g:false});const m=readMouse(P);if(m)inp=merge(inp,m);}
     P.inp=g?merge(inp,readPad(g)):inp;
   });
@@ -280,7 +311,7 @@ function killE(i){
 }
 
 function update(){
-  poll();
+  poll();music();moveStars();
   parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vx*=.98;p.vy*=.98;p.life--;});
   parts=parts.filter(p=>p.life>0);
   ripples.forEach(r=>r.t++);while(ripples.length&&ripples[0].t>70)ripples.shift();
@@ -378,6 +409,26 @@ function warpPt(x,y){
   }
   return[x+dx,y+dy];
 }
+// Starfield: three depths drifting against the players' average motion. In VR the 3D stars take over.
+const stars=Array.from({length:180},()=>({x:Math.random(),y:Math.random(),z:R(.2,1),tw:R(0,6.28)}));
+let camVX=.25,camVY=.08;
+if(window.VR){VR.transparent=true;VR.motion=()=>[camVX*60/H,camVY*60/H];}
+function moveStars(){
+  const ps=state==='play'?players.filter(p=>p.alive):[];
+  const vx=ps.length?ps.reduce((a,p)=>a+p.vx,0)/ps.length:.25,vy=ps.length?ps.reduce((a,p)=>a+p.vy,0)/ps.length:.08;
+  camVX+=(vx-camVX)*.04;camVY+=(vy-camVY)*.04;
+  for(const st of stars){st.x=((st.x-camVX*st.z*.35/W)%1+1)%1;st.y=((st.y-camVY*st.z*.35/H)%1+1)%1;st.tw+=.05;}
+}
+function starfield(){
+  ctx.shadowBlur=0;
+  for(const st of stars){
+    const a=(.25+.6*st.z)*(.8+.2*Math.sin(st.tw)),sz=st.z*1.8;
+    ctx.globalAlpha=a;ctx.fillStyle=st.z>.8?'#cfe8ff':'#8fa6ff';
+    ctx.fillRect(st.x*W,st.y*H,sz,sz);
+    if(st.z>.85&&camVX*camVX+camVY*camVY>4){ctx.globalAlpha=a*.4;ctx.fillRect(st.x*W,st.y*H,camVX*st.z*3+sz,camVY*st.z*3+sz);}
+  }
+  ctx.globalAlpha=1;
+}
 function grid(){
   ctx.lineWidth=1;ctx.strokeStyle='#2233a0';ctx.shadowBlur=0;ctx.globalAlpha=.55;ctx.beginPath();
   const S=40,st=20;
@@ -387,7 +438,8 @@ function grid(){
 }
 function draw(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.fillStyle='#02030a';ctx.fillRect(0,0,W,H);
+  if(window.VR&&VR.active){ctx.clearRect(0,0,W,H);ctx.fillStyle='rgba(2,3,10,.5)';ctx.fillRect(0,0,W,H);}
+  else{ctx.fillStyle='#02030a';ctx.fillRect(0,0,W,H);starfield();}
   ctx.save();
   if(shake>.3)ctx.translate(R(-shake,shake),R(-shake,shake));
   grid();

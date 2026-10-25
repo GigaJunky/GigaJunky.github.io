@@ -1,4 +1,5 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head>
+<script src="vr.js"></script><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Hollowstone</title>
 <meta name="category" content="Games">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -82,6 +83,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#0d1410;color:var(--in
       <dt class="desk">T (hold)</dt><dd class="desk">Fast-forward the clock</dd>
       <dt class="desk">G</dt><dd class="desk">Shadows on or off, if the game runs slowly</dd>
       <dt class="desk">Esc</dt><dd class="desk">Pause</dd>
+      <dt class="desk">Gamepad</dt><dd class="desk">Sticks walk / look · A jump · B fly · X sprint · RT dig · LT place · bumpers pick block</dd>
       <dt class="tch">Left stick</dt><dd class="tch">Walk</dd>
       <dt class="tch">Drag right side</dt><dd class="tch">Look around</dd>
       <dt class="tch">Tap</dt><dd class="tch">Dig or place, switch with the Dig/Place button</dd>
@@ -368,10 +370,10 @@ function step(dt){
   const f=[-Math.sin(P.yaw),-Math.cos(P.yaw)],r=[Math.cos(P.yaw),-Math.sin(P.yaw)];
   const fw=(keys.KeyW?1:0)-(keys.KeyS?1:0)+joy.y,st=(keys.KeyD?1:0)-(keys.KeyA?1:0)+joy.x;
   let mx=f[0]*fw+r[0]*st,mz=f[1]*fw+r[1]*st;const len=Math.hypot(mx,mz);if(len>1){mx/=len;mz/=len;}
-  const wet=inWater(.4),shift=keys.ShiftLeft||keys.ShiftRight;
+  const wet=inWater(.4),shift=keys.ShiftLeft||keys.ShiftRight||padShift;
   let spd=P.fly?10:shift?6.2:4.3;if(wet&&!P.fly)spd*=.55;
   P.vx=mx*spd;P.vz=mz*spd;
-  const jump=keys.Space||tJump;
+  const jump=keys.Space||tJump||padJump;
   if(P.fly)P.vy=(jump?7:0)-(shift?7:0);
   else if(wet){P.vy-=7*dt;P.vy=Math.max(P.vy,-2.5);if(jump)P.vy=Math.min(P.vy+18*dt,3.2);}
   else{P.vy-=26*dt;P.vy=Math.max(P.vy,-40);if(jump&&P.ground)P.vy=8.4;}
@@ -481,12 +483,34 @@ tj.addEventListener("touchend",()=>{tJump=false;});
 tmode.addEventListener("click",()=>{tPlace=!tPlace;tmode.textContent=tPlace?"Place":"Dig";tmode.classList.toggle("place",tPlace);});
 document.getElementById("tpause").addEventListener("click",pause);
 
+/* ---------- gamepad (and the Quest controllers in VR) ----------
+   left stick walk · right stick look · A jump/up · B toggle flying · X sprint/down
+   RT dig · LT place · grips pick block · Start play/pause */
+const padPrev=[];let padJump=false,padShift=false;
+function pollPad(dt){
+  const gp=[...(navigator.getGamepads?navigator.getGamepads():[])].find(p=>p&&p.connected);
+  padJump=padShift=false;if(!gp)return;
+  const ax=i=>Math.abs(gp.axes[i]||0)>.2?gp.axes[i]:0,bt=i=>!!(gp.buttons[i]&&gp.buttons[i].pressed),edge=i=>bt(i)&&!padPrev[i];
+  if(edge(9))playing?pause():startPlay();
+  else if(!playing&&edge(0))startPlay();
+  else if(playing){
+    if(sId===null){joy.x=ax(0);joy.y=-ax(1);}
+    look(ax(2)*700*dt,ax(3)*700*dt,.0024);
+    padJump=bt(0);padShift=bt(2);
+    if(edge(1)){P.fly=!P.fly;P.vy=0;scheduleSave();}
+    if(edge(7))act(false);if(edge(6))act(true);
+    if(edge(4))choose(sel-1);if(edge(5))choose(sel+1);
+  }
+  gp.buttons.forEach((b,i)=>padPrev[i]=b.pressed);
+}
+
 /* ---------- loop ---------- */
 const coords=document.getElementById("coords"),modeEl=document.getElementById("mode"),clockEl=document.getElementById("clock"),waterEl=document.getElementById("water");
 const UW=new THREE.Color(.09,.24,.45);
 let last=performance.now(),hudT=0;
 function frame(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
+  pollPad(dt);
   if(playing){step(dt);tod=(tod+dt/600*(keys.KeyT?40:1))%1;}
   updateSky();
   const bob=P.fly?0:Math.sin(P.bob*2)*.05;
