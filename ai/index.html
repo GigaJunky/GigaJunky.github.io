@@ -6,48 +6,187 @@
 <title>AI Games - BitJunky's</title>
 <meta name="links" content="hide">
 <style>
-:root{--bg:#05060f;--panel:#080c22;--line:#1b2a6b;--cyan:#27f0ff;--pink:#ff2d95;--yellow:#ffe94a;--text:#cfd8ff;--dim:#7684c4}
+:root{--bg:#05060f;--panel:rgba(8,12,34,.82);--line:#1b2a6b;--cyan:#27f0ff;--pink:#ff2d95;--yellow:#ffe94a;--text:#cfd8ff;--dim:#7684c4}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:17px/1.55 ui-monospace,'Share Tech Mono',monospace}
-main{max-width:1000px;margin:0 auto;padding:40px 22px}
+#grid{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+.btn{border:1px solid var(--cyan);padding:7px 16px;background:rgba(39,240,255,.06);cursor:pointer;font:inherit;color:var(--cyan);transition:.15s}
+.btn:hover,.btn:focus-visible{background:var(--cyan);color:#021;box-shadow:0 0 18px var(--cyan);outline:none}
+main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:40px 22px}
 h1{color:#fff;text-shadow:0 0 12px var(--cyan);margin:0 0 6px}
 p.sub{color:var(--dim);margin:0 0 28px}
 a{color:var(--cyan);text-decoration:none}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:24px}
-.card{background:var(--panel);border:1px solid var(--line);padding:16px;display:block;transition:.15s}
-.card:hover,.card:focus-visible{border-color:var(--pink);box-shadow:0 0 18px rgba(255,45,149,.35);outline:none}
+.card{background:var(--panel);border:1px solid var(--line);padding:16px;display:block;overflow:hidden;position:relative;backdrop-filter:blur(3px);transition:transform .2s,border-color .2s,box-shadow .2s}
+.card:hover,.card:focus-visible{border-color:var(--pink);box-shadow:0 0 28px rgba(255,45,149,.45);outline:none;transform:scale(1.07);z-index:2}
+.card .shot{display:block;width:calc(100% + 32px);height:auto;aspect-ratio:8/5;object-fit:cover;margin:-16px -16px 12px;border-bottom:1px solid var(--line);background:#000;transition:transform .3s}
+.card:hover .shot,.card:focus-visible .shot{transform:scale(1.06)}
+@media (prefers-reduced-motion:reduce){.card,.card .shot{transition:none}.card:hover,.card:focus-visible,.card:hover .shot,.card:focus-visible .shot{transform:none}}
 .card h3{margin:0;font-size:1.05rem;color:var(--yellow)}
 .card p{margin:8px 0 0;font-size:.88rem}
 </style>
 </head>
 <body>
+<canvas id="grid" aria-hidden="true"></canvas>
 <main>
   <a href="../index.html">&larr; BitJunky's</a>
   <h1>AI Games</h1>
   <p class="sub">Games I had AI build. Each one is a single page, so just click and play.</p>
   <div class="cards">
-    <a class="card" href="BitRunner.html"><h3>Bit Runner</h3></a>
-    <a class="card" href="ClownsBalloons3d.html"><h3>Clowns &amp; Balloons</h3></a>
-    <a class="card" href="DungeonsOfDaggorath.html"><h3>Dungeons of Daggorath</h3></a>
-    <a class="card" href="DungeonsOfDaggorath2.html"><h3>Dungeons of Daggorath v2</h3></a>
-    <a class="card" href="DungeonsOfDaggorath3.html"><h3>Dungeons of Daggorath v3</h3></a>
-    <a class="card" href="endless-gauntlet.html"><h3>Endless Gauntlet P2P</h3></a>
-    <a class="card" href="GeoGalaxianExtreme.html"><h3>Geo Galaxian Extreme</h3></a>
-    <a class="card" href="Georoids.html"><h3>Georoids</h3></a>
-    <a class="card" href="Hollowstone.html"><h3>Hollowstone</h3></a>
-    <a class="card" href="Hollowstone2.html"><h3>Hollowstone v2</h3></a>
-    <a class="card" href="InvadersExtreme.html"><h3>Invaders Extreme</h3></a>
-    <a class="card" href="Kal-UrDescent.html"><h3>Kal-Ur Descent</h3></a>
-    <a class="card" href="Lancewing.html"><h3>Lancewing</h3><p>Lancewing: aerial jousting for one or two riders.</p></a>
-    <a class="card" href="NeonCentipede.html"><h3>Neon Centipede</h3></a>
-    <a class="card" href="NeonCommandExtreme.html"><h3>Neon Command Extreme</h3></a>
-    <a class="card" href="NeoTron.html"><h3>NEOTRON</h3></a>
-    <a class="card" href="P2PHub.html"><h3>P2P Hub</h3></a>
-    <a class="card" href="RegolithRunner.html"><h3>Regolith Runner</h3></a>
-    <a class="card" href="ShootingGallery(CoColayout).html"><h3>Shooting Gallery (CoCo layout)</h3></a>
-    <a class="card" href="ShootingGallery2.html"><h3>Shooting Gallery</h3></a>
-    <a class="card" href="Skyfall2049.html"><h3>Skyfall 2049</h3><p>A vertical-scrolling co-op shooter in the style of 1942/1943, set over a modern-day and near-future ocean war.</p></a>
+    <a class="card" href="BitRunner.html"><img class="shot" src="shots/BitRunner.webp" alt="" loading="lazy" width="480" height="300"><h3>Bit Runner</h3><p>A synthwave rhythm runner where the obstacles land on the beat. Play the built-in track or drop in your own song and it finds the tempo.</p></a>
+    <a class="card" href="ClownsBalloons3d.html"><img class="shot" src="shots/ClownsBalloons3d.webp" alt="" loading="lazy" width="480" height="300"><h3>Clowns &amp; Balloons</h3><p>A circus classic: bounce clowns off a seesaw to pop rows of balloons under the big top, to a brass-band march.</p></a>
+    <a class="card" href="DungeonsOfDaggorath.html"><img class="shot" src="shots/DungeonsOfDaggorath.webp" alt="" loading="lazy" width="480" height="300"><h3>Dungeons of Daggorath</h3><p>A tribute to the CoCo dungeon crawler. Type commands, explore the maze by torchlight, and listen to your heartbeat as monsters close in.</p></a>
+    <a class="card" href="DungeonsOfDaggorath2.html"><img class="shot" src="shots/DungeonsOfDaggorath2.webp" alt="" loading="lazy" width="480" height="300"><h3>Dungeons of Daggorath v2</h3><p>The Daggorath remake with a full-color mode, fullscreen, and on-screen keys for touch play.</p></a>
+    <a class="card" href="DungeonsOfDaggorath3.html"><img class="shot" src="shots/DungeonsOfDaggorath3.webp" alt="" loading="lazy" width="480" height="300"><h3>Dungeons of Daggorath v3</h3><p>The latest Daggorath build, with a map editor: draw your own levels or generate random ones, then play them.</p></a>
+    <a class="card" href="endless-gauntlet.html"><img class="shot" src="shots/endless-gauntlet.webp" alt="" loading="lazy" width="480" height="300"><h3>Endless Gauntlet P2P</h3><p>A co-op dungeon shooter with no end. Peers link up with no server, over WebRTC or just by opening more tabs.</p></a>
+    <a class="card" href="GeoGalaxianExtreme.html"><img class="shot" src="shots/GeoGalaxianExtreme.webp" alt="" loading="lazy" width="480" height="300"><h3>Geo Galaxian Extreme</h3><p>Galaxian-style waves of diving aliens over a glowing, rippling neon grid, with a boss to finish off.</p></a>
+    <a class="card" href="Georoids.html"><img class="shot" src="shots/Georoids.webp" alt="" loading="lazy" width="480" height="300"><h3>Georoids</h3><p>Asteroids reimagined with shields, warp, nova bombs and gravity wells. One or two players.</p></a>
+    <a class="card" href="Geostar.html"><img class="shot" src="shots/Geostar.webp" alt="" loading="lazy" width="480" height="300"><h3>Geostar</h3><p>A Sinistar-style shooter on a warping neon grid: stop the Maw before it finishes building itself and starts hunting you. Works with gamepad, touch, and VR.</p></a>
+    <a class="card" href="Hollowstone.html"><img class="shot" src="shots/Hollowstone.webp" alt="" loading="lazy" width="480" height="300"><h3>Hollowstone</h3><p>A block-building sandbox on a small island. Dig, chop trees and build, and your world is saved in your browser.</p></a>
+    <a class="card" href="Hollowstone2.html"><img class="shot" src="shots/Hollowstone2.webp" alt="" loading="lazy" width="480" height="300"><h3>Hollowstone v2</h3><p>Hollowstone with sharper textures, a day-night cycle with real shadows and stars, swimming and flying.</p></a>
+    <a class="card" href="InvadersExtreme.html"><img class="shot" src="shots/InvadersExtreme.webp" alt="" loading="lazy" width="480" height="300"><h3>Invaders Extreme</h3><p>Space Invaders turned up, with bosses, UFOs and a two-player mode.</p></a>
+    <a class="card" href="Kal-UrDescent.html"><img class="shot" src="shots/Kal-UrDescent.webp" alt="" loading="lazy" width="480" height="300"><h3>Kal-Ur Descent</h3><p>A Metroid-style platformer down into alien caverns, with a charge beam, missiles, wall jumps, a morph ball and bombs.</p></a>
+    <a class="card" href="Lancewing.html"><img class="shot" src="shots/Lancewing.webp" alt="" loading="lazy" width="480" height="300"><h3>Lancewing</h3><p>Aerial jousting for one or two riders.</p></a>
+    <a class="card" href="NeonCentipede.html"><img class="shot" src="shots/NeonCentipede.webp" alt="" loading="lazy" width="480" height="300"><h3>Neon Centipede</h3><p>Centipede in neon, where every hit sends shockwaves through the background grid.</p></a>
+    <a class="card" href="NeonCommandExtreme.html"><img class="shot" src="shots/NeonCommandExtreme.webp" alt="" loading="lazy" width="480" height="300"><h3>Neon Command Extreme</h3><p>Missile Command in neon: shoot down incoming warheads wave after wave to protect your cities.</p></a>
+    <a class="card" href="NeoTron.html"><img class="shot" src="shots/NeoTron.webp" alt="" loading="lazy" width="480" height="300"><h3>NEOTRON</h3><p>A twin-stick neon arena shooter in the Robotron mold: blast the waves and rescue the survivors.</p></a>
+    <a class="card" href="P2PHub.html"><img class="shot" src="shots/P2PHub.webp" alt="" loading="lazy" width="480" height="300"><h3>P2P Hub</h3><p>Serverless chat, file sharing, a forum and checkers between browsers over WebRTC, connected with copy-paste invite codes.</p></a>
+    <a class="card" href="RegolithRunner.html"><img class="shot" src="shots/RegolithRunner.webp" alt="" loading="lazy" width="480" height="300"><h3>Regolith Runner</h3><p>A Moon Patrol-style run: drive a six-wheel rover across five lunar seas, jump craters, blast boulders and shoot raiders from A to Z.</p></a>
+    <a class="card" href="ShootingGallery(CoColayout).html"><img class="shot" src="shots/ShootingGalleryCoColayout.webp" alt="" loading="lazy" width="480" height="300"><h3>Shooting Gallery (CoCo layout)</h3><p>A carnival shooting gallery laid out like the CoCo original: owls, ducks, bunnies and the bear bonus round.</p></a>
+    <a class="card" href="ShootingGallery2.html"><img class="shot" src="shots/ShootingGallery2.webp" alt="" loading="lazy" width="480" height="300"><h3>Shooting Gallery</h3><p>The shooting gallery with a refreshed look and an "Over the Waves" carnival soundtrack.</p></a>
+    <a class="card" href="Skyfall2049.html"><img class="shot" src="shots/Skyfall2049.webp" alt="" loading="lazy" width="480" height="300"><h3>Skyfall 2049</h3><p>A vertical-scrolling co-op shooter in the style of 1942/1943, set over a modern-day and near-future ocean war.</p></a>
   </div>
 </main>
+<script>
+/* ===== Warping grid (same lattice as the homepage, without the ship game) ===== */
+(function(){
+  const cv = document.getElementById('grid'), ctx = cv.getContext('2d');
+  const MODES = ['full','gentle','off'];
+  let mode; try{ mode = localStorage.getItem('bj-grid'); }catch(e){}
+  if(!MODES.includes(mode)) mode = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'gentle' : 'full';
+  const amp = () => mode==='full' ? 1 : mode==='gentle' ? .35 : 0;
+
+  // on/off/gentle toggle (shares the homepage setting)
+  const btn = document.createElement('button');
+  btn.className = 'btn';
+  btn.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:5;font-size:.78rem;padding:5px 12px;background:rgba(5,6,15,.85)';
+  document.body.appendChild(btn);
+  const label = () => btn.textContent = 'Grid: ' + mode;
+  btn.onclick = () => {
+    mode = MODES[(MODES.indexOf(mode)+1) % 3];
+    try{ localStorage.setItem('bj-grid', mode); }catch(e){}
+    label(); init(); if(mode!=='off' && !running) start();
+  };
+
+  const STEP = 1/120;                       // fixed physics step: same feel at any refresh rate
+  const COLORS = [0,1,2,3,4,5].map(b => {
+    const k = b/5;
+    return `rgba(${Math.round(30+225*k)},${Math.round(80+130*(1-k*.4)+40*k)},255,${(.28+.62*k).toFixed(2)})`;
+  });
+  let W,H,cols,rows,pts,gap,dpr,quality=1,running=false;
+  let mx=-9999,my=-9999,pmx=-9999,pmy=-9999,tx=null,ty=null;
+
+  function init(){
+    dpr = Math.min(devicePixelRatio||1,2);
+    W = innerWidth; H = innerHeight;
+    cv.width = W*dpr; cv.height = H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+    gap = (W<600 ? 28 : 34) * quality;
+    cols = Math.ceil(W/gap)+2; rows = Math.ceil(H/gap)+2;
+    pts = [];
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const x=c*gap-gap/2, y=r*gap-gap/2;
+      pts.push({ox:x,oy:y,x,y,vx:0,vy:0,b:0});
+    }
+    if(mode==='off'){ draw(); }
+  }
+  function push(x,y,rad,force){
+    force *= amp(); if(!force) return;
+    const c0=Math.max(0,Math.floor((x-rad)/gap+.5)), c1=Math.min(cols-1,Math.ceil((x+rad)/gap+.5));
+    const r0=Math.max(0,Math.floor((y-rad)/gap+.5)), r1=Math.min(rows-1,Math.ceil((y+rad)/gap+.5));
+    for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){
+      const p = pts[r*cols+c], dx=p.x-x, dy=p.y-y, d2=dx*dx+dy*dy;
+      if(d2<rad*rad && d2>1){
+        const d=Math.sqrt(d2), f=(1-d/rad)*force;
+        p.vx += dx/d*f; p.vy += dy/d*f;
+      }
+    }
+  }
+  const pull = (x,y,rad,f) => push(x,y,rad,-f);
+
+  // mouse
+  addEventListener('pointermove',e=>{
+    if(e.pointerType==='touch') return;
+    pmx=mx; pmy=my; mx=e.clientX; my=e.clientY;
+    if(pmx>-999) pull(mx,my,140,Math.min(Math.hypot(mx-pmx,my-pmy)*.12,5));
+  });
+  document.documentElement.addEventListener('mouseleave',()=>{ mx=my=pmx=pmy=-9999; });
+  // hovering a card sends a shockwave out from behind it
+  document.querySelectorAll('.card').forEach(el => el.addEventListener('pointerenter',()=>{
+    const r=el.getBoundingClientRect(); push(r.left+r.width/2,r.top+r.height/2,Math.max(r.width,r.height),14);
+  }));
+  // touch (passive, so page scrolling still works)
+  addEventListener('touchstart',e=>{
+    const t=e.touches[0]; tx=t.clientX; ty=t.clientY; push(tx,ty,260,28);
+  },{passive:true});
+  addEventListener('touchmove',e=>{
+    const t=e.touches[0];
+    if(tx!==null) pull(t.clientX,t.clientY,140,Math.min(Math.hypot(t.clientX-tx,t.clientY-ty)*.12,5));
+    tx=t.clientX; ty=t.clientY;
+  },{passive:true});
+  addEventListener('touchend',()=>{tx=ty=null},{passive:true});
+  addEventListener('resize',init);
+
+  function physics(){
+    for(const p of pts){
+      p.vx += (p.ox-p.x)*0.045; p.vy += (p.oy-p.y)*0.045;
+      p.vx *= 0.9; p.vy *= 0.9;
+      p.x += p.vx; p.y += p.vy;
+      const k = Math.min(Math.hypot(p.x-p.ox,p.y-p.oy)/22,1);
+      p.b = Math.min(5,Math.floor(k*6));
+    }
+  }
+  // batched drawing: 6 paths (one per colour) instead of thousands of strokes
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.lineWidth = 1.2;
+    const paths = COLORS.map(()=>new Path2D());
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const p = pts[r*cols+c];
+      if(c<cols-1){ const q=pts[r*cols+c+1], P=paths[Math.max(p.b,q.b)]; P.moveTo(p.x,p.y); P.lineTo(q.x,q.y); }
+      if(r<rows-1){ const q=pts[(r+1)*cols+c], P=paths[Math.max(p.b,q.b)]; P.moveTo(p.x,p.y); P.lineTo(q.x,q.y); }
+    }
+    for(let i=0;i<6;i++){ ctx.strokeStyle=COLORS[i]; ctx.stroke(paths[i]); }
+    if(mx>-999 && mode!=='off'){
+      const g = ctx.createRadialGradient(mx,my,0,mx,my,110);
+      g.addColorStop(0,'rgba(39,240,255,.22)'); g.addColorStop(1,'rgba(39,240,255,0)');
+      ctx.fillStyle=g; ctx.fillRect(mx-110,my-110,220,220);
+    }
+  }
+
+  let last=0,acc=0,ambT=0,frames=0,work=0;
+  function frame(t){
+    if(mode==='off'){ running=false; return; }
+    const w0 = performance.now();
+    const dt = Math.min((t-last)/1000,.1); last=t;
+    acc += dt; ambT += dt;
+    if(ambT>4){ ambT=0; push(Math.random()*W,Math.random()*H,200,10); }
+    let n=0;
+    while(acc>=STEP && n<6){ physics(); acc-=STEP; n++; }
+    if(n===6) acc=0;
+    draw();
+    // adaptive quality: if our own work per frame is too slow, use a coarser grid
+    work += performance.now()-w0;
+    if(++frames===90){
+      if(work/90 > 10 && quality < 2){ quality += .4; init(); }
+      frames=0; work=0;
+    }
+    requestAnimationFrame(frame);
+  }
+  function start(){ running=true; last=performance.now(); requestAnimationFrame(frame); }
+
+  label(); init();
+  if(mode!=='off') start();
+})();
+</script>
 </body>
 </html>
