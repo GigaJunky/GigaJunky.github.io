@@ -81,7 +81,9 @@
   btn.onclick = e => { e.stopPropagation(); enter(); };
   const addBtn = () => document.body.appendChild(btn);
   if(document.body) addBtn(); else addEventListener('DOMContentLoaded', addBtn);
-  if(navigator.xr && navigator.xr.isSessionSupported)
+  // phones report VR support too (Cardboard), so only offer it in headset browsers and on desktop (PC VR)
+  const ua = navigator.userAgent, headset = /OculusBrowser|Quest|Pico|Wolvic|\bVR\b/.test(ua) || !/Android|iPhone|iPad|Mobi/i.test(ua);
+  if(headset && navigator.xr && navigator.xr.isSessionSupported)
     navigator.xr.isSessionSupported('immersive-vr').then(ok => { btn.hidden = !ok; }).catch(() => {});
 
   function pickCanvas(){

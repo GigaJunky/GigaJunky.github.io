@@ -1099,7 +1099,9 @@ async function enterVR(){
     $('padStatus').textContent = 'VR could not start here ('+(e&&e.name||'blocked')+'). Open this page directly in the Quest Browser, or play in 2D: the controllers still work if the browser shares them.';
   }
 }
-if(navigator.xr && navigator.xr.isSessionSupported){
+// phones report VR support too (Cardboard), so only offer it in headset browsers and on desktop (PC VR)
+const headsetUA = /OculusBrowser|Quest|Pico|Wolvic|\bVR\b/.test(navigator.userAgent) || !/Android|iPhone|iPad|Mobi/i.test(navigator.userAgent);
+if(headsetUA && navigator.xr && navigator.xr.isSessionSupported){
   navigator.xr.isSessionSupported('immersive-vr').then(ok=>{ if(ok) $('vrBtn').hidden=false; }).catch(()=>{});
 }
 $('vrBtn').onclick=enterVR;
