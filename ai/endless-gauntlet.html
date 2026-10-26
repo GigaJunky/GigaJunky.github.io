@@ -115,4 +115,5 @@ function draw(){const W=cv.width,Hh=cv.height,ox=W/2-me.x*T,oy=Hh/2-me.y*T;g.fil
  const pl=(p,h,lab)=>{g.fillStyle=`hsl(${h},80%,55%)`;g.beginPath();g.arc(p.x*T+ox,p.y*T+oy,11,0,7);g.fill();g.fillStyle='#fff';g.font='10px sans-serif';g.textAlign='center';g.fillText(lab+' '+(p.hp|0),p.x*T+ox,p.y*T+oy-16)};
  players.forEach((p,k)=>pl(p,p.h,k.slice(0,3)));pl(me,hue,'you')}
 setInterval(tick,16);
-</script></body></html>
+</script><script data-goatcounter="https://gigajunky.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body></html>

@@ -172,6 +172,7 @@
 
     const attr = (prog, name, size) => { const l = gl.getAttribLocation(prog, name); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, size, gl.FLOAT, false, 0, 0); return l; };
     session = s; VR.active = true;
+    window.goatcounter&&goatcounter.count&&goatcounter.count({path:'vr'+location.pathname,title:'VR: '+document.title,event:true});   // GoatCounter event
     if(pending){ nativeCAF(pending); pending = 0; }
     btn.hidden = true;
 

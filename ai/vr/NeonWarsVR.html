@@ -1017,6 +1017,7 @@ function updateHud(dt) {
    VR / AR session handling
    ============================================================ */
 renderer.xr.addEventListener('sessionstart', () => {
+  window.goatcounter&&goatcounter.count&&goatcounter.count({path:'vr'+location.pathname,title:'VR: '+document.title,event:true});
   ensureAudio();
   baseRef = renderer.xr.getReferenceSpace(); W.identity(); snapReady = true;
   state = 'ready'; hudDirty = true;
@@ -1074,5 +1075,6 @@ addEventListener('resize', () => {
 // handy for debugging in the console
 window.__game = { get state() { return state; }, get score() { return score; }, get enemies() { return enemies.length; }, startGame, bomb, hurt, controllers, setMode, get shipVel() { return shipVel; }, W, arena, enemies_: enemies, spawnEnemy, get headPos() { return headPos; } };
 </script>
+<script data-goatcounter="https://gigajunky.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>

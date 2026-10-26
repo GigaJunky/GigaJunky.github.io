@@ -1022,6 +1022,7 @@ async function enterVR(){
   try{
     initAudio();
     const session = await navigator.xr.requestSession('immersive-vr');
+    window.goatcounter&&goatcounter.count&&goatcounter.count({path:'vr'+location.pathname,title:'VR: '+document.title,event:true});
     const glc = document.createElement('canvas');
     const gl = glc.getContext('webgl',{xrCompatible:true, alpha:false, antialias:true});
     if(gl.makeXRCompatible) await gl.makeXRCompatible();
@@ -1130,4 +1131,5 @@ requestAnimationFrame(loop);
 })();
 </script>
 
+<script data-goatcounter="https://gigajunky.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body></html>
