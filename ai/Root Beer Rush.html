@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Root Beer Rush</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -71,6 +75,10 @@ body{background:radial-gradient(120% 80% at 50% 0%, #2a150b 0%, var(--ink) 60%) 
 .foot{margin-top:10px;color:#7a5e48;font-size:16px;text-align:center;max-width:65ch}
 @media (prefers-reduced-motion:reduce){.marquee .bub{animation:none;display:none}}
 </style>
+<style>html,body{margin:0}</style>
+</head>
+<body>
+
 
 <div id="app">
   <div class="screen" id="screen">
@@ -78,7 +86,7 @@ body{background:radial-gradient(120% 80% at 50% 0%, #2a150b 0%, var(--ink) 60%) 
     <canvas id="bloom" width="384" height="240" aria-hidden="true"></canvas>
     <div id="view3d" hidden></div>
     <nav class="bar" id="bar" aria-label="Game options">
-      <button id="bStart">START</button><button id="b3d">3D VIEW</button><button id="bVR">VR</button><button id="bSnd" class="on">SOUND</button><button id="bFull">FULL SCREEN</button>
+      <button id="b3d">3D VIEW</button><button id="bVR">VR</button><button id="bSnd" class="on">SOUND</button><button id="bFull">FULL SCREEN</button>
     </nav>
     <div id="toast" hidden></div>
   </div>
@@ -644,7 +652,7 @@ function gameOver(){G.state='gameover';G.t=0;musicStop();jingle('over')}
 function qualifies(s){return s>SCORES[SCORES.length-1][1]||SCORES.length<5}
 
 /* ================= INPUT ================= */
-const KEYS=['up','down','left','right','fire','start','coin'];
+const KEYS=['up','down','left','right','fire','start','coin','view'];
 const IN={},PREV={},ED={},KB={},TB={},PD={},VRI={},KP={};KEYS.forEach(k=>{IN[k]=PREV[k]=ED[k]=KB[k]=TB[k]=PD[k]=VRI[k]=KP[k]=0});
 const PTR={active:false,row:0,x:0,mode:'pour'};
 const KMAP={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'fire',Enter:'fire',KeyJ:'fire',KeyZ:'fire',KeyX:'fire'};
@@ -657,6 +665,8 @@ addEventListener('keydown',e=>{
   else if(e.code==='KeyM')setSound(!AU.on);
   else if(e.code==='KeyP'||e.code==='Escape')togglePause();
   else if(e.code==='KeyV')toggle3D();
+  else if(e.code==='BracketLeft'||e.code==='Minus')adjustDist(-.5);
+  else if(e.code==='BracketRight'||e.code==='Equal')adjustDist(.5);
   else if(e.code==='KeyF')toggleFull();
 });
 addEventListener('keyup',e=>{const m=KMAP[e.code];if(m)KB[m]=0});
@@ -704,10 +714,15 @@ function pollInput(){
     if((a[1]||0)<-.5||bp(12))PD.up=1;if((a[1]||0)>.5||bp(13))PD.down=1;if((a[0]||0)<-.5||bp(14))PD.left=1;if((a[0]||0)>.5||bp(15))PD.right=1;
     if(bp(0)||bp(1)||bp(2)||bp(5)||bp(7))PD.fire=1;if(bp(9))PD.start=1;if(bp(8))PD.coin=1}
   KEYS.forEach(k=>VRI[k]=0);
-  if(T.inVR&&T.session){for(const src of T.session.inputSources){const gp=src.gamepad;if(!gp)continue;const a=gp.axes;const x=a.length>2?a[2]:(a[0]||0),y=a.length>3?a[3]:(a[1]||0);
-    if(y<-.55)VRI.up=1;if(y>.55)VRI.down=1;if(x<-.55)VRI.left=1;if(x>.55)VRI.right=1;
-    if(gp.buttons[0]&&gp.buttons[0].pressed)VRI.fire=1;if((gp.buttons[1]&&gp.buttons[1].pressed)||(gp.buttons[4]&&gp.buttons[4].pressed))VRI.start=1;if(gp.buttons[5]&&gp.buttons[5].pressed)VRI.coin=1}}
+  if(T.inVR&&T.session){let any=false;const srcs=[...T.session.inputSources];const hasRight=srcs.some(q=>q.handedness==='right'&&q.gamepad);
+    for(const src of srcs){const gp=src.gamepad;if(!gp)continue;const a=gp.axes;const x=a.length>2?a[2]:(a[0]||0),y=a.length>3?a[3]:(a[1]||0);const bp=i=>gp.buttons[i]&&gp.buttons[i].pressed;
+      if([0,1,3,4,5].some(bp))any=true;
+      if(src.handedness==='left'&&hasRight){if(Math.abs(y)>.3&&!T.vrGate){VRD=clamp(VRD+y*(T.dt||.016)*2.5,0,8);saveDist()}}
+      else{if(y<-.55)VRI.up=1;if(y>.55)VRI.down=1;if(x<-.55)VRI.left=1;if(x>.55)VRI.right=1}
+      if(bp(0))VRI.fire=1;if(bp(1)||bp(4))VRI.start=1;if(bp(5))VRI.view=1}
+    if(T.vrGate){if(any)KEYS.forEach(k=>VRI[k]=0);else T.vrGate=false}}
   KEYS.forEach(k=>{IN[k]=(KB[k]||TB[k]||PD[k]||VRI[k])?1:0;ED[k]=(IN[k]&&!PREV[k])||KP[k]?1:0;PREV[k]=IN[k];KP[k]=0});
+  if(ED.view)toggleVRView();
   if(ED.start){if(G.state==='attract')startPress();else if(G.state==='gameover')G.t=99;else if(G.state==='play'||G.state==='ready')togglePause()}
 }
 
@@ -717,6 +732,7 @@ function update(dt){
   for(let i=0;i<ROWS;i++)G.doors[i]=Math.max(0,G.doors[i]-dt*1.3);
   for(const p of G.parts){p.vy+=p.g*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt}G.parts=G.parts.filter(p=>p.life>0);
   for(const p of G.pops)p.t+=dt;G.pops=G.pops.filter(p=>p.t<.9);
+  if(G.paused&&ED.fire){togglePause();return}
   if(G.paused)return;
   switch(G.state){
     case'attract':if(ED.fire)startPress();break;
@@ -913,7 +929,7 @@ function drawAttract(){
       if(ic==='coin')drawCoin(cx,47,y,t);txt(cx,s,74,y,'#f6e7c8','left',8,null,'u')});
   } else if(page===2){
     txt(cx,'CONTROLS',W/2,30,'#e3b955','center',11);
-    [['KEYBOARD','Arrows or WASD move, Space pours'],['MOUSE / TOUCH','Hold near the taps to pour, tap a bar to walk'],['GAMEPAD','D-pad moves, A or RT pours'],['VR','Thumbstick moves, trigger pours'],['ANY TIME','P pause · M sound · V 3D view']].forEach(([a,b],k)=>{const y=52+k*25;txt(cx,a,30,y,'#d07a3c','left',6,null,'u');txt(cx,b,30,y+8,'#f6e7c8','left',8,null,'u')});
+    [['KEYBOARD','Arrows or WASD move, Space pours'],['MOUSE / TOUCH','Hold near the taps to pour, tap a bar to walk'],['GAMEPAD','D-pad moves, A or RT pours'],['VR','Right stick moves, trigger pours, A starts'],['VR VIEW','B/Y flat or 3D screen · left stick moves it nearer or farther'],['ANY TIME','P pause · M sound · V 3D view · [ ] distance']].forEach(([a,b],k)=>{const y=48+k*24;txt(cx,a,30,y,'#d07a3c','left',6,null,'u');txt(cx,b,30,y+8,'#f6e7c8','left',8,null,'u')});
   } else {
     txt(cx,'BEST BARTENDERS',W/2,30,'#e3b955','center',11);
     SCORES.forEach(([n,s],k)=>{const y=58+k*20,c=k===0?'#ffd34a':'#f6e7c8';rr(cx,92,y-3,200,16,3);cx.fillStyle=k%2?'rgba(255,255,255,.04)':'rgba(255,255,255,.08)';cx.fill();
@@ -973,7 +989,11 @@ function applyScale(){
 let scaleT=0;new ResizeObserver(()=>{clearTimeout(scaleT);scaleT=setTimeout(applyScale,120)}).observe(document.getElementById('screen'));
 
 /* ================= 3D / VR ================= */
-const T={on:false,inVR:false,session:null,mx:0,my:0,ent:new Map(),tex:new Map(),bgVer:-1,bannerKey:'x'};
+let VRD=1.8;try{const v=parseFloat(localStorage.getItem('rbr_vrdist'));if(v>=0&&v<=8)VRD=v}catch(e){}
+let distT=0;function saveDist(){clearTimeout(distT);distT=setTimeout(()=>{try{localStorage.setItem('rbr_vrdist',String(VRD.toFixed(2)))}catch(e){}},400)}
+function adjustDist(d){if(T.inVR){VRD=clamp(VRD+d,0,8);saveDist()}else if(T.on){T.camZ=clamp(T.camZ+d,.5,9);toast('VIEW DISTANCE '+T.camZ.toFixed(1)+' M')}}
+function toggleVRView(){if(!T.inVR)return;T.vr2d=!T.vr2d;sfx('tick')}
+const T={vr2d:false,camZ:2.6,yOff:0,eyeY:1.6,vrGate:false,on:false,inVR:false,session:null,mx:0,my:0,ent:new Map(),tex:new Map(),bgVer:-1,bannerKey:'x'};
 const S3=0.022,X3=px=>(px-192)*S3,Z3=i=>-3.0-(3-i)*1.1,CY=i=>0.9+(3-i)*0.45;
 const view3d=document.getElementById('view3d');
 function texFor(c){let t=T.tex.get(c);if(!t){t=new THREE.CanvasTexture(c);t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearFilter;t.generateMipmaps=false;T.tex.set(c,t)}return t}
@@ -1042,6 +1062,7 @@ function init3D(){
     if(h.object===T.screen)return{x:h.uv.x*W,y:(1-h.uv.y)*H};const row=h.object.userData.row;const lp=T.world.worldToLocal(h.point.clone());return{x:lp.x/S3+192,y:RT(row)+30}};
   r.domElement.addEventListener('pointerdown',e=>{e.preventDefault();try{r.domElement.setPointerCapture(e.pointerId)}catch(_){}const p=pick3(e);if(p)pDown(p)});
   r.domElement.addEventListener('pointermove',e=>{const b=r.domElement.getBoundingClientRect();T.mx=(e.clientX-b.left)/b.width*2-1;T.my=(e.clientY-b.top)/b.height*2-1;const p=pick3(e);if(p)pMove(p,!(e.buttons&1)&&e.pointerType==='mouse')});
+  r.domElement.addEventListener('wheel',e=>{e.preventDefault();adjustDist(e.deltaY>0?.35:-.35)},{passive:false});
   r.domElement.addEventListener('pointerup',pUp);r.domElement.addEventListener('pointercancel',pUp);
   new ResizeObserver(size3D).observe(view3d);size3D();
   return true;
@@ -1055,12 +1076,16 @@ function ent(key,make){let m=T.ent.get(key);if(!m){m=make();T.world.add(m);T.ent
 function spriteMesh(geo,c){return new THREE.Mesh(geo,new THREE.MeshBasicMaterial({map:texFor(c),transparent:true,alphaTest:.5,side:THREE.DoubleSide}))}
 function sync3D(){
   const t=G.t,play=['ready','play','death','clear'].includes(G.state);
-  T.screen.visible=!play;T.hud.visible=play;T.gameTex.needsUpdate=true;T.hudTex.needsUpdate=true;
+  const vr2=T.inVR&&T.vr2d;T.world.visible=!vr2;T.screen.visible=vr2||!play;T.hud.visible=play;
+  if(T.inVR)T.world.position.set(0,T.yOff,-VRD);
+  if(vr2){const D=2.2+VRD*.6;T.screen.position.set(0,T.eyeY,-D);T.screen.scale.setScalar(D*1.15/3.84)}
+  else{const wp=T.world.position;T.screen.position.set(0,3.85+wp.y,Z3(0)-.85+wp.z);T.screen.scale.setScalar(1.55)}
+  T.gameTex.needsUpdate=true;T.hudTex.needsUpdate=true;
   if(T.bgVer!==G.bgVer){T.wallTex.needsUpdate=true;T.bgVer=G.bgVer;const dc=new THREE.Color(G.theme.door);for(const pr of T.doors)for(const d of pr)d.m.material.color.copy(dc);T.riserMat.color.set(G.theme.floor[1])}
   const b=G.banner,bk=b&&b.t<b.dur?b.lines.join('|'):'';
   if(bk!==T.bannerKey){T.bannerKey=bk;const g=T.bannerCv.getContext('2d');g.clearRect(0,0,384,48);if(bk){const ls=b.lines.slice(0,3);g.fillStyle='rgba(18,10,6,.88)';g.fillRect(0,0,384,48);g.fillStyle='#d07a3c';g.fillRect(0,0,384,2);g.fillRect(0,46,384,2);
     ls.forEach((s,k)=>txt(g,s,192,ls.length===1?20:ls.length===2?(10+k*16):(4+k*14),k===0?b.col:'#f6e7c8','center',10))}T.bannerTex.needsUpdate=true}
-  T.banner.visible=play&&!!bk;
+  T.banner.visible=play&&!!bk&&!vr2;
   T.seen=new Set();
   if(play){
     const cheerBob=G.cheerT>0&&Math.floor(t*8)%2?2:0;
@@ -1081,14 +1106,14 @@ function sync3D(){
   for(let k=0;k<400;k++){const o=k*3;if(k<n){const p=G.parts[k],row=rowAt(p.y-10);T.pPos[o]=X3(p.x);T.pPos[o+1]=CY(row)+(RT(row)+31-p.y)*S3;T.pPos[o+2]=Z3(row)+.05;
       if(p.col[0]==='#')T.colTmp.set(p.col);else T.colTmp.setRGB(1,.95,.85);T.pCol[o]=T.colTmp.r;T.pCol[o+1]=T.colTmp.g;T.pCol[o+2]=T.colTmp.b}else{T.pPos[o]=0;T.pPos[o+1]=-50;T.pPos[o+2]=0}}
   T.pGeo.attributes.position.needsUpdate=true;T.pGeo.attributes.color.needsUpdate=true;
-  if(!T.inVR){const sh=G.shake>0?.03:0;T.cam.position.set(T.mx*.9+rnd(-sh,sh),2.0-T.my*.35+rnd(-sh,sh),2.6);T.cam.lookAt(0,1.45,-4.2)}
+  if(!T.inVR){const sh=G.shake>0?.03:0,sway=play?0:Math.sin(G.t*.4)*.6;T.cam.position.set(T.mx*.9+sway+rnd(-sh,sh),2.0-T.my*.35+rnd(-sh,sh),T.camZ);T.cam.lookAt(0,play?1.45:2.2,-4.2)}
 }
 function set3D(on){
   if(on&&!init3D()){toast('3D VIEW NEEDS WEBGL, WHICH THIS BROWSER IS NOT PROVIDING');return}
   if(on===T.on)return;T.on=on;view3d.hidden=!on;cv.style.visibility=on?'hidden':'visible';document.getElementById('bloom').style.visibility=on?'hidden':'visible';document.getElementById('b3d').classList.toggle('on',on);
   if(on){cancelAnimationFrame(rafId);size3D();T.renderer.setAnimationLoop(tick)}else{T.renderer.setAnimationLoop(null);rafId=requestAnimationFrame(tick)}
 }
-function toggle3D(){if(T.inVR)return;set3D(!T.on)}
+function toggle3D(){if(T.inVR){toggleVRView();return}set3D(!T.on);if(T.on)toast('3D VIEW ON · SCROLL OR [ ] TO ZOOM')}
 async function enterVR(){
   initAudio();
   if(T.session){T.session.end();return}
@@ -1099,10 +1124,10 @@ async function enterVR(){
   catch(e){toast('VR IS BLOCKED HERE. OPEN THE PAGE IN ITS OWN TAB ON A HEADSET');return}
   set3D(true);
   let type='local-floor';try{await s.requestReferenceSpace('local-floor')}catch(e){type='local'}
-  T.renderer.xr.setReferenceSpaceType(type);T.world.position.set(0,type==='local'?-1.6:0,.6);T.screen.position.set(0,type==='local'?0:1.6,-2.2);
+  T.renderer.xr.setReferenceSpaceType(type);T.yOff=type==='local'?-1.6:0;T.eyeY=type==='local'?0:1.6;T.vrGate=true;if((G.state==='play'||G.state==='ready')&&!G.paused)togglePause();
   try{await T.renderer.xr.setSession(s)}catch(e){toast('COULD NOT START VR');return}
   T.session=s;T.inVR=true;document.getElementById('bVR').classList.add('on');
-  s.addEventListener('end',()=>{T.session=null;T.inVR=false;T.world.position.set(0,0,0);T.screen.position.set(0,1.75,-2.4);document.getElementById('bVR').classList.remove('on');size3D()});
+  s.addEventListener('end',()=>{T.session=null;T.inVR=false;T.vr2d=false;T.world.position.set(0,0,0);saveDist();document.getElementById('bVR').classList.remove('on');size3D()});
 }
 
 /* ================= UI ================= */
@@ -1110,16 +1135,16 @@ let toastT=0;const toastEl=document.getElementById('toast');
 function toast(s){toastEl.textContent=s;toastEl.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>toastEl.hidden=true,2600)}
 function toggleFull(){const el=document.getElementById('app');try{if(document.fullscreenElement)document.exitFullscreen();else if(el.requestFullscreen)el.requestFullscreen().catch(()=>toast('FULL SCREEN IS NOT AVAILABLE HERE'));else toast('FULL SCREEN IS NOT AVAILABLE HERE')}catch(e){toast('FULL SCREEN IS NOT AVAILABLE HERE')}}
 const bind=(id,fn)=>{const b=document.getElementById(id);b.addEventListener('click',e=>{initAudio();fn();b.blur()})};
-bind('bStart',()=>{if(G.state==='attract')startPress();else if(G.state==='gameover')G.t=99});bind('b3d',toggle3D);bind('bVR',enterVR);bind('bSnd',()=>setSound(!AU.on));bind('bFull',toggleFull);
+bind('b3d',toggle3D);bind('bVR',enterVR);bind('bSnd',()=>setSound(!AU.on));bind('bFull',toggleFull);
 (function vrCheck(){const b=document.getElementById('bVR');if(!navigator.xr||!navigator.xr.isSessionSupported){b.title='WebXR is not available in this browser';return}
   navigator.xr.isSessionSupported('immersive-vr').then(ok=>{b.title=ok?'Enter VR':'No VR headset detected'}).catch(()=>{b.title='VR is blocked on this page'})})();
 /* ================= LOOP ================= */
 let last=0,rafId=0,lastBar=null;const bctx=document.getElementById('bloom').getContext('2d');const barEl=document.getElementById('bar');
 function tick(now){
-  const dt=Math.min(.05,last?(now-last)/1000:0.016);last=now;
+  const dt=Math.min(.05,last?(now-last)/1000:0.016);last=now;T.dt=dt;
   pollInput();update(dt);render2D();
   if(!T.on){bctx.globalCompositeOperation='source-over';bctx.drawImage(cv,0,0,384,240);bctx.globalCompositeOperation='multiply';bctx.drawImage(cv,0,0,384,240);bctx.drawImage(cv,0,0,384,240);bctx.globalCompositeOperation='source-over'}
-  const showBar=G.paused||['attract','gameover','initials'].includes(G.state)&&!T.inVR;if(showBar!==lastBar){lastBar=showBar;barEl.hidden=!showBar;document.getElementById('bStart').hidden=G.state!=='attract'}
+  const showBar=G.paused||['attract','gameover','initials'].includes(G.state)&&!T.inVR;if(showBar!==lastBar){lastBar=showBar;barEl.hidden=!showBar}
   if(T.on){sync3D();T.renderer.render(T.scene,T.cam)}
   if(!T.on)rafId=requestAnimationFrame(tick);
 }
@@ -1128,5 +1153,5 @@ const fontWait=document.fonts&&document.fonts.load?Promise.all([document.fonts.l
 Promise.race([fontWait,new Promise(r=>setTimeout(r,2500))]).catch(()=>{}).then(boot);
 </script>
 
-<script data-goatcounter="https://gigajunky.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
-</body></html>
+</body>
+</html>
