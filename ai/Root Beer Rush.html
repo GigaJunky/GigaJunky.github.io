@@ -657,10 +657,9 @@ const IN={},PREV={},ED={},KB={},TB={},PD={},VRI={},KP={};KEYS.forEach(k=>{IN[k]=
 const PTR={active:false,row:0,x:0,mode:'pour'};
 const KMAP={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'fire',Enter:'fire',KeyJ:'fire',KeyZ:'fire',KeyX:'fire'};
 addEventListener('keydown',e=>{
-  initAudio();const m=KMAP[e.code];
+  initAudio();if(G.state==='initials'&&/^Key[A-Z]$/.test(e.code)){e.preventDefault();if(!e.repeat)typeLetter(e.code.slice(3));return}const m=KMAP[e.code];
   if(m){if(!e.repeat)KP[m]=1;KB[m]=1;e.preventDefault()}
   if(e.repeat)return;
-  if(G.state==='initials'&&/^Key[A-Z]$/.test(e.code)&&!['KeyW','KeyA','KeyS','KeyD','KeyJ','KeyZ','KeyX'].includes(e.code)){typeLetter(e.code.slice(3));return}
   if(e.code==='Digit1')startPress();
   else if(e.code==='KeyM')setSound(!AU.on);
   else if(e.code==='KeyP'||e.code==='Escape')togglePause();
@@ -742,7 +741,7 @@ function update(dt){
       if(G.t>3.3){G.lives--;if(G.lives<=0)gameOver();else{G.toSpawn+=G.customers.length;resetRound()}}break;
     case'clear':if(G.t>3.4){add(G.clearBonus);startBonus()}break;
     case'bonus':updateBonus(dt);break;
-    case'gameover':if(ED.fire&&G.t>1.5)G.t=99;if(G.t>5){if(qualifies(G.score)){G.state='initials';G.t=0;G.I={l:[0,0,0],pos:0};jingle('hiscore')}else toAttract()}break;
+    case'gameover':if(ED.fire&&G.t>1.5)G.t=99;if(G.t>5){if(qualifies(G.score)){G.state='initials';G.t=0;G.I={l:lastInitials(),pos:0};jingle('hiscore')}else toAttract()}break;
     case'initials':if(ED.up)initStep(1);if(ED.down)initStep(-1);if(ED.fire||ED.right)initAdvance();if(ED.left&&G.I.pos>0){G.I.pos--;sfx('move')}if(G.t>40)saveInitials();break;
   }
 }
@@ -834,7 +833,8 @@ const ALPHA='ABCDEFGHIJKLMNOPQRSTUVWXYZ.-';
 function initStep(d){const I=G.I;if(!I)return;I.l[I.pos]=(I.l[I.pos]+d+ALPHA.length)%ALPHA.length;sfx('move')}
 function initAdvance(){const I=G.I;if(!I)return;sfx('tick');I.pos++;if(I.pos>=3)saveInitials()}
 function typeLetter(ch){const I=G.I;if(!I)return;I.l[I.pos]=ALPHA.indexOf(ch);initAdvance()}
-function saveInitials(){const I=G.I;const name=I.l.map(i=>ALPHA[i]).join('');SCORES.push([name,G.score]);SCORES.sort((a,b)=>b[1]-a[1]);SCORES=SCORES.slice(0,5);saveScores();G.I=null;toAttract();G.t=14}
+function lastInitials(){try{const v=localStorage.getItem('rbr_last')||'';if(/^[A-Z.\-]{3}$/.test(v))return v.split('').map(ch=>ALPHA.indexOf(ch))}catch(e){}return[0,0,0]}
+function saveInitials(){const I=G.I;const name=I.l.map(i=>ALPHA[i]).join('');try{localStorage.setItem('rbr_last',name)}catch(e){}SCORES.push([name,G.score]);SCORES.sort((a,b)=>b[1]-a[1]);SCORES=SCORES.slice(0,5);saveScores();G.I=null;toAttract();G.t=14}
 
 /* ================= DRAW ================= */
 function custFrame(c){
@@ -1122,6 +1122,7 @@ async function enterVR(){
   let s;
   try{s=await navigator.xr.requestSession('immersive-vr',{optionalFeatures:['local-floor','bounded-floor']})}
   catch(e){toast('VR IS BLOCKED HERE. OPEN THE PAGE IN ITS OWN TAB ON A HEADSET');return}
+  window.goatcounter&&goatcounter.count&&goatcounter.count({path:'vr'+location.pathname,title:'VR: '+document.title,event:true});
   set3D(true);
   let type='local-floor';try{await s.requestReferenceSpace('local-floor')}catch(e){type='local'}
   T.renderer.xr.setReferenceSpaceType(type);T.yOff=type==='local'?-1.6:0;T.eyeY=type==='local'?0:1.6;T.vrGate=true;if((G.state==='play'||G.state==='ready')&&!G.paused)togglePause();
@@ -1137,7 +1138,7 @@ function toggleFull(){const el=document.getElementById('app');try{if(document.fu
 const bind=(id,fn)=>{const b=document.getElementById(id);b.addEventListener('click',e=>{initAudio();fn();b.blur()})};
 bind('b3d',toggle3D);bind('bVR',enterVR);bind('bSnd',()=>setSound(!AU.on));bind('bFull',toggleFull);
 (function vrCheck(){const b=document.getElementById('bVR');if(!navigator.xr||!navigator.xr.isSessionSupported){b.title='WebXR is not available in this browser';return}
-  navigator.xr.isSessionSupported('immersive-vr').then(ok=>{b.title=ok?'Enter VR':'No VR headset detected'}).catch(()=>{b.title='VR is blocked on this page'})})();
+  navigator.xr.isSessionSupported('immersive-vr').then(ok=>{b.title=ok?'Enter VR':'No VR headset detected';if(ok){b.hidden=false;document.getElementById('b3d').hidden=false}}).catch(()=>{b.title='VR is blocked on this page'})})();
 /* ================= LOOP ================= */
 let last=0,rafId=0,lastBar=null;const bctx=document.getElementById('bloom').getContext('2d');const barEl=document.getElementById('bar');
 function tick(now){
@@ -1153,5 +1154,6 @@ const fontWait=document.fonts&&document.fonts.load?Promise.all([document.fonts.l
 Promise.race([fontWait,new Promise(r=>setTimeout(r,2500))]).catch(()=>{}).then(boot);
 </script>
 
+<script data-goatcounter="https://gigajunky.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
