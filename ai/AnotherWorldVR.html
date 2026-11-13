@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Another World — Web Player</title>
+<style>
+  :root { --bg:#0b0d10; --panel:#14181d; --line:#262c34; --fg:#e6e3dc; --dim:#8b929b; --acc:#e0a63a; --bad:#e2665a; --ok:#7cc48a; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--fg); font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  button,select,input { font:inherit; color:inherit; }
+  button { background:#1d232a; border:1px solid var(--line); border-radius:6px; padding:7px 12px; cursor:pointer; }
+  button:hover:not(:disabled) { border-color:var(--acc); }
+  button:disabled { opacity:.45; cursor:default; }
+  button.primary { background:var(--acc); color:#111; border-color:var(--acc); font-weight:600; }
+  select { background:#1d232a; border:1px solid var(--line); border-radius:6px; padding:6px 8px; }
+  .hidden { display:none !important; }
+
+  /* ---- setup screen ---- */
+  #setup { max-width:760px; margin:0 auto; padding:40px 20px 60px; }
+  h1 { font-size:30px; letter-spacing:.04em; margin:0 0 4px; font-weight:700; }
+  h1 span { color:var(--acc); }
+  .sub { color:var(--dim); margin:0 0 26px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:16px; }
+  .card h2 { font-size:15px; margin:0 0 10px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); font-weight:600; }
+  #drop { border:2px dashed var(--line); border-radius:10px; padding:26px; text-align:center; transition:.15s; }
+  #drop.over { border-color:var(--acc); background:#1a1712; }
+  #drop .btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:12px; }
+  .formats { display:grid; grid-template-columns:1fr 1fr; gap:14px; font-size:14px; color:var(--dim); }
+  .formats b { color:var(--fg); }
+  .formats code, .card code { background:#0e1114; padding:1px 5px; border-radius:4px; font-size:13px; color:#d9cfb8; }
+  #detect { font-size:14px; }
+  #detect .ok { color:var(--ok); } #detect .bad { color:var(--bad); } #detect .warn { color:var(--acc); }
+  .opts { display:flex; flex-wrap:wrap; gap:14px 22px; align-items:center; margin:14px 0 4px; }
+  .opts label { display:flex; gap:8px; align-items:center; font-size:14px; color:var(--dim); }
+  #startRow { display:flex; gap:12px; align-items:center; margin-top:14px; }
+  #progress { color:var(--dim); font-size:13px; }
+  .note { font-size:13px; color:var(--dim); }
+  @media (max-width:600px){ .formats{ grid-template-columns:1fr; } }
+
+  /* ---- player ---- */
+  #player { position:fixed; inset:0; display:flex; flex-direction:column; background:#000; }
+  #stage { flex:1; position:relative; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  #screen { display:block; image-rendering:pixelated; image-rendering:crisp-edges; background:#000; }
+  #screen.smooth { image-rendering:auto; }
+  #scan { position:absolute; pointer-events:none; background:repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 50%, rgba(0,0,0,.28) 50%, rgba(0,0,0,.28) 100%); }
+  #msg { position:absolute; top:12px; left:50%; transform:translateX(-50%); background:rgba(10,12,14,.85); border:1px solid var(--line); padding:6px 14px; border-radius:6px; font-size:13px; pointer-events:none; transition:opacity .3s; }
+  #pauseOv { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:28px; letter-spacing:.3em; background:rgba(0,0,0,.45); pointer-events:none; }
+  #bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:8px 10px; background:#0d0f12; border-top:1px solid #1c2127; font-size:13px; }
+  #bar button, #bar select { padding:5px 9px; font-size:13px; }
+  #bar .grow { flex:1; }
+  #bar input[type=range] { width:90px; }
+  #bar .lbl { color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:0 1 auto; }
+  #bar .grow { min-width:0; }
+  #help { position:absolute; inset:0; background:rgba(5,6,8,.92); display:flex; align-items:center; justify-content:center; z-index:5; }
+  #help .box { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px 26px; max-width:520px; font-size:14px; }
+  #help table { border-collapse:collapse; width:100%; }
+  #help td { padding:4px 8px; border-bottom:1px solid var(--line); }
+  #help td:first-child { color:var(--acc); white-space:nowrap; }
+
+  /* fullscreen: toolbar hidden, slides up when the mouse reaches the bottom edge */
+  body.fs #bar { position:absolute; left:0; right:0; bottom:0; transform:translateY(100%); transition:transform .2s; z-index:6; }
+  body.fs.barshow #bar, body.fs.paused #bar { transform:none; }
+
+  /* touch controls: see-through circles, left = direction, right = action */
+  #touch { position:absolute; inset:0; display:none; touch-action:none; user-select:none; -webkit-user-select:none; z-index:4; }
+  body.touch #touch { display:block; }
+  #touch .zone { position:absolute; top:0; bottom:0; width:50%; }
+  #zL { left:0; } #zR { right:0; }
+  /* circles appear where the thumb lands, then fade to barely visible while held; gone when released */
+  .ring { position:absolute; left:0; top:0; border-radius:50%; pointer-events:none; width:min(34vh, 24vw); height:min(34vh, 24vw);
+          background:rgba(255,255,255,.10); border:2px solid rgba(255,255,255,.35); opacity:0; transition:opacity .35s ease-out; }
+  .ring.show { opacity:.9; transition:none; }
+  .ring.show.fade { opacity:.12; transition:opacity 2.2s ease-in; }
+  #ringR { background:rgba(255,255,255,.18); }
+  #knob { position:absolute; left:50%; top:50%; width:42%; height:42%; margin:-21% 0 0 -21%; border-radius:50%; background:rgba(255,255,255,.20); border:1px solid rgba(255,255,255,.3); }
+  #tPause { position:absolute; top:10px; right:12px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12);
+            color:rgba(255,255,255,.3); font-size:14px; display:flex; align-items:center; justify-content:center; z-index:5; }
+</style>
+</head>
+<body>
+
+<!-- ===================================================================== SETUP -->
+<div id="setup">
+  <h1>ANOTHER <span>WORLD</span></h1>
+  <p class="sub">Web player for your own game files. Runs entirely in your browser — nothing is uploaded anywhere.</p>
+
+  <div class="card">
+    <h2>1 · Load your game files</h2>
+    <div id="drop">
+      Drag your game folder here, or
+      <div class="btns">
+        <button id="pickDir" class="primary">Choose game folder…</button>
+        <button id="pickFiles">Choose individual files…</button>
+      </div>
+      <input id="dirInput" type="file" webkitdirectory directory multiple class="hidden">
+      <input id="fileInput" type="file" multiple class="hidden">
+    </div>
+    <div class="formats" style="margin-top:14px">
+      <div><b>DOS / Amiga (original disks)</b><br>
+        <code>MEMLIST.BIN</code> + <code>BANK01</code>…<code>BANK0D</code>, exactly as on the ESP32 SD card.
+        Optional <code>STRINGS.TXT</code> for in‑game text.<br>
+        <b>Amiga disk images:</b> just pick both <code>.adf</code> files — everything is read from them.</div>
+      <div><b>20th Anniversary Edition (GOG / Steam)</b><br>
+        The install folder that contains <code>game/</code> (with <code>DAT</code>, <code>BGZ</code>, <code>WGZ</code>, <code>OGG</code>, <code>TXT</code>). Pick the install folder or the <code>game</code> folder — or a <code>.zip</code> of it (easiest on phones).</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2 · Play</h2>
+    <div id="detect">No files loaded yet.</div>
+    <div class="opts" id="opts20" hidden>
+      <label>Language <select id="optLang"></select></label>
+      <label>Audio <select id="optAudio"><option value="original">Original 1991 sound</option><option value="remastered">Remastered sound</option></select></label>
+      <label>Difficulty <select id="optDiff"><option value="0">Easy</option><option value="1" selected>Normal</option><option value="2">Hard</option></select></label>
+    </div>
+    <div class="opts">
+      <label>Graphics <select id="optGfx"><option value="hd">Sharp HD (1280×800)</option><option value="orig">Original (320×200)</option></select></label>
+      <label>Start at <select id="optPart">
+        <option value="16001">Introduction</option>
+        <option value="16002">Arrival (water)</option>
+        <option value="16003">Jail</option>
+        <option value="16004">City</option>
+        <option value="16005">Arena</option>
+        <option value="16006">Baths</option>
+        <option value="16007">Final</option>
+        <option value="16009">Code screen</option>
+      </select></label>
+    </div>
+    <div id="startRow"><button id="startBtn" class="primary" disabled>▶ Start</button><span id="progress"></span></div>
+  </div>
+
+  <p class="note">Controls: arrows (or WASD) move · Space / Enter / Ctrl = action · P or Esc = pause · C = enter a level code · 1–7 jump to a part · F = fullscreen · gamepads work too.
+  Engine: JavaScript port of Luc Dion's ESP32‑S3 Another World player (MIT). <i>Another World</i> © Éric Chahi. No game data is included.</p>
+</div>
+
+<!-- ===================================================================== PLAYER -->
+<div id="player" class="hidden">
+  <div id="stage">
+    <canvas id="screen" width="320" height="200"></canvas>
+    <div id="scan" class="hidden"></div>
+    <div id="pauseOv" class="hidden">PAUSED</div>
+    <div id="msg" style="opacity:0"></div>
+    <div id="touch">
+      <div class="zone" id="zL"></div><div class="zone" id="zR"></div>
+      <div class="ring" id="ringL"><div id="knob"></div></div>
+      <div class="ring" id="ringR"></div>
+      <div id="tPause">❚❚</div>
+    </div>
+    <div id="help" class="hidden"><div class="box">
+      <table>
+        <tr><td>← → ↑ ↓ / WASD</td><td>Move, jump (↑), crouch (↓)</td></tr>
+        <tr><td>Space · Enter · Ctrl</td><td>Action: run, kick, shoot (hold to charge)</td></tr>
+        <tr><td>P · Esc</td><td>Pause</td></tr>
+        <tr><td>C</td><td>Level-code screen (type letters, Backspace to erase)</td></tr>
+        <tr><td>1 – 7</td><td>Jump to part 1–7</td></tr>
+        <tr><td>F</td><td>Fullscreen</td></tr>
+        <tr><td>M</td><td>Mute</td></tr>
+        <tr><td>Gamepad</td><td>D-pad/stick move · A/B/X/Y action · Start pause</td></tr>
+        <tr><td>Meta Quest</td><td>Thumbstick move · Trigger or A/X action · B/Y pause · click thumbstick to leave VR/AR</td></tr>
+      </table>
+      <p style="text-align:right;margin:14px 0 0"><button id="helpClose">Close</button></p>
+    </div></div>
+  </div>
+  <div id="bar">
+    <button id="bPause">❚❚ Pause</button>
+    <button id="bMute">🔊</button>
+    <input id="vol" type="range" min="0" max="100" value="80" title="Volume">
+    <select id="bPart" title="Jump to part">
+      <option value="">Jump to…</option>
+      <option value="16001">Introduction</option><option value="16002">Arrival</option><option value="16003">Jail</option>
+      <option value="16004">City</option><option value="16005">Arena</option><option value="16006">Baths</option>
+      <option value="16007">Final</option><option value="16009">Code screen</option>
+    </select>
+    <span class="grow"></span>
+    <span class="lbl" id="partLbl"></span>
+    <select id="bAspect" title="Aspect ratio"><option value="4:3">4:3 (CRT)</option><option value="16:10">16:10 (square pixels)</option></select>
+    <select id="bFilter" title="Scaling"><option value="sharp">Sharp pixels</option><option value="smooth">Smooth</option><option value="scan">Scanlines</option></select>
+    <button id="bHelp">?</button>
+    <select id="bDepth" title="3D depth in VR/AR" class="hidden"><option value="0">Flat</option><option value="0.2">Depth: low</option><option value="0.35" selected>Depth: medium</option><option value="0.6">Depth: high</option></select>
+    <button id="bVR" class="hidden" title="Play in VR">VR</button>
+    <button id="bAR" class="hidden" title="Play in AR (passthrough)">AR</button>
+    <button id="bFull">⛶</button>
+    <button id="bQuit" title="Back to file selection">⏏</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ============================================================================================
+   Another World — web player.
+   JavaScript port of the ANOTHERWORLD engine for ESP32-S3 by Luc Dion (MIT licence):
+   bytecode VM (64 cooperative threads, 256 vars), polygon renderer on 4 pages of 320x200x16,
+   ByteKiller unpacker, 4-voice mixer + music sequencer. Adds support for the 20th Anniversary
+   Edition data layout (game/DAT, BGZ, WGZ, OGG, TXT). No game data is included.
+   Font: Adafruit_GFX classic 5x7 (BSD).
+   ============================================================================================ */
+
+const W = 320, H = 200, PAGE = W * H;
+const PART_FIRST = 16000, PART_INTRO = 16001, PART_LAST = 16009;
+const PART_NAMES = { 16000:'Protection', 16001:'Introduction', 16002:'Arrival', 16003:'Jail', 16004:'City', 16005:'Arena', 16006:'Baths', 16007:'Final', 16008:'Code screen', 16009:'Code screen' };
+// resources of each part: palette, bytecode, polygons, shared polygons (0 = none)
+const PARTS = [
+  [0x14,0x15,0x16,0x00],[0x17,0x18,0x19,0x00],[0x1A,0x1B,0x1C,0x11],[0x1D,0x1E,0x1F,0x11],[0x20,0x21,0x22,0x11],
+  [0x23,0x24,0x25,0x00],[0x26,0x27,0x28,0x11],[0x29,0x2A,0x2B,0x11],[0x7D,0x7E,0x7F,0x00],[0x7D,0x7E,0x7F,0x00]];
+const RT_SOUND=0, RT_MUSIC=1, RT_BITMAP=2, RT_PALETTE=3, RT_CODE=4, RT_POLY=5, RT_POLY2=6;
+// Amiga Paula periods for the 40 sound-effect notes
+const PERIODS = [1076,1016,960,906,856,808,762,720,678,640,604,570,538,508,480,453,428,404,381,360,
+                 339,320,302,285,269,254,240,226,214,202,190,180,170,160,151,143,135,127,120,113];
+const PAULA = 7159092;
+const VAR = { SEED:0x3C, LASTCHAR:0xDA, POS_UD:0xE5, MUS_MARK:0xF4, SCROLL_Y:0xF9, ACTION:0xFA, JUMP_DOWN:0xFB, LEFT_RIGHT:0xFC, POS_MASK:0xFD, ACTION_MASK:0xFE, PAUSE:0xFF };
+
+const FONT = Uint8Array.from(atob('AAAAAAA+W09bPj5rT2s+HD58PhwYPH48GBxXfVccHF5/XhwAGDwYAP/nw+f/ABgkGAD/59vn/zBIOgYOJil5KSZAfwUFB0B/BSU/WjznPFp/PhwcCAgcHD5/FCJ/IhRfXwBfXwYJfwF/AGaJlWpgYGBgYJSi/6KUCAR+BAgQIH4gEAgIKhwICBwqCAgeEBAQEAweDB4MMDg+ODAGDj4OBgAAAAAAAABfAAAABwAHABR/FH8UJCp/KhIjEwhkYjZJViBQAAgHAwAAHCJBAABBIhwAKhx/HCoICD4ICACAcDAACAgICAgAAGBgACAQCAQCPlFJRT4AQn9AAHJJSUlGIUFJTTMYFBJ/ECdFRUU5PEpJSTFBIREJBzZJSUk2RklJKR4AABQAAABANAAAAAgUIkEUFBQUFABBIhQIAgFZCQY+QV1ZTnwSERJ8f0lJSTY+QUFBIn9BQUE+f0lJSUF/CQkJAT5BQVFzfwgICH8AQX9BACBAQT8BfwgUIkF/QEBAQH8CHAJ/fwQIEH8+QUFBPn8JCQkGPkFRIV5/CRkpRiZJSUkyAwF/AQM/QEBAPx8gQCAfP0A4QD9jFAgUYwMEeAQDYVlJTUMAf0FBQQIECBAgAEFBQX8EAgECBEBAQEBAAAMHCAAgVFR4QH8oREQ4OERERCg4REQofzhUVFQYAAh+CQIYpKSceH8IBAR4AER9QAAgQEA9AH8QKEQAAEF/QAB8BHgEeHwIBAR4OERERDj8GCQkGBgkJBj8fAgEBAhIVFRUJAQEP0QkPEBAIHwcIEAgHDxAMEA8RCgQKERMkJCQfERkVExEAAg2QQAAAHcAAABBNggAAgECBAI8JiMmPB6hoWESOkBAIHo4VFRVWSFVVXlBIlRUeEIhVVR4QCBUVXlADB5SchI5VVVVWTlUVFRZOVVUVFgAAEV8QQACRX1CAAFFfEB9EhESffAoJSjwfFRVRQAgVFR8VHwKCX9JMklJSTI6REREOjJKSEgwOkFBIXo6QkAgeACdoKB9PUJCQj09QEBAPTwk/yQkSH5JQ2YrL/wvK/8JKfYgwIh+CQMgVFR5QQAARH1BMEhISjI4QEAiegB6CgpyfQ0ZMX0mKSkvKCYpKSkmMEhNQCA4CAgICAgICAg4LxDIrLovECg0+gAAewAACBQqFCIiFCoUCFUAVQBVqlWqVar/Vf9V/wAAAP8AEBAQ/wAUFBT/ABAQ/wD/EBDwEPAUFBT8ABQU9wD/AAD/AP8UFPQE/BQUFxAfEBAfEB8UFBQfABAQEPAAAAAAHxAQEBAfEBAQEPAQAAAA/xAQEBAQEBAQEP8QAAAA/xQAAP8A/wAAHxAXAAD8BPQUFBcQFxQU9AT0AAD/APcUFBQUFBQU9wD3FBQUFxQQEB8QHxQUFPQUEBDwEPAAAB8QHwAAAB8UAAAA/BQAAPAQ8BAQ/xD/FBQU/xQQEBAfAAAAAPAQ///////w8PDw8P///wAAAAAA//8PDw8PDzhERDhE/EpKSjR+AgIGBgJ+An4CY1VJQWM4REQ8BEB+IB4gBgJ+AgKZpeelmRwqSSocTHIBckwwSk1NMDBIeEgwvGJaRj0+SUlJAH4BAQF+KioqKipERF9EREBRSkRAQERKUUAAAP8BA+CA/wAACAhrawg2EjYkNgYPCQ8GAAAYGAAAABAQADBA/wEBAB8BAR4AGR0XEgA8PDw8AAAAAAA='), c => c.charCodeAt(0));
+
+const be16 = (b,o) => (b[o] << 8) | b[o+1];
+const be32 = (b,o) => ((b[o] << 24) | (b[o+1] << 16) | (b[o+2] << 8) | b[o+3]) >>> 0;
+const le16 = (b,o) => b[o] | (b[o+1] << 8);
+const le32 = (b,o) => (b[o] | (b[o+1] << 8) | (b[o+2] << 16) | (b[o+3] << 24)) >>> 0;
+const hex = (n,w=2) => n.toString(16).toUpperCase().padStart(w,'0');
+
+/* ---------------------------------------------------------------------------- file store */
+class FileStore {
+  constructor() { this.map = new Map(); }               // UPPERCASE relative path -> File
+  add(file, path) {
+    path = (path || file.webkitRelativePath || file.name).replace(/\\/g,'/').replace(/^\/+/,'');
+    this.map.set(path.toUpperCase(), file);
+  }
+  get size() { return this.map.size; }
+  // finds a file whose path ends with the given segments (case-insensitive); shortest path wins
+  find(suffix) {
+    suffix = suffix.toUpperCase();
+    let best = null, bestLen = 1e9;
+    for (const [k,f] of this.map) {
+      if ((k === suffix || k.endsWith('/' + suffix)) && k.length < bestLen) { best = f; bestLen = k.length; }
+    }
+    return best;
+  }
+  filter(re) { const out = []; for (const [k,f] of this.map) if (re.test(k)) out.push([k,f]); return out; }
+}
+async function readBytes(file) { return new Uint8Array(await file.arrayBuffer()); }
+async function gunzip(bytes) {
+  if (typeof DecompressionStream === 'undefined') throw new Error('This browser cannot unpack .gz data (DecompressionStream missing). Use a recent Chrome, Edge, Firefox or Safari.');
+  const ds = new DecompressionStream('gzip');
+  const buf = await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+/* ---------------------------------------------------------------------------- ByteKiller */
+// Bit stream read backwards (32-bit big-endian words from the end), output written backwards too.
+function unpackBK(dst, src) {
+  const n = src.length; if (n < 12) return false;
+  let p = n - 4;
+  const outSize = be32(src,p); p -= 4;
+  if (outSize > dst.length) return false;
+  let crc = be32(src,p); p -= 4;
+  let bits = be32(src,p); p -= 4;
+  crc = (crc ^ bits) >>> 0;
+  let s = p, d = outSize - 1, left = outSize, bad = false;
+  const bit = () => {
+    let b = bits & 1;
+    bits >>>= 1;
+    if (bits === 0) {
+      if (s < 0) { bad = true; return 0; }
+      const w = be32(src,s); s -= 4;
+      crc = (crc ^ w) >>> 0;
+      b = w & 1;
+      bits = ((w >>> 1) | 0x80000000) >>> 0;
+    }
+    return b;
+  };
+  const getBits = (k) => { let v = 0; while (k--) v = (v << 1) | bit(); return v; };
+  const literal = (nb, base) => {
+    let c = getBits(nb) + base + 1;
+    if (c > left) c = left;
+    left -= c;
+    while (c--) { if (d < 0) { bad = true; return; } dst[d--] = getBits(8); }
+  };
+  const copy = (nb, c) => {
+    if (c > left) c = left;
+    left -= c;
+    const off = getBits(nb);
+    while (c--) { if (d < 0 || d + off >= outSize) { bad = true; return; } dst[d] = dst[d + off]; d--; }
+  };
+  while (left > 0 && !bad) {
+    if (!bit()) {
+      if (!bit()) literal(3, 0);
+      else copy(8, 2);
+    } else {
+      switch (getBits(2)) {
+        case 3: literal(8, 8); break;
+        case 2: { const c = getBits(8) + 1; copy(12, c); } break;
+        case 1: copy(10, 4); break;
+        default: copy(9, 3); break;
+      }
+    }
+  }
+  return !bad && crc === 0;
+}
+
+/* ---------------------------------------------------------------------------- text helpers */
+// Unicode -> code page 437 (the font's layout), for accented letters in the game texts
+const CP437 = { 'Ç':0x80,'ü':0x81,'é':0x82,'â':0x83,'ä':0x84,'à':0x85,'å':0x86,'ç':0x87,'ê':0x88,'ë':0x89,'è':0x8A,'ï':0x8B,'î':0x8C,'ì':0x8D,'Ä':0x8E,'Å':0x8F,
+  'É':0x90,'æ':0x91,'Æ':0x92,'ô':0x93,'ö':0x94,'ò':0x95,'û':0x96,'ù':0x97,'ÿ':0x98,'Ö':0x99,'Ü':0x9A,'¢':0x9B,'£':0x9C,'¥':0x9D,'á':0xA0,'í':0xA1,'ó':0xA2,'ú':0xA3,'ñ':0xA4,'Ñ':0xA5,'¿':0xA8,'¡':0xAD,'ß':0xE1,
+  'À':0x41,'Â':0x41,'È':0x45,'Ê':0x45,'Ë':0x45,'Î':0x49,'Ï':0x49,'Ô':0x4F,'Ù':0x55,'Û':0x55,'Œ':0x4F,'œ':0x6F,'’':0x27,'‘':0x27,'“':0x22,'”':0x22,'…':0x2E,'©':0x63,'«':0xAE,'»':0xAF };
+function toCP437(str) {
+  let o = '';
+  for (const ch of str) { const c = ch.codePointAt(0); o += c < 128 ? ch : String.fromCharCode(CP437[ch] ?? 0x3F); }
+  return o;
+}
+function decodeText(bytes) {
+  try { return new TextDecoder('utf-8', { fatal:true }).decode(bytes); }
+  catch { return new TextDecoder('windows-1252').decode(bytes); }
+}
+// STRINGS.TXT as used by the ESP32 port: "id=text" (hex id, \n = new line), bytes already in CP437
+function parseStringsTxt(bytes) {
+  const out = new Map();
+  let txt = ''; for (let i = 0; i < bytes.length; i++) txt += String.fromCharCode(bytes[i]);   // raw bytes = CP437 codes
+  for (const line of txt.split('\n')) {
+    const m = /^\s*([0-9A-Fa-f]+)(=|[ \t]+)(.*?)\r?$/.exec(line);
+    if (!m) continue;
+    out.set(parseInt(m[1],16), m[3].replace(/\\n/g,'\n'));
+  }
+  return out;
+}
+// Scan an executable for the text table: u16 id, NUL-terminated text, padded to even, then the next entry.
+const LATIN_TO_CP437 = { 0xE9:0x82,0xE8:0x8A,0xEA:0x88,0xEB:0x89,0xE0:0x85,0xE2:0x83,0xE7:0x87,0xEE:0x8C,0xEF:0x8B,0xF4:0x93,0xF9:0x97,0xFB:0x96,0xFC:0x81,0xC9:0x90,0xC7:0x80 };
+function scanStringTable(d, bigEndian, latin) {
+  const okText = (a,b) => { if (b - a < 1 || b - a > 400) return false; for (let i=a;i<b;i++){ const c=d[i]; if (c < 32 && c !== 9 && c !== 10 && c !== 13) return false; } return true; };
+  const entry = (o) => {
+    if (o + 3 > d.length || (o & 1)) return null;
+    const id = bigEndian ? be16(d,o) : le16(d,o);
+    if (id === 0 || id >= 0x400) return null;
+    let e = o + 2; while (e < d.length && d[e] !== 0 && e - o < 404) e++;
+    if (e >= d.length || d[e] !== 0 || !okText(o+2, e)) return null;
+    let nx = e + 1; if (nx & 1) nx++;
+    let z = 0; while (nx + 2 <= d.length && d[nx] === 0 && d[nx+1] === 0 && z < 3) { nx += 2; z++; }
+    return { id, a:o+2, b:e, next:nx };
+  };
+  const chains = [];
+  for (let o = 0; o < d.length - 4; o += 2) {
+    const chain = []; let q = o, r;
+    while ((r = entry(q))) { chain.push(r); q = r.next; if (chain.length > 600) break; }
+    if (chain.length >= 24) { chains.push(chain); o = q - 2; }
+  }
+  chains.sort((x, y) => y.length - x.length);             // the real table is the longest run
+  if (!chains.length) return new Map();
+  // the table has a few breaks: also take shorter runs (3+) lying just before / after / between the long ones
+  let lo = chains[0][0].a - 2, hi = chains[0][chains[0].length - 1].next;
+  for (const c of chains) { const a = c[0].a - 2, b = c[c.length - 1].next; if (a < hi + 512 && b > lo - 512) { lo = Math.min(lo, a); hi = Math.max(hi, b); } }
+  // walk the table region like the ESP32 tool: take an entry when the next one is valid too, else skip a word
+  const found = new Map();
+  const put = (c) => { if (found.has(c.id)) return; let s = ''; for (let i=c.a;i<c.b;i++){ let ch=d[i]; if (latin && LATIN_TO_CP437[ch]) ch = LATIN_TO_CP437[ch]; s += ch === 13 ? '\n' : String.fromCharCode(ch); } found.set(c.id, s); };
+  // ... up to the 0xFFFF end marker that follows the table (or 2 KB past the long runs)
+  const end = Math.min(hi + 2048, d.length - 4);
+  for (let o = Math.max(0, (lo - 64) & ~1); o < end; ) {
+    if (o >= hi && d[o] === 0xFF && d[o+1] === 0xFF) break;
+    const r = entry(o);
+    if (r && (entry(r.next) || r.next >= end || (d[r.next] === 0xFF && d[r.next+1] === 0xFF))) { put(r); o = r.next; } else o += 2;
+  }
+  for (const c of chains[0]) put(c);
+  return found;
+}
+// Amiga executables carry the resource table (20-byte MEMLIST records) inside: find it.
+function scanMemlist(d) {
+  for (let o = 0; o + 20 * 130 < d.length; o += 2) {
+    let n = 0, q = o, ok = true;
+    while (q + 20 <= d.length) {
+      if (d[q] === 0xFF) break;
+      const type = d[q+1], bank = d[q+7], off = be32(d,q+8), pk = be32(d,q+12), sz = be32(d,q+16);
+      if (type > 6 || bank > 15 || pk > sz || sz > 0x100000 || off > 0x100000) { ok = false; break; }
+      n++; q += 20;
+      if (n > 300) { ok = false; break; }
+    }
+    if (!ok || n < 128 || q + 20 > d.length || d[q] !== 0xFF) continue;
+    const t = (i) => d[o + i*20 + 1];
+    const part = (a) => t(a) === RT_PALETTE && t(a+1) === RT_CODE && t(a+2) === RT_POLY;
+    // shared shapes at 0x11, protection / intro / code-screen parts at their fixed numbers
+    if (t(0x11) === RT_POLY2 && part(0x14) && part(0x17) && part(0x7D)) return d.slice(o, q + 20);
+  }
+  return null;
+}
+
+/* ---------------------------------------------------------------------------- zip archives */
+// Lists a .zip and returns lazy file entries (unpacked only when read): [[path, fileLike], ...]
+async function readZip(file) {
+  const tailLen = Math.min(file.size, 66000);
+  const tail = new Uint8Array(await file.slice(file.size - tailLen).arrayBuffer());
+  let e = -1;
+  for (let i = tail.length - 22; i >= 0; i--) if (le32(tail,i) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error(file.name + ': not a zip file');
+  const count = le16(tail, e + 10), cdSize = le32(tail, e + 12), cdOff = le32(tail, e + 16);
+  const cd = new Uint8Array(await file.slice(cdOff, cdOff + cdSize).arrayBuffer());
+  const out = [];
+  for (let o = 0, k = 0; k < count && o + 46 <= cd.length; k++) {
+    if (le32(cd,o) !== 0x02014b50) break;
+    const method = le16(cd,o+10), csize = le32(cd,o+20), usize = le32(cd,o+24);
+    const nlen = le16(cd,o+28), xlen = le16(cd,o+30), clen = le16(cd,o+32), lho = le32(cd,o+42);
+    const name = new TextDecoder().decode(cd.subarray(o+46, o+46+nlen));
+    o += 46 + nlen + xlen + clen;
+    if (name.endsWith('/') || (method !== 0 && method !== 8)) continue;
+    const entry = {
+      name: name.split('/').pop(), size: usize,
+      async arrayBuffer() {
+        const h = new Uint8Array(await file.slice(lho, lho + 30).arrayBuffer());
+        const start = lho + 30 + le16(h,26) + le16(h,28);
+        const blob = file.slice(start, start + csize);
+        if (method === 0) return blob.arrayBuffer();
+        return new Response(blob.stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer();
+      }
+    };
+    out.push([name, entry]);
+  }
+  return out;
+}
+
+/* ---------------------------------------------------------------------------- Amiga disk images */
+// Read-only AmigaDOS (OFS/FFS) reader: returns [[path, Uint8Array], ...]
+function readADF(d) {
+  if (d.length < 901120 || d[0] !== 0x44 || d[1] !== 0x4F || d[2] !== 0x53) return null;     // "DOS"
+  const ffs = d[3] & 1, nblk = d.length >> 9, root = nblk >> 1;
+  const B = (n) => n * 512;
+  const s32 = (o) => be32(d,o) | 0;
+  const name = (b) => { let s = ''; const l = Math.min(d[b+432], 30); for (let i = 0; i < l; i++) s += String.fromCharCode(d[b+433+i]); return s; };
+  const ok = (n) => n > 0 && n < nblk;
+  const out = [], seen = new Set();
+  const readFile = (hdr) => {
+    const size = be32(d, B(hdr) + 324), data = new Uint8Array(size);
+    let len = 0, h = hdr, guard = 0;
+    while (ok(h) && len < size && guard++ < 4000) {
+      const hb = B(h), n = Math.min(be32(d, hb + 8), 72);
+      for (let i = 0; i < n && len < size; i++) {
+        const blk = be32(d, hb + 308 - 4*i); if (!ok(blk)) break;
+        const db = B(blk);
+        const chunk = ffs ? d.subarray(db, db + 512) : d.subarray(db + 24, db + 24 + Math.min(be32(d, db + 12), 488));
+        const take = Math.min(chunk.length, size - len);
+        data.set(chunk.subarray(0, take), len); len += take;
+      }
+      h = be32(d, hb + 504);                               // extension block
+    }
+    return data;
+  };
+  const walk = (dir, path, depth) => {
+    if (depth > 8) return;
+    for (let i = 0; i < 72; i++) {
+      let e = be32(d, B(dir) + 24 + 4*i), guard = 0;
+      while (ok(e) && !seen.has(e) && guard++ < 500) {
+        seen.add(e);
+        const eb = B(e), t = s32(eb + 508), nm = name(eb);
+        if (t === 2) walk(e, path + nm + '/', depth + 1);
+        else if (t === -3) out.push([path + nm, readFile(e)]);
+        e = be32(d, eb + 496);                             // hash chain
+      }
+    }
+  };
+  walk(root, '', 0);
+  return { label: name(B(root)) || 'disk', files: out };
+}
+
+/* ---------------------------------------------------------------------------- samples */
+// sample = { data: Float32Array, len, loopPos, loopLen } (lengths in samples)
+function sampleFromRaw(buf, silenceStart) {
+  const len = be16(buf,0) * 2, loopLen = be16(buf,2) * 2;
+  const total = Math.min(len + loopLen, Math.max(0, buf.length - 8));
+  const data = new Float32Array(total);
+  for (let i = 0; i < total; i++) { const v = buf[8+i]; data[i] = (v > 127 ? v - 256 : v) / 128; }
+  if (silenceStart) data.fill(0, 0, Math.min(4, total));
+  return { data, len: Math.min(len,total), loopPos: loopLen ? len : 0, loopLen: loopLen ? Math.min(loopLen, total - len) : 0 };
+}
+function sampleFromWav(buf, loop) {
+  if (buf.length < 44 || buf[0] !== 0x52 || buf[1] !== 0x49) return null;      // "RI"
+  let o = 12, fmt = null, data = null;
+  while (o + 8 <= buf.length) {
+    const id = String.fromCharCode(buf[o],buf[o+1],buf[o+2],buf[o+3]), sz = le32(buf,o+4);
+    if (id === 'fmt ') fmt = { ch: le16(buf,o+10), rate: le32(buf,o+12), bits: le16(buf,o+22) };
+    else if (id === 'data') { data = [o+8, Math.min(sz, buf.length - o - 8)]; break; }
+    o += 8 + sz + (sz & 1);
+  }
+  if (!fmt || !data) return null;
+  const bps = fmt.bits >> 3, frame = bps * fmt.ch, n = Math.floor(data[1] / frame);
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    let acc = 0;
+    for (let c = 0; c < fmt.ch; c++) {
+      const p = data[0] + i*frame + c*bps;
+      acc += bps === 1 ? (buf[p] - 128) / 128 : (((buf[p] | (buf[p+1] << 8)) << 16) >> 16) / 32768;
+    }
+    out[i] = acc / fmt.ch;
+  }
+  return { data: out, len: n, loopPos: 0, loopLen: loop ? n : 0, rate: fmt.rate };
+}
+
+/* ---------------------------------------------------------------------------- resources: DOS / Amiga */
+class ResClassic {
+  constructor(store) { this.store = store; this.kind = 'classic'; this.entries = []; this.banks = new Map(); this.strings = new Map(); this.amiga = false; }
+  async init(progress, memlistBytes) {
+    const ml = memlistBytes;
+    for (let o = 0; o + 20 <= ml.length; o += 20) {
+      if (ml[o] === 0xFF) break;
+      this.entries.push({ type: ml[o+1], bank: ml[o+7], offset: be32(ml,o+8), packed: be32(ml,o+12), size: be32(ml,o+16), buf: null, loaded: false, sample: null });
+    }
+    if (this.entries.length < 0x2C) throw new Error('MEMLIST.BIN looks too short (' + this.entries.length + ' entries).');
+    const prefix = this.store.find('BANK01') ? 'BANK' : (this.store.find('DEMO01') ? 'DEMO' : 'BANK');
+    const needed = [...new Set(this.entries.filter(e => e.bank && e.size).map(e => e.bank))].sort((a,b)=>a-b);
+    let i = 0;
+    for (const b of needed) {
+      const f = this.store.find(prefix + hex(b));
+      progress(`Reading ${prefix}${hex(b)}…`, ++i / needed.length);
+      if (f) this.banks.set(b, await readBytes(f));
+    }
+    const b1 = this.banks.get(1);
+    this.amiga = !!b1 && (b1.length === 244674 || b1.length === 244868);
+    // banks only used by the copy-protection screen (skipped) don't matter: BANK05 is absent from Amiga disks
+    const protOnly = (b) => this.entries.every((e, i) => e.bank !== b || !e.size || (e.type === RT_BITMAP && i < 0x17));
+    this.missingBanks = needed.filter(b => !this.banks.has(b) && !protOnly(b)).map(b => prefix + hex(b));
+    this.hasCodeScreen = !!this.banks.get(this.entries[0x7E]?.bank);
+    // texts: STRINGS.TXT, else the text table found in an executable
+    const st = this.store.find('STRINGS.TXT');
+    if (st) this.strings = parseStringsTxt(await readBytes(st));
+    if (this.strings.size === 0) {
+      for (const [k,f] of this.store.filter(/(^|\/)(ANOTHER(\.EXE)?|[^/]*\.EXE|OOTW\.EXE)$/)) {
+        if (f.size > 4 * 1024 * 1024) continue;
+        const d = await readBytes(f);
+        let s = scanStringTable(d, true, this.amiga || !/\.EXE$/.test(k));
+        if (s.size < 40) { const s2 = scanStringTable(d, false, false); if (s2.size > s.size) s = s2; }
+        if (s.size >= 40) { this.strings = s; this.stringsFrom = k; break; }
+      }
+    }
+  }
+  get title() { return this.amiga ? 'Amiga data' : 'DOS data'; }
+  firstPart() { return PART_INTRO; }
+  hasPart(p) { return p !== 16008 && p !== 16009 ? true : this.hasCodeScreen; }
+  loadEntry(num) {
+    const e = this.entries[num];
+    if (!e || num <= 0) return false;
+    if (e.loaded) return true;
+    if (!e.bank || !e.size) return false;
+    const bank = this.banks.get(e.bank);
+    if (!bank || e.offset + e.packed > bank.length) { this.lastError = `cannot read resource ${hex(num)} (bank ${hex(e.bank)})`; return false; }
+    const src = bank.subarray(e.offset, e.offset + e.packed);
+    let out;
+    if (e.packed === e.size) out = src.slice();
+    else { out = new Uint8Array(e.size); if (!unpackBK(out, src)) console.warn('[RES] resource ' + hex(num) + ': bad checksum after unpacking'); }
+    if (e.type === RT_BITMAP) { this.onBitmap?.(out, 'planar'); return true; }   // goes straight to page 0
+    e.buf = out; e.loaded = true; e.sample = null;
+    return true;
+  }
+  freeAll() { for (const e of this.entries) { e.buf = null; e.loaded = false; e.sample = null; } }
+  freeVolatile() { for (const e of this.entries) if (e.type <= RT_BITMAP) { e.buf = null; e.loaded = false; e.sample = null; } }
+  setupPart(part, curPart) {
+    const ids = PARTS[part - PART_FIRST];
+    if (part !== curPart) {
+      this.freeAll();
+      for (const id of ids) if (id && !this.loadEntry(id)) throw new Error(this.lastError || `cannot load part ${part}`);
+    }
+    return { pal: this.entries[ids[0]].buf, code: this.entries[ids[1]].buf, poly: this.entries[ids[2]].buf, poly2: ids[3] ? this.entries[ids[3]].buf : null };
+  }
+  request(num) { this.loadEntry(num); }
+  soundSample(num) {
+    const e = this.entries[num];
+    if (!e || !e.loaded || e.type !== RT_SOUND) return null;
+    return e.sample || (e.sample = sampleFromRaw(e.buf, false));
+  }
+  module(num) { const e = this.entries[num]; return e && e.loaded && e.type === RT_MUSIC ? e.buf : null; }
+  instrument(num) {
+    const e = this.entries[num];
+    if (!e || !e.loaded || e.type !== RT_SOUND) return null;
+    return e.instr || (e.instr = sampleFromRaw(e.buf, true));
+  }
+  getString(id) { return this.strings.get(id) ?? null; }
+}
+
+/* ---------------------------------------------------------------------------- resources: 20th Anniversary */
+// string ids used by the bytecode, in the order of the lines of game/TXT/<LANG>.txt
+const STR_IDS_NTH = [
+  0x001,0x002,0x003,0x004,0x005,0x006,0x007,0x008,0x00A,0x00B,0x00C,0x00D,0x00E,0x00F,0x010,0x011,
+  0x012,0x013,0x014,0x015,0x016,0x017,0x018,0x019,0x01A,0x01B,0x01C,0x021,0x022,0x023,0x024,0x025,
+  0x026,0x027,0x028,0x029,0x02A,0x02B,0x02C,0x031,0x032,0x033,0x034,0x035,0x036,0x037,0x038,0x039,
+  0x03C,0x03D,0x03E,0x03F,0x040,0x041,0x042,0x043,0x044,0x045,0x046,0x047,0x048,0x04B,0x04C,0x12C,
+  0x12D,0x12E,0x12F,0x130,0x131,0x132,0x133,0x134,0x135,0x136,0x137,0x138,0x139,0x13C,0x13D,0x13E,
+  0x13F,0x140,0x141,0x142,0x143,0x144,0x258,0x259,0x25A,0x25B,0x25C,0x25D,0x25E,0x25F,0x260,0x261,
+  0x263,0x264,0x265,0x181,0x182,0x183,0x184,0x185,0x186,0x187,0x188,0x190,0x191,0x192,0x193,0x194,
+  0x193,0x1F4,0x1F5,0x1F6,0x1F7,0x1F8,0x1F9,0x1FA,0x384,0x385,0x386,0x387,0x15E,0x17C,0x17D,0x15F,
+  0x17A,0x17B,0x160,0x164,0x163,0x177,0x175,0x161,0x176,0x162,0x179,0x165,0x178,0x166,0x167,0x168,
+  0x16C,0x16D,0x16E,0x16F,0x170,0x169,0x172,0x17F,0x173,0x17E,0x174,0x16A,0x16B];
+const NTH_BITMAPS = [67,68,69,70,71,72,73,83,144,145];
+const LOOPING_WAVS = new Set([1,3,8,16,89,97,102,104,106,132,139]);
+
+class Res20th {
+  constructor(store) { this.store = store; this.kind = '20th'; this.dat = new Map(); this.bmp = new Map(); this.wav = new Map(); this.wavPending = new Map(); this.music = new Map(); this.strings = new Map(); this.musicType = 0; }
+  get title() { return '20th Anniversary Edition'; }
+  static languages(store) {
+    const langs = [];
+    for (const L of ['EN','FR','DE','ES','IT']) if (store.find('TXT/' + L + '.TXT') || store.find('TXT/LINUX/' + L + '.TXT')) langs.push(L);
+    return langs;
+  }
+  async init(progress, opts) {
+    this.remastered = opts.audio === 'remastered';
+    this.difficulty = opts.difficulty;
+    // FILEnnn.DAT by number, plus the updated per-part files (INTRO2011.mac, BANK2.MAT, ...) by name
+    const dats = this.store.filter(/(^|\/)DAT\/(FILE\d{3}\.DAT|[A-Z]+2011\.(PAL|MAC|MAT)|BANK2\.MAT)$/);
+    this.named = new Map();
+    let i = 0;
+    for (const [k,f] of dats) {
+      const base = k.split('/').pop(), m = /^FILE(\d{3})\.DAT$/.exec(base);
+      if (m) { const n = parseInt(m[1], 10); if (!this.dat.has(n)) this.dat.set(n, await readBytes(f)); }
+      else if (!this.named.has(base)) this.named.set(base, await readBytes(f));
+      if ((++i & 7) === 0) progress('Reading DAT files…', i / dats.length * 0.6);
+    }
+    i = 0;
+    for (const n of NTH_BITMAPS) {
+      progress('Unpacking backgrounds…', 0.6 + (++i / NTH_BITMAPS.length) * 0.3);
+      const f = this.store.find(`BGZ/FILE${String(n).padStart(3,'0')}.BGZ`);
+      if (f) try { this.bmp.set(n, await gunzip(await readBytes(f))); } catch (e) { console.warn(e); }
+    }
+    const L = opts.lang || 'EN';
+    const tf = this.store.find('TXT/' + L + '.TXT') || this.store.find('TXT/LINUX/' + L + '.TXT');
+    if (tf) {
+      const lines = decodeText(await readBytes(tf)).replace(/^\uFEFF/,'').split('\n').map(s => s.replace(/\r$/,''));
+      STR_IDS_NTH.forEach((id, idx) => { if (lines[idx] !== undefined && !this.strings.has(id)) this.strings.set(id, toCP437(lines[idx])); });
+    }
+    this.hasCodeScreen = this.dat.has(0x7E);
+    this.hd = !!opts.hd;
+    const ff = this.hd && this.store.find('BGZ/FONT.BGZ');
+    if (ff) try { this.fontBmp = await gunzip(await readBytes(ff)); } catch (e) { console.warn(e); }
+    progress('Ready', 1);
+    // warm the sound cache in the background
+    setTimeout(() => this.prefetchSounds(), 500);
+  }
+  firstPart() { return PART_INTRO; }
+  hasPart(p) { return p === 16008 || p === 16009 ? this.hasCodeScreen : true; }
+  setupPart(part) {
+    const ids = PARTS[part - PART_FIRST];
+    const names = ['INTRO','EAU','PRI','CITE','ARENE','LUXE','FINAL'][part - PART_INTRO];
+    const get = (n, slot) => {
+      if (!n) return null;
+      if (names) { const alt = this.named.get(slot === 3 ? 'BANK2.MAT' : `${names}2011.${['PAL','MAC','MAT'][slot]}`); if (alt) return alt; }
+      const d = this.dat.get(n); if (!d) throw new Error(`game/DAT/FILE${String(n).padStart(3,'0')}.DAT missing`); return d;
+    };
+    return { pal: get(ids[0],0), code: get(ids[1],1), poly: get(ids[2],2), poly2: get(ids[3],3) };
+  }
+  request(num) {
+    if (num >= 3000) {                                    // painted HD backgrounds (only in HD mode); the VM waits for the promise
+      if (!this.hd) return null;
+      return this.loadHd(num).then((b) => { if (b) this.onBitmap?.(b, 'hd'); });
+    }
+    if (num >= 2000) return null;                         // 2000+: sound preload
+    const b = this.bmp.get(num);
+    if (b) this.onBitmap?.(b, 'bmp');
+    return null;
+  }
+  async loadHd(num) {
+    const c = this.hdCache || (this.hdCache = new Map());
+    if (c.has(num)) { const v = c.get(num); c.delete(num); c.set(num, v); return v; }
+    let f = null;
+    for (const size of ['1280X800', '1152X720']) if ((f = this.store.find(`BGZ/DATA${size}/${size}_E${num}.BGZ`))) break;
+    let b = null;
+    if (f) try { b = await gunzip(await readBytes(f)); } catch (e) { console.warn(e); }
+    c.set(num, b);
+    while (c.size > 4) c.delete(c.keys().next().value);
+    return b;
+  }
+  freeVolatile() {}
+  wavPath(num) {
+    const n3 = String(num).padStart(3,'0');
+    if (!this.remastered) return [`WGZ/ORIGINAL/FILE${n3}.WGZ`, `WGZ/ORIGINAL/FILE${n3}B.WGZ`];
+    const r = (k) => 1 + Math.floor(Math.random() * k);
+    const t = this.musicType;
+    switch (num) {
+      case 81: return [`WGZ/FILE081-EX-${r(3)}.WGZ`];
+      case 85: return [`WGZ/FILE085-${t === 1 ? 'EX' : 'IN'}-${r(2)}.WGZ`];
+      case 96: return [`WGZ/FILE096-${t === 1 ? 'EX' : t === 2 ? 'IN' : 'GR'}-${r(3)}.WGZ`];
+      case 163: return [`WGZ/FILE163-${t === 1 ? 'EX' : t === 2 ? 'IN' : 'GR'}-1.WGZ`];
+    }
+    return [`WGZ/FILE${n3}.WGZ`, `WGZ/FILE${n3}B.WGZ`];
+  }
+  async loadWav(num) {
+    const variants = [81,85,96,163].includes(num) && this.remastered;
+    const key = variants ? num + ':' + this.wavPath(num)[0] : num;
+    if (this.wav.has(key)) return this.wav.get(key);
+    if (this.wavPending.has(key)) return this.wavPending.get(key);
+    const pr = (async () => {
+      let f = null; for (const p of this.wavPath(num)) if ((f = this.store.find(p))) break;
+      let s = null;
+      if (f) try { s = sampleFromWav(await gunzip(await readBytes(f)), LOOPING_WAVS.has(num)); } catch (e) { console.warn(e); }
+      this.wav.set(key, s); this.wavPending.delete(key);
+      return s;
+    })();
+    this.wavPending.set(key, pr);
+    return pr;
+  }
+  async prefetchSounds() {
+    const re = this.remastered ? /(^|\/)WGZ\/FILE(\d{3})B?\.WGZ$/ : /(^|\/)WGZ\/ORIGINAL\/FILE(\d{3})B?\.WGZ$/;
+    for (const [k] of this.store.filter(re)) {
+      const n = parseInt(/FILE(\d{3})/.exec(k)[1], 10);
+      await this.loadWav(n);
+    }
+  }
+  musicPath(num) {
+    if (num >= 5000 && this.remastered) {
+      this.musicType = num === 5005 ? 1 : num === 5006 ? 3 : 2;
+      return `OGG/AMB${num}.OGG`;
+    }
+    if (num === 7) return this.remastered ? 'OGG/INTRO_20TH.OGG' : 'OGG/ORIGINAL/INTRO.OGG';
+    if (num === 138 && !this.remastered) return 'OGG/ORIGINAL/ENDING.OGG';
+    return null;
+  }
+  getString(id) { const s = this.strings.get(id); return s == null ? null : s; }
+}
+
+/* ---------------------------------------------------------------------------- video */
+class Video {
+  // S = scale factor: 1 = original 320x200, 4 = 1280x800 (polygons rasterised at full resolution)
+  constructor(canvas, S = 1) {
+    this.S = S; this.PW = W * S; this.PH = H * S; this.PS = this.PW * this.PH;
+    canvas.width = this.PW; canvas.height = this.PH;
+    this.ctx = canvas.getContext('2d', { alpha:false });
+    this.img = this.ctx.createImageData(this.PW, this.PH);
+    this.out = new Uint32Array(this.img.data.buffer);
+    this.pages = [0,1,2,3].map(() => new Uint8Array(this.PS));
+    this.bg = null;                                       // HD background (RGBA), shown where a page holds 16 / 17
+    this.pal = new Uint32Array(16);
+    for (let i = 0; i < 16; i++) this.pal[i] = this.rgba(i * 0x111);
+    this.palReq = 0xFF; this.palSeg = null;
+    this.hdFont = null;                                   // 256x256 1-bit atlas (20th edition Font.bgz)
+    this.resetPages();
+  }
+  rgba(c) { const r = ((c >> 8) & 15) * 17, g = ((c >> 4) & 15) * 17, b = (c & 15) * 17; return (0xFF000000 | (b << 16) | (g << 8) | r) >>> 0; }
+  resetPages() { this.back = 1; this.front = 2; this.draw = this.pageIndex(0xFE); }
+  pageIndex(id) { if (id <= 3) return id; if (id === 0xFE) return this.front; if (id === 0xFF) return this.back; return 0; }
+  selectPage(id) { this.draw = this.pageIndex(id); }
+  fillPage(id, color) { this.pages[this.pageIndex(id)].fill(color & 15); }
+  copyPage(src, dst, vscroll) {
+    if (src === dst) return;
+    if (src >= 0xFE || !(src & 0x80)) {
+      const s = this.pageIndex(src >= 0xFE ? src : (src & 0xBF)), d = this.pageIndex(dst);
+      if (s !== d) this.pages[d].set(this.pages[s]);
+      return;
+    }
+    const s = this.pageIndex(src & 3), d = this.pageIndex(dst);
+    if (s === d || vscroll < -199 || vscroll > 199) return;
+    const from = this.pages[s], to = this.pages[d], dy = vscroll * this.S * this.PW;
+    if (dy < 0) to.set(from.subarray(-dy, this.PS), 0);
+    else to.set(from.subarray(0, this.PS - dy), dy);
+  }
+  requestPalette(n) { this.palReq = n; }
+  applyPalette(n) {
+    if (!this.palSeg || n >= 32) return;
+    const p = this.palSeg, o = n * 32;
+    for (let i = 0; i < 16; i++) this.pal[i] = this.rgba(((p[o+2*i] & 0x0F) << 8) | p[o+2*i+1]);
+  }
+  show(id) {
+    if (id !== 0xFE) {
+      if (id === 0xFF) { const t = this.front; this.front = this.back; this.back = t; }
+      else this.front = this.pageIndex(id);
+    }
+    if (this.palReq !== 0xFF) { this.applyPalette(this.palReq); this.palReq = 0xFF; }
+    this.present();
+  }
+  present() {
+    const src = this.pages[this.front], out = this.out, pal = this.pal, bg = this.bg, n = this.PS;
+    if (!bg) { for (let i = 0; i < n; i++) out[i] = pal[src[i] & 15]; }
+    else {
+      // highlight over the HD picture: 75% of colour 12 over the background, like the GL renderer of rawgl
+      const a = pal[12], ar = (a & 0xFF) * 3, ag = ((a >> 8) & 0xFF) * 3, ab = ((a >> 16) & 0xFF) * 3;
+      for (let i = 0; i < n; i++) {
+        const v = src[i];
+        if (v < 16) out[i] = pal[v];
+        else if (v === 16) out[i] = bg[i];
+        else { const b = bg[i]; out[i] = (0xFF000000 | ((((b >> 16) & 0xFF) + ab) >> 2) << 16 | ((((b >> 8) & 0xFF) + ag) >> 2) << 8 | (((b & 0xFF) + ar) >> 2)) >>> 0; }
+      }
+    }
+    if (this.xr) this.buildLayers(); else this.ctx.putImageData(this.img, 0, 0);
+  }
+  // VR/AR layers: background = page 0, foreground = what the frame adds over it (transparent elsewhere)
+  buildLayers() {
+    const n = this.PS, src = this.pages[this.front], p0 = this.pages[0], out = this.out, pal = this.pal, bg = this.bg;
+    if (!this.xrBg || this.xrBg.length !== n) { this.xrBg = new Uint32Array(n); this.xrFg = new Uint32Array(n); }
+    const B = this.xrBg, F = this.xrFg, depth = this.xr.depth > 0 && this.front !== 0;
+    if (!depth) { B.set(out); F.fill(0); }
+    else for (let i = 0; i < n; i++) {
+      const v0 = p0[i];
+      if (src[i] === v0) { B[i] = out[i]; F[i] = 0; }
+      else { B[i] = v0 < 16 ? pal[v0] : (bg ? bg[i] : pal[0]); F[i] = out[i]; }
+    }
+    this.xrDirty = true;
+  }
+
+  // -------- drawing (y, xa, xb in page pixels)
+  span(y, xa, xb, color) {
+    if (xa > xb) { const t = xa; xa = xb; xb = t; }
+    const PW = this.PW;
+    if (xa > PW - 1 || xb < 0) return;
+    if (xa < 0) xa = 0;
+    if (xb > PW - 1) xb = PW - 1;
+    const pg = this.pages[this.draw], o = y * PW;
+    if (color < 0x10) pg.fill(color, o + xa, o + xb + 1);
+    else if (color === 0x10) { for (let i = o + xa; i <= o + xb; i++) { const v = pg[i]; pg[i] = v < 16 ? (v & 7) | 8 : 17; } }
+    else if (this.draw !== 0) pg.set(this.pages[0].subarray(o + xa, o + xb + 1), o + xa);
+  }
+  plot(x, y, color) {
+    if (x < 0 || x >= W || y < 0 || y >= H) return;
+    const S = this.S;
+    for (let k = 0; k < S; k++) this.span(y * S + k, x * S, x * S + S - 1, color);
+  }
+  fillPolygon(seg, p, color, zoom, cx, cy) {
+    const S = this.S;
+    const bbw = (seg[p] * zoom / 64) | 0, bbh = (seg[p+1] * zoom / 64) | 0, n = seg[p+2];
+    p += 3;
+    if (n < 2 || n > 64) return;
+    if (bbw === 0 && bbh <= 1 && n === 4) { this.plot(cx, cy, color); return; }
+    const x0 = cx - (bbw >> 1), y0 = cy - (bbh >> 1);
+    if (x0 > W - 1 || cx + (bbw >> 1) < 0 || y0 > H - 1 || cy + (bbh >> 1) < 0) return;
+    if (S === 1) return this.fillPolygon1(seg, p, n, color, zoom, x0, y0);
+    // high resolution: vertices kept with their fractional zoom, edges stepped in floating point
+    const px = this._fx || (this._fx = new Float64Array(64)), py = this._fy || (this._fy = new Float64Array(64));
+    for (let i = 0; i < n; i++) { px[i] = Math.round((x0 + seg[p+2*i] * zoom / 64) * S); py[i] = Math.round((y0 + seg[p+2*i+1] * zoom / 64) * S); }
+    let i = 0, j = n - 1;
+    let ea = px[j], eb = px[i];
+    let y = Math.min(py[i], py[j]);
+    i++; j--;
+    const PH = this.PH;
+    for (let left = n - 2; left > 0; left -= 2) {
+      const dya = py[j] - py[j+1], h = py[i] - py[i-1];
+      const sa = dya > 0 ? (px[j] - px[j+1]) / dya : 0, sb = h > 0 ? (px[i] - px[i-1]) / h : 0;
+      ea = px[j+1]; eb = px[i-1];
+      i++; j--;
+      if (h <= 0) { continue; }
+      for (let k = h; k > 0; k--) {
+        if (y >= 0) this.span(y, Math.round(ea), Math.round(eb), color);
+        ea += sa; eb += sb;
+        if (++y > PH - 1) return;
+      }
+    }
+  }
+  // original fixed-point rasteriser (pixel-exact at 320x200)
+  fillPolygon1(seg, p, n, color, zoom, x0, y0) {
+    const px = this._px || (this._px = new Int32Array(64)), py = this._py || (this._py = new Int32Array(64));
+    for (let i = 0; i < n; i++) { px[i] = (seg[p+2*i] * zoom / 64) | 0; py[i] = (seg[p+2*i+1] * zoom / 64) | 0; }
+    const slope = (dx, dy) => { const inv = dy > 0 ? Math.trunc(0x4000 / dy) : 0x4000; return (dx * inv * 4) | 0; };
+    let i = 0, j = n - 1;
+    let ea = ((px[j] + x0) << 16) | 0;
+    let eb = ((px[i] + x0) << 16) | 0;
+    i++; j--;
+    let y = y0;
+    for (let left = n - 2; left > 0; left -= 2) {
+      const sa = slope(px[j] - px[j+1], py[j] - py[j+1]);
+      const h = py[i] - py[i-1];
+      const sb = slope(px[i] - px[i-1], h);
+      i++; j--;
+      ea = (ea & 0xFFFF0000) | 0x7FFF;
+      eb = (eb & 0xFFFF0000) | 0x8000;
+      if (h <= 0) { ea = (ea + sa) | 0; eb = (eb + sb) | 0; continue; }
+      for (let k = h; k > 0; k--) {
+        if (y >= 0) this.span(y, ea >> 16, eb >> 16, color);
+        ea = (ea + sa) | 0; eb = (eb + sb) | 0;
+        if (++y > H - 1) return;
+      }
+    }
+  }
+  drawGroup(seg, p, zoom, x, y, depth) {
+    x -= (seg[p] * zoom / 64) | 0;
+    y -= (seg[p+1] * zoom / 64) | 0;
+    const n = seg[p+2];
+    p += 3;
+    for (let k = 0; k <= n; k++) {
+      const w = be16(seg, p);
+      const ox = x + ((seg[p+2] * zoom / 64) | 0), oy = y + ((seg[p+3] * zoom / 64) | 0);
+      p += 4;
+      let col = 0xFF;
+      if (w & 0x8000) { col = seg[p] & 0x7F; p += 2; }
+      this.drawShapeAt(seg, (w & 0x7FFF) * 2, col, zoom, ox, oy, depth + 1);
+    }
+  }
+  drawShapeAt(seg, p, color, zoom, x, y, depth) {
+    if (depth > 16 || p >= seg.length) return;
+    const h = seg[p++];
+    if (h >= 0xC0) {
+      if (color & 0x80) color = h & 0x3F;
+      this.fillPolygon(seg, p, color, zoom, x, y);
+    } else if ((h & 0x3F) === 2) this.drawGroup(seg, p, zoom, x, y, depth);
+  }
+  drawShape(seg, off, zoom, x, y) { if (seg) this.drawShapeAt(seg, off, 0xFF, zoom, x, y, 0); }
+
+  // 320x200 indices -> page 0, enlarged to the page size
+  put320(ix) {
+    const dst = this.pages[0], S = this.S, PW = this.PW;
+    if (S === 1) { dst.set(ix); return; }
+    for (let y = 0; y < H; y++) {
+      const row = new Uint8Array(PW);
+      for (let x = 0; x < W; x++) row.fill(ix[y * W + x], x * S, x * S + S);
+      for (let k = 0; k < S; k++) dst.set(row, (y * S + k) * PW);
+    }
+  }
+  loadBitmap(buf, kind) {
+    const ix = new Uint8Array(PAGE);
+    if (kind === 'planar') {                              // 4 planes of 8000 bytes, plane 0 = low bit
+      if (buf.length < 32000) return;
+      let o = 0;
+      for (let k = 0; k < 8000; k++) {
+        const b0 = buf[k], b1 = buf[8000+k], b2 = buf[16000+k], b3 = buf[24000+k];
+        for (let bit = 7; bit >= 0; bit--)
+          ix[o++] = ((b0 >> bit) & 1) | (((b1 >> bit) & 1) << 1) | (((b2 >> bit) & 1) << 2) | (((b3 >> bit) & 1) << 3);
+      }
+      this.put320(ix);
+      return;
+    }
+    // Windows BMP (20th Anniversary), 8 or 4 bits per pixel, bottom-up
+    if (buf[0] !== 0x42 || buf[1] !== 0x4D) return;
+    const data = le32(buf,0x0A), w = le32(buf,0x12), h0 = le32(buf,0x16) | 0, h = Math.abs(h0), bpp = le16(buf,0x1C);
+    const stride = ((w * bpp + 31) >> 5) << 2;
+    const px = (x, y) => { const row = data + (h0 > 0 ? h - 1 - y : y) * stride; return bpp === 8 ? buf[row + x] : (buf[row + (x >> 1)] >> ((x & 1) ? 0 : 4)) & 15; };
+    if (w === W && h === H) {
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) ix[y * W + x] = px(x, y) & 15;
+      this.put320(ix);
+      return;
+    }
+    if (kind === 'hd' && bpp === 8 && this.S > 1) {        // painted HD background: true colours from the BMP palette
+      const ncol = Math.min(256, (data - 54) >> 2), lut = new Uint32Array(256);
+      for (let i = 0; i < ncol; i++) { const o = 54 + i * 4; lut[i] = (0xFF000000 | (buf[o+2]) | (buf[o+1] << 8) | (buf[o] << 16)) >>> 0; }
+      const PW = this.PW, PH = this.PH, bg = this.bg || (this.bg = new Uint32Array(this.PS));
+      for (let y = 0; y < PH; y++) {
+        const sy = Math.min(h - 1, Math.floor(y * h / PH)), row = data + (h0 > 0 ? h - 1 - sy : sy) * stride;
+        if (w === PW) for (let x = 0; x < PW; x++) bg[y * PW + x] = lut[buf[row + x]];
+        else for (let x = 0; x < PW; x++) bg[y * PW + x] = lut[buf[row + Math.floor(x * w / PW)]];
+      }
+      this.pages[0].fill(16);
+      return;
+    }
+    console.warn('[VID] bitmap ' + w + 'x' + h + ' ignored');
+  }
+
+  setHdFont(buf) {                                       // Font.bgz: 256x256, 16x16-pixel cells indexed by character code
+    if (!buf || buf[0] !== 0x42) return;
+    const data = le32(buf,0x0A), w = le32(buf,0x12), h0 = le32(buf,0x16) | 0, h = Math.abs(h0);
+    if (w !== 256 || h !== 256) return;
+    const f = new Uint8Array(65536);
+    for (let y = 0; y < 256; y++) { const row = data + (h0 > 0 ? 255 - y : y) * 256; for (let x = 0; x < 256; x++) f[y * 256 + x] = buf[row + x] ? 1 : 0; }
+    this.hdFont = f;
+  }
+  drawChar(page, gx, gy, c, color) {
+    const S = this.S, PW = this.PW, PH = this.PH;
+    if (this.hdFont && S >= 2 && c >= 0x20 && c < 0x80) {
+      const cx = (c & 15) * 16, cy = (c >> 4) * 16, size = 8 * S;     // cell = character code
+      for (let y = 0; y < size; y++) {
+        const fy = cy + Math.floor(y * 16 / size), py = gy * S + y;
+        if (py < 0 || py >= PH) continue;
+        for (let x = 0; x < size; x++) {
+          if (!this.hdFont[fy * 256 + cx + Math.floor(x * 16 / size)]) continue;
+          const pxx = gx * S + x; if (pxx >= 0 && pxx < PW) page[py * PW + pxx] = color;
+        }
+      }
+      return;
+    }
+    for (let col = 0; col < 5; col++) {
+      const bits = FONT[c * 5 + col];
+      for (let row = 0; row < 8; row++) {
+        if (!((bits >> row) & 1)) continue;
+        const px = gx + 1 + col, py = gy + row;
+        if (px < 0 || px >= W || py < 0 || py >= H) continue;
+        for (let a = 0; a < S; a++) page.fill(color, (py * S + a) * PW + px * S, (py * S + a) * PW + px * S + S);
+      }
+    }
+  }
+  drawString(color, x, y, id, txt, escaped) {
+    if (txt == null) return;
+    const page = this.pages[this.draw], x0 = x;
+    for (let i = 0; i < txt.length; i++) {
+      const ch = txt.charCodeAt(i);
+      if (ch === 10 || ch === 13) { y += 8; x = x0; continue; }
+      if (escaped && ch === 0x5C) {                       // 20th edition escapes: \n, \2x / \3x (special glyphs)
+        const nx = txt[i+1];
+        if (nx === 'n') { y += 8; x = x0; i++; continue; }
+        if (nx === '2' || nx === '3') { i += 2; x++; continue; }
+      }
+      this.drawChar(page, x * 8, y, ch & 0xFF, color & 15);
+      x++;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------- VR / AR (WebXR, e.g. Meta Quest) */
+// The game is shown on a large floating screen. Two layers give it depth: the background (page 0)
+// sits on the screen, everything drawn over it (characters, shots, moving objects) floats in front.
+const mat4 = {
+  mul(a, b) { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k*4+r] * b[c*4+k]; o[c*4+r] = s; } return o; },
+  model(x, y, z, sx, sy) { const m = new Float32Array(16); m[0] = sx; m[5] = sy; m[10] = 1; m[15] = 1; m[12] = x; m[13] = y; m[14] = z; return m; }
+};
+class XRScreen {
+  constructor() { this.session = null; this.depth = 0.35; this.dist = 2.6; this.width = 3.0; }
+  static async support() {
+    if (!navigator.xr) return { vr:false, ar:false };
+    const q = async (m) => { try { return await navigator.xr.isSessionSupported(m); } catch { return false; } };
+    return { vr: await q('immersive-vr'), ar: await q('immersive-ar') };
+  }
+  async start(mode, video, aspect, onEnd) {
+    const session = await navigator.xr.requestSession(mode === 'ar' ? 'immersive-ar' : 'immersive-vr', { optionalFeatures: ['local-floor'] });
+    this.session = session; this.video = video; this.mode = mode; this.aspect = aspect; this.onEnd = onEnd;
+    const canvas = document.createElement('canvas');
+    const gl = this.gl = canvas.getContext('webgl', { xrCompatible: true, alpha: true, antialias: true });
+    if (gl.makeXRCompatible) await gl.makeXRCompatible();
+    session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl) });
+    this.ref = await session.requestReferenceSpace('local');
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+    const prog = this.prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, 'attribute vec2 p; uniform mat4 m; varying vec2 uv; void main(){ uv = vec2(p.x*0.5+0.5, 0.5-p.y*0.5); gl_Position = m*vec4(p,0.0,1.0); }'));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, 'precision mediump float; uniform sampler2D t; uniform float dim; varying vec2 uv; void main(){ gl_FragColor = texture2D(t, uv) * dim; }'));
+    gl.linkProgram(prog);
+    this.buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    const tex = () => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+      for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+      return t; };
+    this.texBg = tex(); this.texFg = tex(); this.loaded = false;
+    video.xr = this; video.present();
+    session.addEventListener('end', () => { video.xr = null; this.session = null; video.present(); this.onEnd?.(); });
+    session.requestAnimationFrame((t, f) => this.frame(t, f));
+  }
+  end() { this.session?.end().catch(() => {}); }
+  upload() {
+    const gl = this.gl, v = this.video;
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    for (const [t, data] of [[this.texBg, v.xrBg], [this.texFg, v.xrFg]]) {
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, v.PW, v.PH, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(data.buffer));
+    }
+    v.xrDirty = false; this.loaded = true;
+  }
+  frame(t, xf) {
+    const s = this.session; if (!s) return;
+    s.requestAnimationFrame((t2, f2) => this.frame(t2, f2));
+    const pose = xf.getViewerPose(this.ref); if (!pose) return;
+    const gl = this.gl, layer = s.renderState.baseLayer;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
+    if (this.mode === 'ar') gl.clearColor(0, 0, 0, 0); else gl.clearColor(0.015, 0.017, 0.02, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    if (this.video.xrDirty) this.upload();
+    if (!this.loaded) return;
+    gl.useProgram(this.prog);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buf);
+    const loc = gl.getAttribLocation(this.prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.disable(gl.DEPTH_TEST);
+    gl.uniform1f(gl.getUniformLocation(this.prog, 'dim'), game && game.paused ? 0.45 : 1);
+    const hw = this.width / 2, hh = hw / this.aspect, z = -this.dist;
+    // the front layer is scaled so both layers line up when seen straight on: depth without distortion
+    const zf = z + this.depth, k = -zf / -z;
+    const mBg = mat4.model(0, 0, z, hw, hh), mFg = mat4.model(0, 0, zf, hw * k, hh * k);
+    const uM = gl.getUniformLocation(this.prog, 'm');
+    for (const view of pose.views) {
+      const vp = layer.getViewport(view); gl.viewport(vp.x, vp.y, vp.width, vp.height);
+      const pv = mat4.mul(view.projectionMatrix, view.transform.inverse.matrix);
+      gl.bindTexture(gl.TEXTURE_2D, this.texBg); gl.uniformMatrix4fv(uM, false, mat4.mul(pv, mBg)); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      if (this.depth > 0) { gl.bindTexture(gl.TEXTURE_2D, this.texFg); gl.uniformMatrix4fv(uM, false, mat4.mul(pv, mFg)); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------- sound */
+class Sound {
+  constructor(res) {
+    this.res = res;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.rate = this.ctx.sampleRate;
+    this.gain = this.ctx.createGain(); this.gain.gain.value = 0.8;
+    this.gain.connect(this.ctx.destination);
+    this.voices = [0,1,2,3].map(() => ({ s:null, pos:0, inc:0, vol:0, on:false }));
+    this.mus = { on:false, patterns:null, order:null, numOrder:0, curOrder:0, row:0, tick:0, count:0, instr:[], buf:null };
+    this.vars = null;
+    this.node = this.ctx.createScriptProcessor(2048, 0, 2);
+    this.node.onaudioprocess = (e) => this.render(e.outputBuffer);
+    this.node.connect(this.gain);
+    this.oggSrc = null; this.oggCache = new Map(); this.musicToken = 0;
+  }
+  setVolume(v) { this.gain.gain.value = v; }
+  voiceStart(ch, s, freq, vol) {
+    const v = this.voices[ch & 3];
+    v.s = s; v.pos = 0; v.inc = freq / this.rate; v.vol = Math.min(vol, 63) / 64; v.on = s.len + s.loopLen > 1;
+  }
+  voicesOff() { for (const v of this.voices) v.on = false; }
+  stopAll() { this.mus.on = false; this.voicesOff(); this.stopOgg(); }
+
+  playSound(num, freqIdx, vol, ch) {
+    ch &= 3;
+    if (vol === 0) { this.voices[ch].on = false; return; }
+    if (this.res.kind === '20th') {
+      if (freqIdx > 39) freqIdx = 39;
+      if (freqIdx !== 0) freqIdx--;
+      if (freqIdx >= 32) freqIdx++;
+      const base = PAULA / (PERIODS[Math.min(freqIdx,39)] * 2);
+      const go = (s) => { if (!s) return; const f = (s.rate === 22050 || s.rate === 44100 || s.rate === 48000) ? base * s.rate / 9943 : base; this.voiceStart(ch, s, f, vol); };
+      const p = this.res.loadWav(num);
+      const ready = this.res.wav.get(num);
+      if (ready !== undefined && ![81,85,96,163].includes(num)) go(ready); else p.then(go);
+      return;
+    }
+    const s = this.res.soundSample(num);
+    if (s) this.voiceStart(ch, s, PAULA / (PERIODS[Math.min(freqIdx,39)] * 2), vol);
+  }
+
+  // ---- 4-channel module sequencer (DOS / Amiga)
+  setDelay(d) { let ms = Math.floor(d * 60 / 7050); if (ms === 0) ms = 1; this.mus.tick = Math.max(1, Math.floor(ms * this.rate / 1000)); }
+  playMusic(num, delay, pos) {
+    if (this.res.kind === '20th') return this.playMusicNth(num);
+    if (num) {
+      const m = this.res.module(num);
+      if (!m) return;
+      const instr = [];
+      for (let i = 0; i < 15; i++) {
+        const r = be16(m, 2 + 4*i);
+        instr.push({ s: r ? this.res.instrument(r) : null, vol: be16(m, 4 + 4*i) });
+      }
+      const M = this.mus;
+      M.instr = instr; M.order = m.subarray(0x40, 0xC0); M.numOrder = be16(m, 0x3E); M.curOrder = pos; M.row = 0;
+      M.patterns = m; M.patOff = 0xC0;
+      this.setDelay(delay ? delay : be16(m, 0));
+      M.count = 0;
+      M.on = M.numOrder > 0 && pos < M.numOrder;
+      return;
+    }
+    if (delay) this.setDelay(delay);
+    else { this.mus.on = false; this.voicesOff(); }
+  }
+  musicVoice(ch, m, o) {
+    const note = be16(m, o), arg = be16(m, o + 2);
+    if (note === 0xFFFD) { if (this.vars) this.vars[VAR.MUS_MARK] = arg; return; }
+    let s = null, vol = 0;
+    const n = arg >> 12;
+    if (n && this.mus.instr[n-1] && this.mus.instr[n-1].s) {
+      s = this.mus.instr[n-1].s;
+      let v = this.mus.instr[n-1].vol;
+      const fx = (arg >> 8) & 15, amt = arg & 0xFF;
+      if (fx === 5) v = Math.min(63, v + amt); else if (fx === 6) v = Math.max(0, v - amt);
+      vol = v;
+      this.voices[ch].vol = Math.min(vol,63) / 64;
+    }
+    if (note === 0xFFFE) this.voices[ch].on = false;
+    else if (note !== 0 && s) this.voiceStart(ch, s, PAULA / (note * 2), vol);
+  }
+  musicTick() {
+    const M = this.mus;
+    const base = M.patOff + M.order[M.curOrder] * 1024 + M.row;
+    if (base + 16 > M.patterns.length) { M.on = false; return; }
+    for (let ch = 0; ch < 4; ch++) this.musicVoice(ch, M.patterns, base + ch * 4);
+    M.row += 16;
+    if (M.row >= 1024) { M.row = 0; if (++M.curOrder >= M.numOrder) { M.on = false; this.voicesOff(); } }
+  }
+  render(ob) {
+    const L = ob.getChannelData(0), R = ob.getChannelData(1), n = L.length, M = this.mus, V = this.voices;
+    for (let f = 0; f < n; f++) {
+      if (M.on) { if (M.count <= 0) { this.musicTick(); M.count = M.tick; } M.count--; }
+      let l = 0, r = 0;
+      for (let ch = 0; ch < 4; ch++) {
+        const v = V[ch];
+        if (!v.on) continue;
+        const s = v.s;
+        let i = v.pos | 0;
+        const end = s.loopLen ? s.loopPos + s.loopLen : s.len;
+        if (i >= end) {
+          if (!s.loopLen) { v.on = false; continue; }
+          v.pos -= s.loopLen; i = v.pos | 0;
+          if (i < 0) { v.pos = s.loopPos; i = s.loopPos; }
+        }
+        const smp = s.data[i] * v.vol;
+        if (ch === 0 || ch === 3) l += smp; else r += smp;
+        v.pos += v.inc;
+      }
+      L[f] = (3 * l + r) / 8;                              // Amiga stereo with a little cross-feed
+      R[f] = (3 * r + l) / 8;
+    }
+  }
+
+  // ---- 20th Anniversary: OGG music
+  stopOgg() { this.musicToken++; if (this.oggSrc) { try { this.oggSrc.stop(); } catch {} this.oggSrc = null; } }
+  async playMusicNth(num) {
+    if (num === 5000) { this.stopOgg(); return; }
+    if (!num) return;
+    const path = this.res.musicPath(num);
+    if (!path) return;
+    const loop = num >= 5001 && num <= 5010;
+    this.stopOgg();
+    const token = this.musicToken;
+    let buf = this.oggCache.get(path);
+    if (!buf) {
+      const f = this.res.store.find(path);
+      if (!f) { console.warn('[SND] missing ' + path); return; }
+      try { buf = await this.ctx.decodeAudioData(await f.arrayBuffer()); } catch (e) { console.warn('[SND] cannot decode ' + path, e); return; }
+      this.oggCache.set(path, buf);
+    }
+    if (token !== this.musicToken) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf; src.loop = loop; src.connect(this.gain); src.start();
+    this.oggSrc = src;
+  }
+}
+
+/* ---------------------------------------------------------------------------- input */
+class Input {
+  constructor() {
+    this.k = { left:false, right:false, up:false, down:false, action:false };
+    this.touch = { left:false, right:false, up:false, down:false, action:false };
+    this.pad = { left:false, right:false, up:false, down:false, action:false };
+    this.code = false; this.lastChar = 0; this.partReq = 0;
+    this.padStart = false;
+  }
+  get left() { return this.k.left || this.touch.left || this.pad.left; }
+  get right() { return this.k.right || this.touch.right || this.pad.right; }
+  get up() { return this.k.up || this.touch.up || this.pad.up; }
+  get down() { return this.k.down || this.touch.down || this.pad.down; }
+  get action() { return this.k.action || this.touch.action || this.pad.action; }
+  pollPads(onPause, onExitXR) {
+    const pads = [...(navigator.getGamepads ? navigator.getGamepads() : [])];
+    const xs = game && game.xr && game.xr.session;
+    if (xs) for (const src of xs.inputSources) if (src.gamepad) pads.push(src.gamepad);
+    const p = { left:false, right:false, up:false, down:false, action:false }; let start = false, exit = false;
+    for (const g of pads) {
+      if (!g || !g.connected) continue;
+      const b = (i) => !!(g.buttons[i] && g.buttons[i].pressed);
+      if (g.mapping === 'xr-standard' || /oculus|meta|quest/i.test(g.id)) {
+        // Quest Touch: thumbstick = move, trigger or A/X = action, B/Y = pause, thumbstick click = leave VR
+        const ax = g.axes[2] || g.axes[0] || 0, ay = g.axes[3] || g.axes[1] || 0;
+        p.left ||= ax < -0.5; p.right ||= ax > 0.5; p.up ||= ay < -0.5; p.down ||= ay > 0.5;
+        p.action ||= b(0) || b(4);
+        start ||= b(5);
+        exit ||= b(3);
+        continue;
+      }
+      const ax = g.axes[0] || 0, ay = g.axes[1] || 0;
+      p.left ||= b(14) || ax < -0.5; p.right ||= b(15) || ax > 0.5;
+      p.up ||= b(12) || ay < -0.5; p.down ||= b(13) || ay > 0.5;
+      p.action ||= b(0) || b(1) || b(2) || b(3);
+      start ||= b(9);
+    }
+    this.pad = p;
+    if (start && !this.padStart) onPause();
+    if (exit && !this.padExit) onExitXR?.();
+    this.padStart = start; this.padExit = exit;
+  }
+}
+
+/* ---------------------------------------------------------------------------- VM */
+const NO_PC = 0xFFFF, NO_REQ = 0xFFFF, KILL_REQ = 0xFFFE, MAX_OPS = 200000;
+
+class VM {
+  constructor(res, video, sound, input) {
+    this.res = res; this.vid = video; this.snd = sound; this.inp = input;
+    this.vars = new Int16Array(256);
+    if (sound) sound.vars = this.vars;
+    this.pc = new Uint16Array(64); this.reqPc = new Uint16Array(64);
+    this.paused = new Uint8Array(64); this.reqPaused = new Uint8Array(64);
+    this.stack = new Uint16Array(64); this.sp = 0;
+    this.code = null; this.ip = 0; this.yieldF = false; this.fault = false;
+    this.seg = null; this.curPart = 0; this.nextPart = 0;
+    this.t = -1; this.threadStarted = false; this.blit = -1;
+    this.opts = {};
+    res.onBitmap = (b, kind) => video.loadBitmap(b, kind);
+  }
+  init(opts) {
+    this.opts = opts || {};
+    const v = this.vars;
+    v.fill(0);
+    if (this.res.kind === 'classic') {
+      v[0x54] = 0x81;
+      v[VAR.SEED] = (Math.random() * 65536) | 0;
+      // values normally left by the copy-protection screen (16000), which is skipped
+      v[0xBC] = 0x10; v[0xC6] = 0x80; v[0xF2] = this.res.amiga ? 6000 : 4000; v[0xDC] = 33;
+    }
+  }
+  startPart(part) {
+    this.snd?.stopAll();
+    if (this.res.kind === 'classic') this.vars[0xE4] = 0x14;
+    else { this.vars[0xBF] = this.opts.difficulty ?? 1; this.vars[0xDE] = this.opts.remastered ? 1 : 0; }
+    this.seg = this.res.setupPart(part, this.curPart);
+    this.vid.palSeg = this.seg.pal;
+    this.code = this.seg.code;
+    this.curPart = part;
+    for (let i = 0; i < 64; i++) { this.pc[i] = NO_PC; this.reqPc[i] = NO_REQ; this.paused[i] = this.reqPaused[i] = 0; }
+    this.pc[0] = 0;
+    this.t = -1;
+    this.onPart?.(part);
+  }
+  f8() { if (this.ip >= this.code.length) { this.fault = true; return 0x06; } return this.code[this.ip++]; }
+  f16() { const h = this.f8(); return (h << 8) | this.f8(); }
+
+  beginFrame() {
+    const I = this.inp;
+    if (I.partReq) { if (this.res.hasPart(I.partReq)) this.nextPart = I.partReq; I.partReq = 0; }
+    if (this.nextPart) {
+      const p = this.nextPart, prev = this.curPart; this.nextPart = 0;
+      try { this.startPart(p); }
+      catch (e) {
+        if (!prev || prev === p) throw e;
+        this.onError?.(`Cannot load ${PART_NAMES[p] || p}: ${e.message}`);
+        this.curPart = 0; this.startPart(prev);
+      }
+    }
+    for (let i = 0; i < 64; i++) {
+      this.paused[i] = this.reqPaused[i];
+      if (this.reqPc[i] !== NO_REQ) { this.pc[i] = this.reqPc[i] === KILL_REQ ? NO_PC : this.reqPc[i]; this.reqPc[i] = NO_REQ; }
+    }
+    this.updateInputVars();
+  }
+  updateInputVars() {
+    const I = this.inp, v = this.vars;
+    if ((this.curPart === 16008 || this.curPart === 16009) && I.lastChar) {
+      v[VAR.LASTCHAR] = I.lastChar === 8 ? 8 : (I.lastChar & ~0x20);
+      I.lastChar = 0;
+    }
+    let lr = 0, ud = 0, mask = 0;
+    if (I.right) { lr = 1; mask |= 1; }
+    if (I.left) { lr = -1; mask |= 2; }
+    if (I.down) { ud = 1; mask |= 4; }
+    v[VAR.POS_UD] = I.up ? -1 : ud;
+    if (I.up) { ud = -1; mask |= 8; }
+    v[VAR.JUMP_DOWN] = ud;
+    v[VAR.LEFT_RIGHT] = lr;
+    v[VAR.POS_MASK] = mask;
+    v[VAR.ACTION] = I.action ? 1 : 0;
+    if (I.action) mask |= 0x80;
+    v[VAR.ACTION_MASK] = mask;
+  }
+
+  // Runs until the bytecode asks for a display (returns the page id) or the frame ends (returns -1).
+  run() {
+    for (;;) {
+      if (this.t < 0) { this.beginFrame(); this.t = 0; this.threadStarted = false; }
+      while (this.t < 64) {
+        const t = this.t;
+        if (!this.threadStarted) {
+          if (this.paused[t] || this.pc[t] === NO_PC) { this.t++; continue; }
+          this.ip = this.pc[t]; this.sp = 0; this.yieldF = false; this.fault = false; this.ops = 0;
+          this.threadStarted = true;
+        }
+        while (!this.yieldF && !this.fault) {
+          this.step();
+          if (this.blit >= 0) { const b = this.blit; this.blit = -1; return b; }
+          if (this.waitFor) return -2;
+          if (++this.ops > MAX_OPS) { console.warn(`[VM] thread ${t} never yields`); this.fault = true; }
+        }
+        if (this.fault) { console.warn(`[VM] thread ${t} stopped (part ${this.curPart}, ip ${hex(this.ip,4)})`); this.ip = NO_PC; }
+        this.pc[t] = this.ip & 0xFFFF;
+        this.t++; this.threadStarted = false;
+      }
+      this.t = -1;
+      return -1;
+    }
+  }
+
+  condJump() {
+    const op = this.f8();
+    const b = this.vars[this.f8()];
+    let a;
+    if (op & 0x80) a = this.vars[this.f8()];
+    else if (op & 0x40) a = (this.f16() << 16) >> 16;
+    else a = this.f8();
+    let t = false;
+    switch (op & 7) {
+      case 0: t = b === a; break; case 1: t = b !== a; break; case 2: t = b > a; break;
+      case 3: t = b >= a; break; case 4: t = b < a; break; case 5: t = b <= a; break;
+    }
+    const dst = this.f16();
+    if (t) this.ip = dst;
+  }
+  threadRange() {
+    const first = this.f8(), last = this.f8() & 0x3F, mode = this.f8();
+    if (last < first || first >= 64) return;
+    for (let i = first; i <= last; i++) {
+      if (mode === 2) this.reqPc[i] = KILL_REQ;
+      else if (mode < 2) this.reqPaused[i] = mode;
+    }
+  }
+  drawBackgroundShape(op) {
+    const off = (((op << 8) | this.f8()) * 2) & 0xFFFF;
+    let x = this.f8(), y = this.f8();
+    const over = y - 199;
+    if (over > 0) { y = 199; x += over; }
+    this.vid.drawShape(this.seg.poly, off, 64, x, y);
+  }
+  drawShapeOp(op) {
+    const off = (this.f16() * 2) & 0xFFFF;
+    let x = this.f8();
+    if (!(op & 0x20)) {
+      if (!(op & 0x10)) x = (((x << 8) | this.f8()) << 16) >> 16;
+      else x = this.vars[x];
+    } else if (op & 0x10) x += 0x100;
+    let y = this.f8();
+    if (!(op & 0x08)) {
+      if (!(op & 0x04)) y = (((y << 8) | this.f8()) << 16) >> 16;
+      else y = this.vars[y];
+    }
+    let seg = this.seg.poly, zoom = 64;
+    if (!(op & 0x02)) { if (op & 0x01) zoom = this.vars[this.f8()] & 0xFFFF; }
+    else { if (op & 0x01) seg = this.seg.poly2; else zoom = this.f8(); }
+    this.vid.drawShape(seg, off, zoom, x, y);
+  }
+  step() {
+    const op = this.f8(), v = this.vars;
+    if (op & 0x80) { this.drawBackgroundShape(op); return; }
+    if (op & 0x40) { this.drawShapeOp(op); return; }
+    switch (op) {
+      case 0x00: { const i = this.f8(); v[i] = this.f16(); } break;
+      case 0x01: { const i = this.f8(); v[i] = v[this.f8()]; } break;
+      case 0x02: { const i = this.f8(); v[i] += v[this.f8()]; } break;
+      case 0x03: {
+        // original game bug: the gun sound never stops in part 16006 (fixed in later editions)
+        if (this.res.kind === 'classic' && this.curPart === 16006 && this.ip === 0x6D48) this.snd?.playSound(0x5B, 1, 64, 1);
+        const i = this.f8(); v[i] += this.f16();
+      } break;
+      case 0x04: { const dst = this.f16(); if (this.sp < 64) this.stack[this.sp++] = this.ip; this.ip = dst; } break;
+      case 0x05: if (this.sp > 0) this.ip = this.stack[--this.sp]; else this.fault = true; break;
+      case 0x06: this.yieldF = true; break;
+      case 0x07: this.ip = this.f16(); break;
+      case 0x08: { const t = this.f8(), dst = this.f16(); if (t < 64) this.reqPc[t] = dst; } break;
+      case 0x09: { const i = this.f8(); v[i]--; if (v[i] !== 0) this.ip = this.f16(); else this.f16(); } break;
+      case 0x0A: this.condJump(); break;
+      case 0x0B: this.vid.requestPalette(this.f16() >> 8); break;
+      case 0x0C: this.threadRange(); break;
+      case 0x0D: this.vid.selectPage(this.f8()); break;
+      case 0x0E: { const p = this.f8(); this.vid.fillPage(p, this.f8()); } break;
+      case 0x0F: { const s = this.f8(); this.vid.copyPage(s, this.f8(), v[VAR.SCROLL_Y]); } break;
+      case 0x10: {
+        const page = this.f8();
+        if (this.inp.code) {
+          this.inp.code = false;
+          if (this.curPart !== PART_FIRST && this.curPart !== 16008 && this.curPart !== PART_LAST && this.res.hasPart(PART_LAST)) this.nextPart = PART_LAST;
+        }
+        v[0xF7] = 0;
+        this.blit = page;
+      } break;
+      case 0x11: this.ip = NO_PC; this.yieldF = true; break;
+      case 0x12: {
+        const id = this.f16(), x = this.f8(), y = this.f8(), col = this.f8();
+        this.vid.drawString(col, x, y, id, this.res.getString(id), this.res.kind === '20th');
+      } break;
+      case 0x13: { const i = this.f8(); v[i] -= v[this.f8()]; } break;
+      case 0x14: { const i = this.f8(); v[i] = (v[i] & 0xFFFF) & this.f16(); } break;
+      case 0x15: { const i = this.f8(); v[i] = (v[i] & 0xFFFF) | this.f16(); } break;
+      case 0x16: { const i = this.f8(); v[i] = (v[i] & 0xFFFF) << (this.f16() & 15); } break;
+      case 0x17: { const i = this.f8(); v[i] = (v[i] & 0xFFFF) >>> (this.f16() & 15); } break;
+      case 0x18: { const r = this.f16(), f = this.f8(), vol = this.f8(), ch = this.f8(); this.snd?.playSound(r, f, vol, ch); } break;
+      case 0x19: {
+        const r = this.f16();
+        if (r === 0) { this.snd?.stopAll(); this.res.freeVolatile(); }
+        else if (r >= PART_FIRST) { if (r > PART_FIRST || this.res.kind === 'classic') this.nextPart = r; }
+        else { const pr = this.res.request(r); if (pr) this.waitFor = pr; }
+      } break;
+      case 0x1A: { const r = this.f16(), d = this.f16(), pos = this.f8(); this.snd?.playMusic(r, d, pos); } break;
+      default:
+        console.warn(`[VM] bad opcode ${hex(op)} at ${hex(this.ip - 1, 4)}`);
+        this.fault = true;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------- UI / main loop */
+const $ = (id) => document.getElementById(id);
+const store = new FileStore();
+let detected = null;              // { kind, memlist?, info }
+let game = null;                  // running instance
+
+function setDetect(html) { $('detect').innerHTML = html; }
+
+async function collectEntries(items) {
+  const files = [];
+  const walk = async (entry, path) => {
+    if (entry.isFile) {
+      const f = await new Promise((res, rej) => entry.file(res, rej));
+      files.push([f, path + entry.name]);
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      let batch;
+      do {
+        batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+        for (const e of batch) await walk(e, path + entry.name + '/');
+      } while (batch.length);
+    }
+  };
+  for (const it of items) { const e = it.webkitGetAsEntry && it.webkitGetAsEntry(); if (e) await walk(e, ''); }
+  return files;
+}
+
+async function addFiles(list) {
+  let n = 0;
+  for (const [f, p] of list) {
+    if (/\.zip$/i.test(f.name)) {
+      try {
+        const entries = await readZip(f);
+        const adfs = [];
+        for (const [path, entry] of entries) { if (/\.(adf|adz)$/i.test(path)) adfs.push([new File([await entry.arrayBuffer()], entry.name), path]); else store.add(entry, path); }
+        if (adfs.length) { await addFiles(adfs); continue; }
+      } catch (e) { console.warn(e); setDetect(`<span class="bad">✘ ${e.message}</span>`); }
+      continue;
+    }
+    if (/\.(adf|adz)$/i.test(f.name)) {
+      try {
+        let d = await readBytes(f);
+        if (/\.adz$/i.test(f.name)) d = await gunzip(d);
+        const disk = readADF(d);
+        if (!disk) { console.warn(f.name + ' is not an AmigaDOS disk image'); continue; }
+        n++;
+        const base = 'ADF' + n + '-' + f.name.replace(/[^\w.-]/g, '_') + '/';
+        for (const [path, data] of disk.files) store.add(new File([data], path.split('/').pop()), base + path);
+      } catch (e) { console.warn(e); }
+    } else store.add(f, p);
+  }
+  await detect();
+}
+
+async function detect() {
+  detected = null; $('startBtn').disabled = true; $('opts20').hidden = true;
+  if (store.find('DAT/FILE017.DAT')) {
+    const langs = Res20th.languages(store);
+    const sel = $('optLang'); sel.innerHTML = '';
+    const names = { EN:'English', FR:'Français', DE:'Deutsch', ES:'Español', IT:'Italiano' };
+    for (const L of (langs.length ? langs : ['EN'])) sel.add(new Option(names[L] || L, L));
+    const hasRem = store.filter(/(^|\/)WGZ\/FILE\d{3}B?\.WGZ$/).length > 0;
+    const hasOrig = store.filter(/(^|\/)WGZ\/ORIGINAL\//).length > 0;
+    $('optAudio').value = hasOrig ? 'original' : 'remastered';
+    $('opts20').hidden = false;
+    const dats = store.filter(/(^|\/)DAT\/FILE\d{3}\.DAT$/).length;
+    setDetect(`<span class="ok">✔ 20th Anniversary Edition found</span> — ${dats} DAT files, ` +
+      `${store.filter(/(^|\/)BGZ\/FILE\d{3}\.BGZ$/).length} backgrounds, sounds: ${hasOrig ? 'original' : ''}${hasOrig && hasRem ? ' + ' : ''}${hasRem ? 'remastered' : ''}${!hasOrig && !hasRem ? '<span class="warn">none</span>' : ''}, ` +
+      `texts: ${langs.length ? langs.join(', ') : '<span class="warn">none</span>'}.`);
+    detected = { kind:'20th' };
+    $('optGfx').value = 'hd';
+    $('startBtn').disabled = false;
+    return;
+  }
+  let memlist = null, from = '';
+  const ml = store.find('MEMLIST.BIN');
+  if (ml) { memlist = await readBytes(ml); from = 'MEMLIST.BIN'; }
+  else if (store.find('BANK01')) {
+    for (const [k, f] of store.filter(/(^|\/)(ANOTHER|[^/]*\.EXE)$/)) {
+      if (f.size > 4 * 1024 * 1024) continue;
+      const t = scanMemlist(await readBytes(f));
+      if (t) { memlist = t; from = 'table found in ' + k.split('/').pop(); break; }
+    }
+  }
+  if (!memlist) {
+    if (store.size === 0) setDetect('No files loaded yet.');
+    else if (store.find('BANK01')) setDetect('<span class="bad">✘ BANK files found but no MEMLIST.BIN.</span> For the Amiga version, also add the <code>another</code> executable from disk 1 (or build MEMLIST.BIN with the ESP32 repo\'s <code>tools/check_res.py</code>).');
+    else setDetect(`<span class="bad">✘ No game data recognised</span> in ${store.size} file(s). Need <code>MEMLIST.BIN</code> + <code>BANKxx</code>, or the 20th Anniversary <code>game/</code> folder.`);
+    return;
+  }
+  const banks = store.filter(/(^|\/)(BANK|DEMO)0[0-9A-F]$/).length;
+  const hasStr = !!store.find('STRINGS.TXT');
+  const exe = store.filter(/(^|\/)(ANOTHER|[^/]*\.EXE)$/)[0];
+  const adfs = new Set([...store.map.keys()].filter(k => /^ADF\d+-/.test(k)).map(k => k.split('/')[0])).size;
+  setDetect(`<span class="ok">✔ ${adfs ? 'Amiga disk images' : 'DOS/Amiga data'} found</span> — ${adfs ? adfs + ' disk(s), ' : ''}${from}, ${banks} bank file(s).` +
+    (hasStr ? ' Texts: STRINGS.TXT.' : exe ? ` Texts: read from ${exe[0].split('/').pop().toLowerCase()}.` :
+      ' <span class="warn">No STRINGS.TXT: add it, or the game executable (ANOTHER.EXE / another), for in-game texts.</span>'));
+  detected = { kind:'classic', memlist };
+  $('optGfx').value = 'orig';
+  $('startBtn').disabled = false;
+}
+
+function progress(msg, frac) { $('progress').textContent = msg + (frac != null ? ` ${Math.round(frac * 100)}%` : ''); }
+
+async function start() {
+  if (!detected) return;
+  $('startBtn').disabled = true;
+  try {
+    const opts = { lang: $('optLang').value, audio: $('optAudio').value, difficulty: +$('optDiff').value, hd: $('optGfx').value === 'hd' };
+    const res = detected.kind === '20th' ? new Res20th(store) : new ResClassic(store);
+    await res.init(progress, detected.kind === '20th' ? opts : detected.memlist);
+    if (res.missingBanks?.length) console.warn('Missing banks: ' + res.missingBanks.join(', '));
+    const video = new Video($('screen'), opts.hd ? 4 : 1);
+    if (res.fontBmp) video.setHdFont(res.fontBmp);
+    $('bFilter').value = opts.hd ? 'smooth' : 'sharp';
+    const sound = new Sound(res);
+    await sound.ctx.resume().catch(() => {});
+    const input = new Input();
+    const vm = new VM(res, video, sound, input);
+    vm.init({ difficulty: opts.difficulty, remastered: opts.audio === 'remastered' });
+    vm.onError = (m) => flash(m, 5000);
+    vm.onPart = (p) => { $('partLbl').textContent = PART_NAMES[p] || p; $('partLbl').title = res.title; };
+    let part = +$('optPart').value;
+    if (!res.hasPart(part)) part = res.firstPart();
+    vm.startPart(part);
+    const t0 = performance.now();
+    game = { res, video, sound, input, vm, paused:false, pending:-1, lastBlit:t0, lastBlitTarget:t0, timer:0, running:true };
+    $('setup').classList.add('hidden'); $('player').classList.remove('hidden');
+    progress('');
+    layout();
+    if (res.missingBanks?.length) flash('Missing ' + res.missingBanks.join(', ') + ' — some parts will not load', 6000);
+    else if (res.kind === 'classic' && res.strings.size === 0) flash('No text table found: in-game texts will be blank (add STRINGS.TXT)', 5000);
+    else if (res.kind === 'classic' && res.stringsFrom) flash(`${res.strings.size} game texts read from ${res.stringsFrom.split('/').pop()}`, 3000);
+    else flash('Press ? for controls', 2500);
+    game.padTimer = setInterval(() => game && game.input.pollPads(togglePause, () => game.xr && game.xr.end()), 25);
+    tick();
+  } catch (e) {
+    console.error(e);
+    progress('');
+    setDetect(`<span class="bad">✘ ${e.message}</span>`);
+    $('startBtn').disabled = false;
+  }
+}
+
+function tick() {
+  const g = game;
+  if (!g || !g.running) return;
+  g.timer = 0;
+  if (g.paused) return;
+  const now = performance.now();
+  if (g.pending >= 0) {
+    g.video.show(g.pending); g.pending = -1;
+    g.lastBlit = now - g.lastBlitTarget > 40 ? now : g.lastBlitTarget;
+  }
+  const t0 = now;
+  try {
+    for (;;) {
+      const page = g.vm.run();
+      if (page === -2) {                                    // a resource is loading (HD background): resume when ready
+        const pr = g.vm.waitFor; g.vm.waitFor = null;
+        g.timer = 1;
+        pr.catch((e) => console.warn(e)).finally(() => { g.timer = 0; if (!g.paused) tick(); });
+        return;
+      }
+      if (page >= 0) {
+        const want = g.vm.vars[VAR.PAUSE] * 20;
+        g.lastBlitTarget = g.lastBlit + want;
+        g.pending = page;
+        g.timer = setTimeout(tick, Math.max(0, g.lastBlitTarget - performance.now()));
+        return;
+      }
+      if (performance.now() - t0 > 12) { g.timer = setTimeout(tick, 0); return; }
+    }
+  } catch (e) {
+    console.error(e);
+    g.running = false;
+    flash('Error: ' + e.message, 10000);
+  }
+}
+
+function togglePause(force) {
+  const g = game; if (!g) return;
+  g.paused = typeof force === 'boolean' ? force : !g.paused;
+  $('pauseOv').classList.toggle('hidden', !g.paused);
+  document.body.classList.toggle('paused', g.paused);
+  if (!g.paused) document.body.classList.remove('barshow');          // menu bar shows while paused (also in fullscreen)
+  $('bPause').textContent = g.paused ? '▶ Resume' : '❚❚ Pause';
+  if (g.paused) { if (g.timer !== 1) { clearTimeout(g.timer); g.timer = 0; } g.sound.ctx.suspend(); }
+  else { g.sound.ctx.resume(); g.lastBlit = performance.now(); g.lastBlitTarget = g.lastBlit; if (!g.timer) tick(); }
+}
+function setMute(m) { if (!game) return; game.muted = m; game.sound.setVolume(m ? 0 : $('vol').value / 100); $('bMute').textContent = m ? '🔇' : '🔊'; }
+
+let flashT = 0;
+function flash(text, ms = 2000) { const m = $('msg'); m.textContent = text; m.style.opacity = 1; clearTimeout(flashT); flashT = setTimeout(() => m.style.opacity = 0, ms); }
+
+function layout() {
+  const st = $('stage'), cv = $('screen'), sc = $('scan');
+  const aspect = $('bAspect').value === '4:3' ? 4 / 3 : 16 / 10;
+  const sw = st.clientWidth, sh = st.clientHeight;
+  let w = sw, h = w / aspect;
+  if (h > sh) { h = sh; w = h * aspect; }
+  // integer multiples of 200 lines keep pixels even when sharp scaling is on
+  if ($('bFilter').value !== 'smooth' && h >= 400) { const k = Math.floor(h / 200); h = k * 200; w = h * aspect; }
+  cv.style.width = Math.floor(w) + 'px'; cv.style.height = Math.floor(h) + 'px';
+  Object.assign(sc.style, { width: Math.floor(w) + 'px', height: Math.floor(h) + 'px', backgroundSize: `100% ${h / 200}px` });
+  cv.classList.toggle('smooth', $('bFilter').value === 'smooth');
+  sc.classList.toggle('hidden', $('bFilter').value !== 'scan');
+}
+
+const KEYMAP = { ArrowLeft:'left', ArrowRight:'right', ArrowUp:'up', ArrowDown:'down', KeyA:'left', KeyD:'right', KeyW:'up', KeyS:'down',
+                 Space:'action', Enter:'action', NumpadEnter:'action', ControlLeft:'action', ControlRight:'action', ShiftLeft:'action' };
+function onKey(e, down) {
+  const g = game; if (!g || $('player').classList.contains('hidden')) return;
+  if (e.target && (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') && !KEYMAP[e.code]) return;
+  const codeScreen = g.vm.curPart === 16008 || g.vm.curPart === 16009;
+  let dir = KEYMAP[e.code];
+  if (codeScreen && /^Key[ADWS]$/.test(e.code)) dir = null;          // letters are for typing the code
+  if (dir) { g.input.k[dir] = down; e.preventDefault(); }
+  if (!down) return;
+  if (codeScreen && /^Key[A-Z]$/.test(e.code)) { g.input.lastChar = e.code.charCodeAt(3) + 32; e.preventDefault(); return; }
+  if (codeScreen && e.code === 'Backspace') { g.input.lastChar = 8; e.preventDefault(); return; }
+  if (e.repeat) return;
+  switch (e.code) {
+    case 'KeyP': case 'Escape': if (!$('help').classList.contains('hidden')) $('help').classList.add('hidden'); else togglePause(); e.preventDefault(); break;
+    case 'KeyC': g.input.code = true; break;
+    case 'KeyM': setMute(!g.muted); break;
+    case 'KeyF': toggleFull(); break;
+    default:
+      if (/^Digit[1-7]$/.test(e.code)) { g.input.partReq = PART_INTRO + (+e.code[5]) - 1; flash(PART_NAMES[g.input.partReq]); }
+  }
+}
+function toggleFull() {
+  const el = $('player');
+  if (document.fullscreenElement) document.exitFullscreen();
+  else (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
+}
+
+// ------------------------------------------------------------------ wiring
+$('pickDir').onclick = () => $('dirInput').click();
+$('pickFiles').onclick = () => $('fileInput').click();
+$('dirInput').onchange = (e) => addFiles([...e.target.files].map(f => [f, f.webkitRelativePath || f.name]));
+$('fileInput').onchange = (e) => addFiles([...e.target.files].map(f => [f, f.name]));
+const drop = $('drop');
+drop.ondragover = (e) => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = async (e) => {
+  e.preventDefault(); drop.classList.remove('over');
+  const items = [...(e.dataTransfer.items || [])];
+  if (items.length && items[0].webkitGetAsEntry) await addFiles(await collectEntries(items));
+  else await addFiles([...e.dataTransfer.files].map(f => [f, f.name]));
+};
+document.addEventListener('dragover', (e) => e.preventDefault());
+document.addEventListener('drop', (e) => { if (!drop.contains(e.target)) e.preventDefault(); });
+$('startBtn').onclick = start;
+
+window.addEventListener('keydown', (e) => onKey(e, true));
+window.addEventListener('keyup', (e) => onKey(e, false));
+window.addEventListener('blur', () => { if (game) for (const k in game.input.k) game.input.k[k] = false; });
+window.addEventListener('resize', layout);
+document.addEventListener('fullscreenchange', () => onFsChange());
+$('bPause').onclick = () => togglePause();
+$('bMute').onclick = () => setMute(!game?.muted);
+$('vol').oninput = () => { if (game && !game.muted) game.sound.setVolume($('vol').value / 100); };
+$('bPart').onchange = (e) => { if (game && e.target.value) { game.input.partReq = +e.target.value; if (game.paused) togglePause(false); } e.target.value = ''; e.target.blur(); };
+$('bAspect').onchange = (e) => { layout(); e.target.blur(); };
+$('bFilter').onchange = (e) => { layout(); e.target.blur(); };
+$('bHelp').onclick = () => $('help').classList.remove('hidden');
+$('helpClose').onclick = () => $('help').classList.add('hidden');
+$('bFull').onclick = toggleFull;
+XRScreen.support().then((s) => { $('bVR').classList.toggle('hidden', !s.vr); $('bAR').classList.toggle('hidden', !s.ar); $('bDepth').classList.toggle('hidden', !s.vr && !s.ar); });
+async function enterXR(mode) {
+  if (!game || game.xr) return;
+  const xr = new XRScreen();
+  xr.depth = +$('bDepth').value;
+  try {
+    game.xr = xr;
+    if (game.paused) togglePause(false);
+    await xr.start(mode, game.video, $('bAspect').value === '4:3' ? 4 / 3 : 16 / 10, () => { if (game) game.xr = null; });
+  } catch (e) { game.xr = null; flash('Could not start ' + mode.toUpperCase() + ': ' + e.message, 5000); }
+}
+$('bVR').onclick = () => enterXR('vr');
+$('bAR').onclick = () => enterXR('ar');
+$('bDepth').onchange = (e) => { if (game && game.xr) game.xr.depth = +e.target.value; e.target.blur(); };
+$('bQuit').onclick = () => {
+  if (!game) return;
+  game.running = false; clearTimeout(game.timer); clearInterval(game.padTimer); game.xr?.end(); document.body.classList.remove('paused'); game.sound.ctx.close(); game = null;
+  $('player').classList.add('hidden'); $('setup').classList.remove('hidden'); $('startBtn').disabled = !detected;
+};
+// ---- fullscreen: hide the toolbar; show it while the mouse is at the bottom edge
+let barT = 0;
+const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+function onFsChange() { document.body.classList.toggle('fs', isFs()); document.body.classList.remove('barshow'); setTimeout(layout, 60); }
+document.addEventListener('webkitfullscreenchange', onFsChange);
+$('player').addEventListener('pointermove', (e) => {
+  if (!isFs() || e.pointerType !== 'mouse') return;      // taps on a touch screen don't reveal the bar
+  if (e.clientY > window.innerHeight - 70) { document.body.classList.add('barshow'); clearTimeout(barT); }
+  else if (!$('bar').matches(':hover')) { clearTimeout(barT); barT = setTimeout(() => document.body.classList.remove('barshow'), 600); }
+});
+
+// ---- touch: left half steers (direction from the centre of the left circle), right half is action
+const enableTouch = () => document.body.classList.add('touch');
+if (matchMedia('(pointer: coarse)').matches) enableTouch();
+window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') enableTouch(); }, true);
+const stick = { id: null, cx: 0, cy: 0 }, act = new Map();
+// shows a circle centred on the touch point, bright at first and fading to barely visible
+function ringAt(ring, x, y) {
+  const box = $('touch').getBoundingClientRect(), d = ring.offsetWidth;
+  ring.style.transform = `translate(${x - box.left - d / 2}px, ${y - box.top - d / 2}px)`;
+  ring.classList.remove('fade'); ring.classList.add('show');
+  void ring.offsetWidth;                                   // restart the fade
+  ring.classList.add('fade');
+}
+const ringOff = (ring) => ring.classList.remove('show', 'fade');
+function setDir(dx, dy) {
+  const T = game ? game.input.touch : null, r = $('ringL').offsetWidth / 2;
+  const len = Math.hypot(dx, dy), k = len > r ? r / len : 1;
+  $('knob').style.transform = `translate(${dx * k}px, ${dy * k}px)`;
+  if (!T) return;
+  const dead = r * 0.25;
+  T.left = T.right = T.up = T.down = false;
+  if (len < dead) return;
+  const a = Math.atan2(dy, dx) * 180 / Math.PI;           // 8 directions, 45° sectors
+  T.right = a > -67.5 && a < 67.5;
+  T.left = a > 112.5 || a < -112.5;
+  T.down = a > 22.5 && a < 157.5;
+  T.up = a < -22.5 && a > -157.5;
+}
+const zL = $('zL'), zR = $('zR');
+zL.addEventListener('pointerdown', (e) => {
+  e.preventDefault(); try { zL.setPointerCapture(e.pointerId); } catch {}
+  stick.id = e.pointerId; stick.cx = e.clientX; stick.cy = e.clientY;   // the stick is centred where the thumb lands
+  ringAt($('ringL'), e.clientX, e.clientY); setDir(0, 0);
+});
+zL.addEventListener('pointermove', (e) => { if (e.pointerId === stick.id) setDir(e.clientX - stick.cx, e.clientY - stick.cy); });
+const stickEnd = (e) => { if (e.pointerId !== stick.id) return; stick.id = null; setDir(0, 0); ringOff($('ringL')); };
+zL.addEventListener('pointerup', stickEnd); zL.addEventListener('pointercancel', stickEnd);
+const setAct = () => { if (game) game.input.touch.action = act.size > 0; if (!act.size) ringOff($('ringR')); };
+zR.addEventListener('pointerdown', (e) => {
+  e.preventDefault(); try { zR.setPointerCapture(e.pointerId); } catch {}
+  act.set(e.pointerId, true); ringAt($('ringR'), e.clientX, e.clientY); setAct();
+});
+const actEnd = (e) => { act.delete(e.pointerId); setAct(); };
+zR.addEventListener('pointerup', actEnd); zR.addEventListener('pointercancel', actEnd);
+$('tPause').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); togglePause(); });
+$('touch').addEventListener('contextmenu', (e) => e.preventDefault());
+
+// test hook (used for automated checks; harmless otherwise)
+window.__aw = { addFiles, start, get game() { return game; }, unpackBK, scanMemlist, scanStringTable, readADF, store };
+</script>
+<script data-goatcounter="https://gigajunky.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

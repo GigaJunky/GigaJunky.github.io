@@ -174,7 +174,7 @@ summary{cursor:pointer;font-family:var(--f-mono);font-size:12px;letter-spacing:.
           <dl>
             <dt>W / S</dt><dd>Stick forward / back</dd>
             <dt>A / D</dt><dd>Roll left / right</dd>
-            <dt>Q / E</dt><dd>Rudder</dd>
+            <dt>Q / E</dt><dd>Rudder · Arcade: full roll (barrel rolls, inverted)</dd>
             <dt>R / F</dt><dd>Throttle up / down</dd>
             <dt>Space</dt><dd>Guns · open parachute</dd>
             <dt>Hold Shift</dt><dd>Arcade: auto-chase the bandit</dd>
@@ -198,7 +198,7 @@ summary{cursor:pointer;font-family:var(--f-mono);font-size:12px;letter-spacing:.
           <dl>
             <dt>Left stick</dt><dd>Pitch and roll</dd>
             <dt>Right stick</dt><dd>Look around</dd>
-            <dt>LB / RB</dt><dd>Rudder</dd>
+            <dt>LB / RB</dt><dd>Rudder · Arcade: full roll</dd>
             <dt>RT</dt><dd>Guns</dd>
             <dt>LT (air)</dt><dd>Arcade: auto-chase</dd>
             <dt>LT</dt><dd>Brakes</dd>
@@ -214,7 +214,7 @@ summary{cursor:pointer;font-family:var(--f-mono);font-size:12px;letter-spacing:.
           <dl>
             <dt>R grip</dt><dd>Grab the stick and fly it with your hand</dd>
             <dt>L grip</dt><dd>Grab the throttle, push to add power</dd>
-            <dt>Sticks</dt><dd>R: pitch/roll · L: throttle/rudder</dd>
+            <dt>Sticks</dt><dd>R: pitch/roll · L: throttle/rudder (Arcade: L left/right = full roll)</dd>
             <dt>R trigger</dt><dd>Guns · open parachute</dd>
             <dt>Touch + trigger</dt><dd>Work the gear, flap and hook levers in the cockpit</dd>
             <dt>Red handle</dt><dd>Hold to jettison canopy and bail out (or hold Y)</dd>
@@ -1429,10 +1429,12 @@ function stepFlight(p,c,dt){
   if(p.arc&&live&&!p.onGround){const bank=Math.atan2(-_rt.y,_up.y),pitchA=Math.asin(clamp(_fwd.y,-1,1));const want=ctrl.roll*80*DEG;
     _tg.z=-clamp((want-bank)*3.2,-S.roll*DEG*1.4,S.roll*DEG*1.4);
     arcPull=clamp(Math.tan(clamp(Math.abs(bank),0,80*DEG))*G/Math.max(V,40)*.9,0,gl)*smooth(.08,.35,Math.abs(bank))*(Math.abs(pitchA)<1.2&&Math.abs(bank)<1.75?1:0);
-    if(Math.abs(ctrl.pitch)<.1&&V>30){const gam=Math.asin(clamp(p.vel.y/V,-1,1));arcPull+=-gam*1.6*Math.cos(clamp(bank,-1.5,1.5));}}
+    if(Math.abs(ctrl.pitch)<.1&&V>30){const gam=Math.asin(clamp(p.vel.y/V,-1,1));arcPull+=-gam*1.6*Math.cos(clamp(bank,-1.5,1.5));}
+    if(Math.abs(ctrl.yaw)>.2){_tg.z=-ctrl.yaw*Math.max(S.roll,100)*DEG*1.3;arcPull=0;p.freeRollT=simT;}
+    else if(simT-(p.freeRollT??-9)<.35)arcPull=0;}
   const pmax=Math.min(S.pitch*DEG*Math.min(eff*1.3,1),ctrl.pitch>0?gl:gl*.5);
   _tg.x=ctrl.pitch*(p.arc?Math.max(pmax,Math.min(60*DEG,gl)):pmax)+arcPull*(p.arc?Math.min(1,1+ctrl.pitch):0);
-  _tg.y=-ctrl.yaw*S.yaw*DEG*Math.min(eff*1.4,1);
+  _tg.y=(p.arc&&live&&!p.onGround)?0:-ctrl.yaw*S.yaw*DEG*Math.min(eff*1.4,1);
   const aTrim=clamp((S.mass*G*(p.arc&&!p.onGround?Math.min(1/Math.max(Math.abs(_up.y),.17),5.8):Math.max(_up.y,.15)))/(Math.max(qd,50)*S.area*CLA)-A0-flapCL/CLA,-.05,aSt*.75);
   _tg.x+=-(alpha-aTrim)*4.5*effS;
   _tg.y+=-beta*3.0*effS;
@@ -2099,7 +2101,7 @@ function buildMenu(){
   $('myPlanes').onclick=e=>{const b=e.target.closest('.card');if(!b)return;cfg.mine=b.dataset.k;for(const x of $('myPlanes').children)x.setAttribute('aria-pressed',x===b);buildPreview();save();};
   $('foePlanes').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;cfg.foe=b.dataset.k;for(const x of $('foePlanes').children)x.setAttribute('aria-pressed',x===b);save();};
 }
-function modeNote(){const n=$('modeNote');if(n)n.textContent=cfg.mode==='arcade'?'Arcade: A / D turn the plane like a car and it pulls the turn for you; throttle, flaps, gear and rudder run themselves; hold Shift to auto-chase the bandit. No stalls, the ground bounces you back up, unlimited ammo, guns that help aim, softer enemy, and instant respawn.':'Simulation: full flight physics, stalls, blackouts, limited ammo and realistic damage.';}
+function modeNote(){const n=$('modeNote');if(n)n.textContent=cfg.mode==='arcade'?'Arcade: A / D turn the plane like a car and it pulls the turn for you; Q / E roll it all the way round; throttle, flaps, gear and rudder run themselves; hold Shift to auto-chase the bandit. No stalls, the ground bounces you back up, unlimited ammo, guns that help aim, softer enemy, and instant respawn.':'Simulation: full flight physics, stalls, blackouts, limited ammo and realistic damage.';}
 function onCfg(k){if(k==='mode')modeNote();if(k==='gfx')applyGfx();if(k==='voice')voiceOn=cfg.voice;save();}
 function applyGfx(){const hi=cfg.gfx==='high';renderer.shadowMap.enabled=hi;sun.castShadow=hi;renderer.setPixelRatio(hi?Math.min(window.devicePixelRatio||1,2):1);buildClouds(hi?80:40);treeMesh.visible=true;scene.traverse(o=>{if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>m.needsUpdate=true);}});}
 function save(){try{localStorage.setItem('bandits-cfg',JSON.stringify(cfg));}catch(e){}}
