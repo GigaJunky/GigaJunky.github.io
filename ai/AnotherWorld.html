@@ -15,6 +15,7 @@
   button.primary { background:var(--acc); color:#111; border-color:var(--acc); font-weight:600; }
   select { background:#1d232a; border:1px solid var(--line); border-radius:6px; padding:6px 8px; }
   .hidden { display:none !important; }
+  [hidden] { display:none !important; }
 
   /* ---- setup screen ---- */
   #setup { max-width:760px; margin:0 auto; padding:40px 20px 60px; }
@@ -45,6 +46,16 @@
   #screen.smooth { image-rendering:auto; }
   #scan { position:absolute; pointer-events:none; background:repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 50%, rgba(0,0,0,.28) 50%, rgba(0,0,0,.28) 100%); }
   #msg { position:absolute; top:12px; left:50%; transform:translateX(-50%); background:rgba(10,12,14,.85); border:1px solid var(--line); padding:6px 14px; border-radius:6px; font-size:13px; pointer-events:none; transition:opacity .3s; }
+  #bar { display:none !important; }
+  #menu { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.55); z-index:8; }
+  #menu .panel { background:rgba(12,14,18,.94); border:2px solid rgba(224,166,58,.85); border-radius:16px; padding:18px 18px 12px; width:min(560px, 92vw); max-height:92vh; overflow:auto; }
+  #menu h2 { margin:0 0 10px; text-align:center; color:var(--acc); letter-spacing:.25em; font-size:22px; }
+  #menu .mi { display:flex; align-items:center; gap:10px; padding:9px 14px; border-radius:10px; cursor:pointer; font-size:17px; color:#c9cdd2; user-select:none; -webkit-user-select:none; }
+  #menu .mi.sel { background:rgba(224,166,58,.2); color:#fff; font-weight:600; }
+  #menu .mi .v { margin-left:auto; color:#8b929b; display:flex; align-items:center; gap:6px; font-weight:400; }
+  #menu .mi.sel .v { color:var(--acc); }
+  #menu .arr { width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:#1d232a; color:inherit; display:flex; align-items:center; justify-content:center; font-size:13px; padding:0; }
+  #menu .hint { text-align:center; color:#8b929b; font-size:12.5px; margin-top:10px; }
   #pauseOv { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:28px; letter-spacing:.3em; background:rgba(0,0,0,.45); pointer-events:none; }
   #bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:8px 10px; background:#0d0f12; border-top:1px solid #1c2127; font-size:13px; }
   #bar button, #bar select { padding:5px 9px; font-size:13px; }
@@ -52,11 +63,15 @@
   #bar input[type=range] { width:90px; }
   #bar .lbl { color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:0 1 auto; }
   #bar .grow { min-width:0; }
-  #help { position:absolute; inset:0; background:rgba(5,6,8,.92); display:flex; align-items:center; justify-content:center; z-index:5; }
+  #help { position:absolute; inset:0; background:rgba(5,6,8,.92); display:flex; align-items:center; justify-content:center; z-index:10; }
   #help .box { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px 26px; max-width:520px; font-size:14px; }
   #help table { border-collapse:collapse; width:100%; }
   #help td { padding:4px 8px; border-bottom:1px solid var(--line); }
   #help td:first-child { color:var(--acc); white-space:nowrap; }
+  #help .box { max-height:88vh; overflow:auto; max-width:720px; }
+  .readme { font-size:14px; color:#cfd3d8; } .readme h3 { font-size:15px; color:var(--acc); margin:16px 0 6px; } .readme p, .readme li { margin:4px 0; }
+  .readme table { border-collapse:collapse; width:100%; } .readme td { padding:5px 8px; border-bottom:1px solid var(--line); vertical-align:top; } .readme td:first-child { color:var(--acc); white-space:nowrap; }
+  #readmeCard summary { cursor:pointer; list-style:none; } #readmeCard summary::before { content:'▸ '; color:var(--acc); } #readmeCard[open] summary::before { content:'▾ '; }
 
   /* fullscreen: toolbar hidden, slides up when the mouse reaches the bottom edge */
   body.fs #bar { position:absolute; left:0; right:0; bottom:0; transform:translateY(100%); transition:transform .2s; z-index:6; }
@@ -74,7 +89,8 @@
   .ring.show.fade { opacity:.12; transition:opacity 2.2s ease-in; }
   #ringR { background:rgba(255,255,255,.18); }
   #knob { position:absolute; left:50%; top:50%; width:42%; height:42%; margin:-21% 0 0 -21%; border-radius:50%; background:rgba(255,255,255,.20); border:1px solid rgba(255,255,255,.3); }
-  #tPause { position:absolute; top:10px; right:12px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12);
+  body.gamepaused #tPause { display:none; }
+  #tPause { cursor:pointer; position:absolute; top:10px; right:12px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12);
             color:rgba(255,255,255,.3); font-size:14px; display:flex; align-items:center; justify-content:center; z-index:5; }
 </style>
 </head>
@@ -130,8 +146,53 @@
     <div id="startRow"><button id="startBtn" class="primary" disabled>▶ Start</button><span id="progress"></span></div>
   </div>
 
-  <p class="note">Controls: arrows (or WASD) move · Space / Enter / Ctrl = action · P or Esc = pause · C = enter a level code · 1–7 jump to a part · F = fullscreen · gamepads work too.
-  Engine: JavaScript port of Luc Dion's ESP32‑S3 Another World player (MIT). <i>Another World</i> © Éric Chahi. No game data is included.</p>
+  <details class="card" id="readmeCard"><summary><h2 style="display:inline">Read me — files, controls, HD, VR, troubleshooting</h2></summary>
+<div class="readme">
+<h3>What this is</h3>
+<p>A player for <i>Another World</i> (Éric Chahi, 1991) that runs entirely in your browser from your own game files. Nothing is uploaded and no game data is included. It is a JavaScript port of Luc Dion's ESP32‑S3 player (MIT licence), extended for the 20th Anniversary Edition, HD graphics, touch screens, gamepads and VR/AR headsets.</p>
+
+<h3>Starting it</h3>
+<p>Double‑click <code>AnotherWorld.html</code> — no installation or web server needed. Works in Chrome, Edge, Firefox, Safari, Samsung Internet and the Meta Quest browser.</p>
+
+<h3>Game files it accepts</h3>
+<ul>
+<li><b>20th Anniversary Edition (GOG / Steam, Windows, Mac or Linux)</b> — choose the game's install folder, e.g. <code>C:\GOG Games\Another World 20th Anniversary Edition</code>, or a <code>.zip</code> of it (easiest on phones and the Quest). The player needs the folder that contains <code>DAT</code>, <code>BGZ</code>, <code>WGZ</code>, <code>OGG</code> and <code>TXT</code>; it searches inside whatever you pick. If your selection contains several installs (for example <code>C:\GOG Games</code> with both the 15th and 20th editions), it uses the most complete 20th Anniversary folder and says which one.</li>
+<li><b>Amiga disk images</b> — pick both <code>.adf</code> (or <code>.adz</code>) files; everything is read from them.</li>
+<li><b>DOS / Amiga files</b> as used on the ESP32 SD card — <code>MEMLIST.BIN</code> + <code>BANK01</code>…<code>BANK0D</code>, optional <code>STRINGS.TXT</code>. Amiga banks without MEMLIST.BIN work if you add the <code>another</code> program from disk 1.</li>
+</ul>
+<p>After you pick files, the start screen lists what was found. For the 20th Anniversary Edition check the <b>HD backgrounds</b> and <b>HD font</b> lines: if they say “none”/“no”, the folder you picked lacks the HD pictures — <code>BGZ/data1280x800</code> + <code>BGZ/Font.bgz</code> (Linux/Mac builds) or <code>BMP/data1728x1080</code> + <code>BMP/Font.bmp</code> (Windows build). Pick the install folder itself rather than a shortcut or a partial copy. Both layouts are read automatically. (The 15th Anniversary Edition's packed format is not supported.)</p>
+
+<h3>Graphics</h3>
+<ul>
+<li><b>Sharp HD (1280×800)</b> — shapes drawn at 4× resolution; with the 20th Anniversary files also the painted HD backgrounds and the HD font. Default for the 20th Anniversary Edition.</li>
+<li><b>Original (320×200)</b> — the pixel‑exact original look.</li>
+<li>Switch at any time with the <b>H</b> key, Select/Back on a gamepad, Y on a Quest controller, or Graphics in the menu. Aspect (4:3 CRT or square pixels) and Display (sharp, smooth, scanlines) are in the menu too.</li>
+</ul>
+
+<h3>Controls</h3>
+<table>
+<tr><td>Keyboard</td><td>Arrows or WASD move · Space / Enter / Ctrl action (run, kick, shoot — hold to charge) · P or Esc opens the menu · C level‑code screen · 1–7 jump to a part · H HD/original · F fullscreen · M mute</td></tr>
+<tr><td>Gamepad</td><td>D‑pad or stick move · A/B/X/Y action · Start opens the menu · Select / Back / View switches HD ↔ original</td></tr>
+<tr><td>Touch screen</td><td>Nothing is shown until you touch. Left half: put your thumb down anywhere and slide to move. Right half: action. The circles appear under your thumbs and fade. Faint ❚❚ top‑right pauses.</td></tr>
+<tr><td>Meta Quest</td><td>Thumbstick move · trigger or A/X action · B opens the menu · Y switches HD ↔ original · click a thumbstick to leave VR/AR</td></tr>
+</table>
+<p><b>In‑game menu:</b> every display mode uses the same menu — press P or Esc, the ❚❚ button (top right), Start on a gamepad or B on a Quest controller. It has Resume, Graphics (Sharp HD / Original), Aspect and Display (or 3D depth and Screen size in VR/AR), Volume, Jump to a part, Fullscreen, Play in VR/AR, Controls &amp; read me, and Load other game files. Arrows/WASD or the stick select and change, Enter/Space/A/trigger choose; with a mouse or touch just click or tap.</p>
+
+<h3>VR and AR (Meta Quest and other WebXR headsets)</h3>
+<p>On a headset, <b>VR</b> and <b>AR</b> buttons appear in the menu bar. The game plays on a large floating screen — in VR in a dark space, in AR in your room. The background stays on the screen while characters and moving objects float in front of it for real depth. B opens the same menu inside the headset, with 3D depth (flat/low/medium/high), Screen size and Leave VR/AR — thumbstick up/down to select, left/right to change, trigger or A to choose.</p>
+
+<h3>Level codes</h3>
+<p>Press <b>C</b> during play, type the four‑letter code from your previous game and confirm with action.</p>
+
+<h3>Troubleshooting</h3>
+<ul>
+<li><b>No HD backgrounds or HD text:</b> look at the list on the start screen (see above), and make sure Graphics is set to Sharp HD (in the menu, or press H).</li>
+<li><b>In‑game text blank (DOS/Amiga):</b> add <code>STRINGS.TXT</code> or the game executable.</li>
+<li><b>The page won't open on a phone or headset:</b> some browsers refuse local HTML files; open it from the file manager with Samsung Internet / Chrome, or put it on a web page you control.</li>
+</ul>
+<p class="note"><i>Another World</i> © Éric Chahi. Engine based on the ANOTHERWORLD ESP32‑S3 port by Luc Dion (MIT); file formats as documented by the rawgl project. Font: Adafruit GFX classic font (BSD).</p>
+</div>
+  </details>
 </div>
 
 <!-- ===================================================================== PLAYER -->
@@ -140,26 +201,76 @@
     <canvas id="screen" width="320" height="200"></canvas>
     <div id="scan" class="hidden"></div>
     <div id="pauseOv" class="hidden">PAUSED</div>
+    <div id="tPause" title="Menu (P / Esc)">❚❚</div>
+    <div id="menu" class="hidden"><div class="panel"><h2>PAUSED</h2><div id="menuList"></div><div class="hint" id="menuHint"></div></div></div>
     <div id="msg" style="opacity:0"></div>
     <div id="touch">
       <div class="zone" id="zL"></div><div class="zone" id="zR"></div>
       <div class="ring" id="ringL"><div id="knob"></div></div>
       <div class="ring" id="ringR"></div>
-      <div id="tPause">❚❚</div>
+
     </div>
     <div id="help" class="hidden"><div class="box">
       <table>
         <tr><td>← → ↑ ↓ / WASD</td><td>Move, jump (↑), crouch (↓)</td></tr>
         <tr><td>Space · Enter · Ctrl</td><td>Action: run, kick, shoot (hold to charge)</td></tr>
-        <tr><td>P · Esc</td><td>Pause</td></tr>
+        <tr><td>P · Esc</td><td>Menu (pauses the game)</td></tr>
         <tr><td>C</td><td>Level-code screen (type letters, Backspace to erase)</td></tr>
         <tr><td>1 – 7</td><td>Jump to part 1–7</td></tr>
         <tr><td>F</td><td>Fullscreen</td></tr>
         <tr><td>M</td><td>Mute</td></tr>
-        <tr><td>Gamepad</td><td>D-pad/stick move · A/B/X/Y action · Start pause</td></tr>
-        <tr><td>Meta Quest</td><td>Thumbstick move · Trigger or A/X action · B/Y pause · click thumbstick to leave VR/AR</td></tr>
+        <tr><td>H</td><td>Switch sharp HD ↔ original graphics</td></tr>
+        <tr><td>Gamepad</td><td>D-pad/stick move · A/B/X/Y action · Start = menu · Select/Back/View = HD ↔ original</td></tr>
+        <tr><td>Meta Quest</td><td>Thumbstick move · Trigger or A/X action · B = menu · Y = HD ↔ original · click thumbstick to leave VR/AR</td></tr>
       </table>
-      <p style="text-align:right;margin:14px 0 0"><button id="helpClose">Close</button></p>
+      <details style="margin-top:12px"><summary style="cursor:pointer;color:var(--acc)">Full read me</summary>
+<div class="readme">
+<h3>What this is</h3>
+<p>A player for <i>Another World</i> (Éric Chahi, 1991) that runs entirely in your browser from your own game files. Nothing is uploaded and no game data is included. It is a JavaScript port of Luc Dion's ESP32‑S3 player (MIT licence), extended for the 20th Anniversary Edition, HD graphics, touch screens, gamepads and VR/AR headsets.</p>
+
+<h3>Starting it</h3>
+<p>Double‑click <code>AnotherWorld.html</code> — no installation or web server needed. Works in Chrome, Edge, Firefox, Safari, Samsung Internet and the Meta Quest browser.</p>
+
+<h3>Game files it accepts</h3>
+<ul>
+<li><b>20th Anniversary Edition (GOG / Steam, Windows, Mac or Linux)</b> — choose the game's install folder, e.g. <code>C:\GOG Games\Another World 20th Anniversary Edition</code>, or a <code>.zip</code> of it (easiest on phones and the Quest). The player needs the folder that contains <code>DAT</code>, <code>BGZ</code>, <code>WGZ</code>, <code>OGG</code> and <code>TXT</code>; it searches inside whatever you pick. If your selection contains several installs (for example <code>C:\GOG Games</code> with both the 15th and 20th editions), it uses the most complete 20th Anniversary folder and says which one.</li>
+<li><b>Amiga disk images</b> — pick both <code>.adf</code> (or <code>.adz</code>) files; everything is read from them.</li>
+<li><b>DOS / Amiga files</b> as used on the ESP32 SD card — <code>MEMLIST.BIN</code> + <code>BANK01</code>…<code>BANK0D</code>, optional <code>STRINGS.TXT</code>. Amiga banks without MEMLIST.BIN work if you add the <code>another</code> program from disk 1.</li>
+</ul>
+<p>After you pick files, the start screen lists what was found. For the 20th Anniversary Edition check the <b>HD backgrounds</b> and <b>HD font</b> lines: if they say “none”/“no”, the folder you picked lacks the HD pictures — <code>BGZ/data1280x800</code> + <code>BGZ/Font.bgz</code> (Linux/Mac builds) or <code>BMP/data1728x1080</code> + <code>BMP/Font.bmp</code> (Windows build). Pick the install folder itself rather than a shortcut or a partial copy. Both layouts are read automatically. (The 15th Anniversary Edition's packed format is not supported.)</p>
+
+<h3>Graphics</h3>
+<ul>
+<li><b>Sharp HD (1280×800)</b> — shapes drawn at 4× resolution; with the 20th Anniversary files also the painted HD backgrounds and the HD font. Default for the 20th Anniversary Edition.</li>
+<li><b>Original (320×200)</b> — the pixel‑exact original look.</li>
+<li>Switch at any time with the <b>H</b> key, Select/Back on a gamepad, Y on a Quest controller, or Graphics in the menu. Aspect (4:3 CRT or square pixels) and Display (sharp, smooth, scanlines) are in the menu too.</li>
+</ul>
+
+<h3>Controls</h3>
+<table>
+<tr><td>Keyboard</td><td>Arrows or WASD move · Space / Enter / Ctrl action (run, kick, shoot — hold to charge) · P or Esc opens the menu · C level‑code screen · 1–7 jump to a part · H HD/original · F fullscreen · M mute</td></tr>
+<tr><td>Gamepad</td><td>D‑pad or stick move · A/B/X/Y action · Start opens the menu · Select / Back / View switches HD ↔ original</td></tr>
+<tr><td>Touch screen</td><td>Nothing is shown until you touch. Left half: put your thumb down anywhere and slide to move. Right half: action. The circles appear under your thumbs and fade. Faint ❚❚ top‑right pauses.</td></tr>
+<tr><td>Meta Quest</td><td>Thumbstick move · trigger or A/X action · B opens the menu · Y switches HD ↔ original · click a thumbstick to leave VR/AR</td></tr>
+</table>
+<p><b>In‑game menu:</b> every display mode uses the same menu — press P or Esc, the ❚❚ button (top right), Start on a gamepad or B on a Quest controller. It has Resume, Graphics (Sharp HD / Original), Aspect and Display (or 3D depth and Screen size in VR/AR), Volume, Jump to a part, Fullscreen, Play in VR/AR, Controls &amp; read me, and Load other game files. Arrows/WASD or the stick select and change, Enter/Space/A/trigger choose; with a mouse or touch just click or tap.</p>
+
+<h3>VR and AR (Meta Quest and other WebXR headsets)</h3>
+<p>On a headset, <b>VR</b> and <b>AR</b> buttons appear in the menu bar. The game plays on a large floating screen — in VR in a dark space, in AR in your room. The background stays on the screen while characters and moving objects float in front of it for real depth. B opens the same menu inside the headset, with 3D depth (flat/low/medium/high), Screen size and Leave VR/AR — thumbstick up/down to select, left/right to change, trigger or A to choose.</p>
+
+<h3>Level codes</h3>
+<p>Press <b>C</b> during play, type the four‑letter code from your previous game and confirm with action.</p>
+
+<h3>Troubleshooting</h3>
+<ul>
+<li><b>No HD backgrounds or HD text:</b> look at the list on the start screen (see above), and make sure Graphics is set to Sharp HD (in the menu, or press H).</li>
+<li><b>In‑game text blank (DOS/Amiga):</b> add <code>STRINGS.TXT</code> or the game executable.</li>
+<li><b>The page won't open on a phone or headset:</b> some browsers refuse local HTML files; open it from the file manager with Samsung Internet / Chrome, or put it on a web page you control.</li>
+</ul>
+<p class="note"><i>Another World</i> © Éric Chahi. Engine based on the ANOTHERWORLD ESP32‑S3 port by Luc Dion (MIT); file formats as documented by the rawgl project. Font: Adafruit GFX classic font (BSD).</p>
+</div>
+      </details>
+      <p style="display:flex;align-items:center;gap:12px;margin:14px 0 0"><span class="note" style="flex:1">↑↓ scroll · Esc, Enter or A to go back to the menu</span><button id="helpClose">Close</button></p>
     </div></div>
   </div>
   <div id="bar">
@@ -174,6 +285,7 @@
     </select>
     <span class="grow"></span>
     <span class="lbl" id="partLbl"></span>
+    <button id="bHD" title="Switch between sharp HD and original graphics (H)">HD</button>
     <select id="bAspect" title="Aspect ratio"><option value="4:3">4:3 (CRT)</option><option value="16:10">16:10 (square pixels)</option></select>
     <select id="bFilter" title="Scaling"><option value="sharp">Sharp pixels</option><option value="smooth">Smooth</option><option value="scan">Scanlines</option></select>
     <button id="bHelp">?</button>
@@ -236,13 +348,75 @@ class FileStore {
     return best;
   }
   filter(re) { const out = []; for (const [k,f] of this.map) if (re.test(k)) out.push([k,f]); return out; }
+  // a store limited to one folder (used when several game installs were picked together)
+  scoped(root) { const s = new FileStore(); for (const [k,f] of this.map) if (k.startsWith(root)) s.map.set(k.slice(root.length), f); s.root = root; s.parent = this; return s; }
+  // like find(), but also looks in the rest of the selection (assets kept outside the game folder)
+  findAny(suffix) { return this.find(suffix) || (this.parent ? this.parent.find(suffix) : null); }
+  filterAny(re) { const r = this.filter(re); return r.length || !this.parent ? r : this.parent.filter(re); }
 }
 async function readBytes(file) { return new Uint8Array(await file.arrayBuffer()); }
 async function gunzip(bytes) {
-  if (typeof DecompressionStream === 'undefined') throw new Error('This browser cannot unpack .gz data (DecompressionStream missing). Use a recent Chrome, Edge, Firefox or Safari.');
-  const ds = new DecompressionStream('gzip');
-  const buf = await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer();
-  return new Uint8Array(buf);
+  if (bytes[0] !== 0x1F || bytes[1] !== 0x8B) return bytes;          // some builds ship the data uncompressed
+  if (typeof DecompressionStream !== 'undefined') {
+    try { return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()); }
+    catch (e) { console.warn('[gzip] native unpack failed, using the built-in one', e); }
+  }
+  // gzip header, then raw deflate
+  let o = 10; const fl = bytes[3];
+  if (fl & 4) o += 2 + (bytes[o] | (bytes[o+1] << 8));
+  if (fl & 8) { while (bytes[o++]); }
+  if (fl & 16) { while (bytes[o++]); }
+  if (fl & 2) o += 2;
+  return inflateRaw(bytes.subarray(o), le32(bytes, bytes.length - 4));
+}
+// Small RFC 1951 inflater (fallback for browsers without DecompressionStream)
+function inflateRaw(src, sizeHint) {
+  let out = new Uint8Array(Math.max(sizeHint || 0, src.length * 4, 1024)), op = 0, bp = 0, bb = 0, bc = 0;
+  const need = (n) => { if (op + n > out.length) { const o2 = new Uint8Array(Math.max(out.length * 2, op + n)); o2.set(out); out = o2; } };
+  const bits = (n) => { while (bc < n) { bb |= src[bp++] << bc; bc += 8; } const v = bb & ((1 << n) - 1); bb >>>= n; bc -= n; return v; };
+  const build = (lens) => {                                   // canonical Huffman -> {count, sym}
+    const count = new Uint16Array(16), offs = new Uint16Array(16), sym = new Uint16Array(lens.length);
+    for (const l of lens) count[l]++; count[0] = 0;
+    for (let i = 1; i < 16; i++) offs[i] = offs[i-1] + count[i-1];
+    lens.forEach((l, i) => { if (l) sym[offs[l]++] = i; });
+    return { count, sym };
+  };
+  const decode = (h) => { let code = 0, first = 0, index = 0; for (let len = 1; len < 16; len++) { code |= bits(1); const c = h.count[len]; if (code - c < first) return h.sym[index + (code - first)]; index += c; first = (first + c) << 1; code <<= 1; } throw new Error('bad deflate data'); };
+  const LB = [3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258], LE = [0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0];
+  const DB = [1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577], DE = [0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13];
+  let fixL = null, fixD = null, last = 0;
+  while (!last) {
+    last = bits(1); const type = bits(2);
+    if (type === 0) {
+      bb = 0; bc = 0; const len = src[bp] | (src[bp+1] << 8); bp += 4;
+      need(len); out.set(src.subarray(bp, bp + len), op); op += len; bp += len; continue;
+    }
+    let lh, dh;
+    if (type === 1) {
+      if (!fixL) { const l = new Uint8Array(288); l.fill(8, 0, 144); l.fill(9, 144, 256); l.fill(7, 256, 280); l.fill(8, 280); fixL = build(l); fixD = build(new Uint8Array(30).fill(5)); }
+      lh = fixL; dh = fixD;
+    } else {
+      const nl = bits(5) + 257, nd = bits(5) + 1, nc = bits(4) + 4, ord = [16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15];
+      const cl = new Uint8Array(19); for (let i = 0; i < nc; i++) cl[ord[i]] = bits(3);
+      const ch = build(cl), lens = new Uint8Array(nl + nd);
+      for (let i = 0; i < nl + nd; ) {
+        const sym = decode(ch);
+        if (sym < 16) lens[i++] = sym;
+        else { let rep, val = 0; if (sym === 16) { val = lens[i-1]; rep = 3 + bits(2); } else if (sym === 17) rep = 3 + bits(3); else rep = 11 + bits(7); while (rep--) lens[i++] = val; }
+      }
+      lh = build(lens.subarray(0, nl)); dh = build(lens.subarray(nl));
+    }
+    for (;;) {
+      const sym = decode(lh);
+      if (sym < 256) { need(1); out[op++] = sym; }
+      else if (sym === 256) break;
+      else {
+        const k = sym - 257, len = LB[k] + bits(LE[k]), d = decode(dh), dist = DB[d] + bits(DE[d]);
+        need(len); for (let i = 0; i < len; i++, op++) out[op] = out[op - dist];
+      }
+    }
+  }
+  return out.subarray(0, op);
 }
 
 /* ---------------------------------------------------------------------------- ByteKiller */
@@ -583,21 +757,49 @@ const STR_IDS_NTH = [
   0x17A,0x17B,0x160,0x164,0x163,0x177,0x175,0x161,0x176,0x162,0x179,0x165,0x178,0x166,0x167,0x168,
   0x16C,0x16D,0x16E,0x16F,0x170,0x169,0x172,0x17F,0x173,0x17E,0x174,0x16A,0x16B];
 const NTH_BITMAPS = [67,68,69,70,71,72,73,83,144,145];
+// The 20th edition's text files leave the death / checkpoint screen blank (its own engine draws that screen).
+// Original texts: the access-code prompt, "press button" and the checkpoint codes shown after you die.
+const NTH_CODE_SCREEN = {
+  EN: { 0x13C: '        ACCESS CODE:', 0x13D: 'PRESS BUTTON OR RETURN TO CONTINUE' },
+  FR: { 0x13C: "       CODE D'ACCES:", 0x13D: 'PRESSEZ LE BOUTON POUR CONTINUER' },
+  DE: { 0x13C: '        ZUGANGSCODE:', 0x13D: 'TASTE DRUECKEN UM WEITERZUSPIELEN' },
+  ES: { 0x13C: '   CODIGO DE ACCESO:', 0x13D: 'PULSA UN BOTON PARA CONTINUAR' },
+  IT: { 0x13C: "   CODICE D'ACCESSO:", 0x13D: 'PREMI UN TASTO PER CONTINUARE' },
+};
+const LEVEL_CODES = { 0x15E:'LDKD', 0x15F:'HTDC', 0x160:'CLLD', 0x161:'FXLC', 0x162:'KRFK', 0x163:'XDDJ', 0x164:'LBKG', 0x165:'KLFB', 0x166:'TTCT', 0x167:'DDRX', 0x168:'TBHK', 0x169:'BRTD', 0x16A:'CKJL', 0x16B:'LFCK', 0x16C:'BFLX', 0x16D:'XJRT', 0x16E:'HRTB', 0x16F:'HBHK', 0x170:'JCGB', 0x172:'TFBB', 0x173:'TXHF', 0x174:'JHJL' };
 const LOOPING_WAVS = new Set([1,3,8,16,89,97,102,104,106,132,139]);
 
 class Res20th {
   constructor(store) { this.store = store; this.kind = '20th'; this.dat = new Map(); this.bmp = new Map(); this.wav = new Map(); this.wavPending = new Map(); this.music = new Map(); this.strings = new Map(); this.musicType = 0; }
   get title() { return '20th Anniversary Edition'; }
+  // HD background folder: BGZ/data<W>x<H>; 1280x800 preferred, otherwise the one with the most pictures
+  static hdFolder(store) {
+    const dirs = new Map();
+    const re = /(^|\/)(BGZ|BMP)\/DATA(\d+)X(\d+)\/(\d+X\d+_)?E\d+\.(BGZ|BMP)$/;
+    for (const [k] of (store.filterAny ? store.filterAny(re) : store.filter(re))) {
+      const m = /(BGZ|BMP)\/DATA(\d+)X(\d+)\//.exec(k), key = m[1] + ':' + m[2] + 'X' + m[3];
+      dirs.set(key, (dirs.get(key) || 0) + 1);
+    }
+    if (!dirs.size) return null;
+    const pick = dirs.has('BGZ:1280X800') ? 'BGZ:1280X800' : [...dirs].sort((a, b) => b[1] - a[1] || parseInt(b[0].split(':')[1]) - parseInt(a[0].split(':')[1]))[0][0];
+    const [kind, size] = pick.split(':');
+    return { kind, size, count: dirs.get(pick) };
+  }
+  static txtFile(store, L) {                                  // TXT/EN.txt, TXT/Linux/EN.txt, TXT/Windows/EN.txt, ...
+    const re = new RegExp('(^|/)TXT/([^/]+/)?' + L + '\\.TXT$');
+    const a = (store.filterAny ? store.filterAny(re) : store.filter(re)).sort((x, y) => x[0].length - y[0].length);
+    return a.length ? a[0][1] : null;
+  }
   static languages(store) {
     const langs = [];
-    for (const L of ['EN','FR','DE','ES','IT']) if (store.find('TXT/' + L + '.TXT') || store.find('TXT/LINUX/' + L + '.TXT')) langs.push(L);
+    for (const L of ['EN','FR','DE','ES','IT']) if (Res20th.txtFile(store, L)) langs.push(L);
     return langs;
   }
   async init(progress, opts) {
     this.remastered = opts.audio === 'remastered';
     this.difficulty = opts.difficulty;
     // FILEnnn.DAT by number, plus the updated per-part files (INTRO2011.mac, BANK2.MAT, ...) by name
-    const dats = this.store.filter(/(^|\/)DAT\/(FILE\d{3}\.DAT|[A-Z]+2011\.(PAL|MAC|MAT)|BANK2\.MAT)$/);
+    const dats = this.store.filter(/(^|\/)DAT\/(FILE\d{3}\.DAT|[A-Z]+2011(HD)?\.(PAL|MAC|MAT)|BANK2(HD)?\.MAT)$/);
     this.named = new Map();
     let i = 0;
     for (const [k,f] of dats) {
@@ -609,18 +811,24 @@ class Res20th {
     i = 0;
     for (const n of NTH_BITMAPS) {
       progress('Unpacking backgrounds…', 0.6 + (++i / NTH_BITMAPS.length) * 0.3);
-      const f = this.store.find(`BGZ/FILE${String(n).padStart(3,'0')}.BGZ`);
+      const f = this.store.findAny(`BGZ/FILE${String(n).padStart(3,'0')}.BGZ`) || this.store.findAny(`BMP/FILE${String(n).padStart(3,'0')}.BMP`);
       if (f) try { this.bmp.set(n, await gunzip(await readBytes(f))); } catch (e) { console.warn(e); }
     }
     const L = opts.lang || 'EN';
-    const tf = this.store.find('TXT/' + L + '.TXT') || this.store.find('TXT/LINUX/' + L + '.TXT');
+    const tf = Res20th.txtFile(this.store, L);
     if (tf) {
       const lines = decodeText(await readBytes(tf)).replace(/^\uFEFF/,'').split('\n').map(s => s.replace(/\r$/,''));
       STR_IDS_NTH.forEach((id, idx) => { if (lines[idx] !== undefined && !this.strings.has(id)) this.strings.set(id, toCP437(lines[idx])); });
     }
+    // fill the blank death-screen texts (access-code prompt and checkpoint codes)
+    const blank = (id) => !(this.strings.get(id) || '').trim();
+    const cs = NTH_CODE_SCREEN[L] || NTH_CODE_SCREEN.EN;
+    for (const id of [0x13C, 0x13D]) if (blank(id)) this.strings.set(id, cs[id]);
+    for (const [id, code] of Object.entries(LEVEL_CODES)) if (blank(+id)) this.strings.set(+id, code);
     this.hasCodeScreen = this.dat.has(0x7E);
     this.hd = !!opts.hd;
-    const ff = this.hd && this.store.find('BGZ/FONT.BGZ');
+    this.hdDir = Res20th.hdFolder(this.store);
+    const ff = this.store.findAny('BGZ/FONT.BGZ') || this.store.findAny('BMP/FONT.BMP');
     if (ff) try { this.fontBmp = await gunzip(await readBytes(ff)); } catch (e) { console.warn(e); }
     progress('Ready', 1);
     // warm the sound cache in the background
@@ -631,28 +839,36 @@ class Res20th {
   setupPart(part) {
     const ids = PARTS[part - PART_FIRST];
     const names = ['INTRO','EAU','PRI','CITE','ARENE','LUXE','FINAL'][part - PART_INTRO];
+    // The Windows build also ships …2011HD.pal/.mac/.mat + BANK2HD.MAT. Some of those shapes are stored at a larger
+    // scale that DotEmu's engine resolves with data we can't read, so they would be drawn far too big: not used.
+    const hdSet = !!(window.__tryHdSet && names && this.hd && ['PAL','MAC','MAT'].every((e) => this.named.has(`${names}2011HD.${e}`)) && this.named.has('BANK2HD.MAT'));
+    this.partHdSet = hdSet;
     const get = (n, slot) => {
       if (!n) return null;
-      if (names) { const alt = this.named.get(slot === 3 ? 'BANK2.MAT' : `${names}2011.${['PAL','MAC','MAT'][slot]}`); if (alt) return alt; }
+      if (names) { const alt = this.named.get(slot === 3 ? (hdSet ? 'BANK2HD.MAT' : 'BANK2.MAT') : `${names}2011${hdSet ? 'HD' : ''}.${['PAL','MAC','MAT'][slot]}`); if (alt) return alt; }
       const d = this.dat.get(n); if (!d) throw new Error(`game/DAT/FILE${String(n).padStart(3,'0')}.DAT missing`); return d;
     };
     return { pal: get(ids[0],0), code: get(ids[1],1), poly: get(ids[2],2), poly2: get(ids[3],3) };
   }
   request(num) {
     if (num >= 3000) {                                    // painted HD backgrounds (only in HD mode); the VM waits for the promise
-      if (!this.hd) return null;
-      return this.loadHd(num).then((b) => { if (b) this.onBitmap?.(b, 'hd'); });
+      this.lastBg = num;
+      if (!this.hd) { this.onBitmap?.(null, 'hd', num); return null; }    // remembered, loaded if HD is switched on
+      return this.loadHd(num).then((b) => { if (b) this.onBitmap?.(b, 'hd', num); });
     }
     if (num >= 2000) return null;                         // 2000+: sound preload
     const b = this.bmp.get(num);
-    if (b) this.onBitmap?.(b, 'bmp');
+    if (b) { this.lastBg = null; this.onBitmap?.(b, 'bmp'); }
     return null;
   }
   async loadHd(num) {
     const c = this.hdCache || (this.hdCache = new Map());
     if (c.has(num)) { const v = c.get(num); c.delete(num); c.set(num, v); return v; }
     let f = null;
-    for (const size of ['1280X800', '1152X720']) if ((f = this.store.find(`BGZ/DATA${size}/${size}_E${num}.BGZ`))) break;
+    const d = this.hdDir;
+    if (d) f = d.kind === 'BMP' ? this.store.findAny(`BMP/DATA${d.size}/E${num}.BMP`) : this.store.findAny(`BGZ/DATA${d.size}/${d.size}_E${num}.BGZ`);
+    if (!f) for (const size of ['1280X800', '1152X720']) if ((f = this.store.findAny(`BGZ/DATA${size}/${size}_E${num}.BGZ`))) break;
+    if (!f) { this.hdMissing = (this.hdMissing || 0) + 1; console.warn('[HD] no picture for background ' + num); }
     let b = null;
     if (f) try { b = await gunzip(await readBytes(f)); } catch (e) { console.warn(e); }
     c.set(num, b);
@@ -724,20 +940,90 @@ class Video {
     this.hdFont = null;                                   // 256x256 1-bit atlas (20th edition Font.bgz)
     this.resetPages();
   }
+  // switch between 320x200 (S=1) and 1280x800 (S=4) while playing; page contents are carried over
+  setScale(S) {
+    if (S === this.S) return;
+    const oS = this.S, oPW = this.PW, old = this.pages, low0 = this.low0;
+    this.S = S; this.PW = W * S; this.PH = H * S; this.PS = this.PW * this.PH;
+    const cv = this.ctx.canvas; cv.width = this.PW; cv.height = this.PH;
+    this.img = this.ctx.createImageData(this.PW, this.PH); this.out = new Uint32Array(this.img.data.buffer);
+    this.bg = null; this.bgBuf = null;
+    // pages without a usable drawing record are resampled
+    this.pages = old.map((pg) => {
+      const np = new Uint8Array(this.PS);
+      if (S < oS) {
+        const h = oS >> 1;
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+          const v = pg[(y * oS + h) * oPW + x * oS + h];
+          np[y * W + x] = v < 16 ? v : (low0 ? low0[y * W + x] : 0);
+        }
+      } else {
+        const PW = this.PW;
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+          const v = pg[y * W + x], o = y * S * PW + x * S;
+          for (let k = 0; k < S; k++) np.fill(v, o + k * PW, o + k * PW + S);
+        }
+      }
+      return np;
+    });
+    this.rebuild();
+  }
+  // ---- drawing records: what was drawn into each page since it was last cleared, so a change of
+  //      resolution can redraw everything properly instead of stretching pixels
+  rec(page, e) {
+    if (this.replaying) return;
+    const L = this.logs[page];
+    if (!L) return;
+    if (L.length > 6000) { this.logs[page] = null; return; }
+    L.push(e);
+  }
+  replay(i, log) {
+    const pg = this.pages[i], saveDraw = this.draw;
+    pg.fill(0);
+    for (const e of log) {
+      switch (e.t) {
+        case 'fill': pg.fill(e.c); break;
+        case 'bmp': this.bmpTarget = i; this.loadBitmap(e.buf, e.kind); this.bmpTarget = 0; break;
+        case 'hd': if (this.S > 1 && e.buf) { this.bmpTarget = i; this.loadBitmap(e.buf, 'hd'); this.bmpTarget = 0; } break;
+        case 'shape': this.draw = i; this.drawShapeAt(e.seg, e.off, 0xFF, e.zoom, e.x, e.y, 0); break;
+        case 'text': this.draw = i; this.drawString(e.color, e.x, e.y, e.id, e.txt, e.esc); break;
+        case 'scroll': {
+          const tmp = this.pages.length; this.pages.push(new Uint8Array(this.PS));
+          this.replay(tmp, e.src);
+          const from = this.pages.pop(), dy = e.v * this.S * this.PW;
+          if (dy < 0) pg.set(from.subarray(-dy, this.PS), 0); else pg.set(from.subarray(0, this.PS - dy), dy);
+        } break;
+      }
+    }
+    this.draw = saveDraw;
+  }
+  rebuild() {
+    this.replaying = true;
+    try { for (let i = 0; i < 4; i++) if (this.logs[i]) this.replay(i, this.logs[i]); }
+    finally { this.replaying = false; }
+    this.present();
+  }
+  // HD pictures the game asked for while low-res was on (they were skipped then)
+  pendingHd() {
+    const out = [], walk = (L) => { if (L) for (const e of L) { if (e.t === 'hd' && !e.buf) out.push(e); else if (e.t === 'scroll') walk(e.src); } };
+    this.logs.forEach(walk);
+    return out;
+  }
   rgba(c) { const r = ((c >> 8) & 15) * 17, g = ((c >> 4) & 15) * 17, b = (c & 15) * 17; return (0xFF000000 | (b << 16) | (g << 8) | r) >>> 0; }
-  resetPages() { this.back = 1; this.front = 2; this.draw = this.pageIndex(0xFE); }
+  resetPages() { this.back = 1; this.front = 2; this.draw = this.pageIndex(0xFE); this.logs = [[], [], [], []]; }
   pageIndex(id) { if (id <= 3) return id; if (id === 0xFE) return this.front; if (id === 0xFF) return this.back; return 0; }
   selectPage(id) { this.draw = this.pageIndex(id); }
-  fillPage(id, color) { this.pages[this.pageIndex(id)].fill(color & 15); }
+  fillPage(id, color) { const d = this.pageIndex(id); this.pages[d].fill(color & 15); if (!this.replaying) this.logs[d] = [{ t: 'fill', c: color & 15 }]; }
   copyPage(src, dst, vscroll) {
     if (src === dst) return;
     if (src >= 0xFE || !(src & 0x80)) {
       const s = this.pageIndex(src >= 0xFE ? src : (src & 0xBF)), d = this.pageIndex(dst);
-      if (s !== d) this.pages[d].set(this.pages[s]);
+      if (s !== d) { this.pages[d].set(this.pages[s]); this.logs[d] = this.logs[s] ? this.logs[s].slice() : null; }
       return;
     }
     const s = this.pageIndex(src & 3), d = this.pageIndex(dst);
     if (s === d || vscroll < -199 || vscroll > 199) return;
+    this.logs[d] = this.logs[s] ? [{ t: 'scroll', src: this.logs[s].slice(), v: vscroll }] : null;
     const from = this.pages[s], to = this.pages[d], dy = vscroll * this.S * this.PW;
     if (dy < 0) to.set(from.subarray(-dy, this.PS), 0);
     else to.set(from.subarray(0, this.PS - dy), dy);
@@ -879,11 +1165,11 @@ class Video {
       this.fillPolygon(seg, p, color, zoom, x, y);
     } else if ((h & 0x3F) === 2) this.drawGroup(seg, p, zoom, x, y, depth);
   }
-  drawShape(seg, off, zoom, x, y) { if (seg) this.drawShapeAt(seg, off, 0xFF, zoom, x, y, 0); }
+  drawShape(seg, off, zoom, x, y) { if (!seg) return; this.rec(this.draw, { t: 'shape', seg, off, zoom, x, y }); this.drawShapeAt(seg, off, 0xFF, zoom, x, y, 0); }
 
   // 320x200 indices -> page 0, enlarged to the page size
   put320(ix) {
-    const dst = this.pages[0], S = this.S, PW = this.PW;
+    const dst = this.pages[this.bmpTarget || 0], S = this.S, PW = this.PW;
     if (S === 1) { dst.set(ix); return; }
     for (let y = 0; y < H; y++) {
       const row = new Uint8Array(PW);
@@ -891,7 +1177,11 @@ class Video {
       for (let k = 0; k < S; k++) dst.set(row, (y * S + k) * PW);
     }
   }
-  loadBitmap(buf, kind) {
+  loadBitmap(buf, kind, num) {
+    if (!this.replaying) {
+      if (kind === 'hd') this.rec(0, { t: 'hd', num, buf });
+      else this.logs[0] = [{ t: 'bmp', buf, kind }];
+    }
     const ix = new Uint8Array(PAGE);
     if (kind === 'planar') {                              // 4 planes of 8000 bytes, plane 0 = low bit
       if (buf.length < 32000) return;
@@ -917,13 +1207,36 @@ class Video {
     if (kind === 'hd' && bpp === 8 && this.S > 1) {        // painted HD background: true colours from the BMP palette
       const ncol = Math.min(256, (data - 54) >> 2), lut = new Uint32Array(256);
       for (let i = 0; i < ncol; i++) { const o = 54 + i * 4; lut[i] = (0xFF000000 | (buf[o+2]) | (buf[o+1] << 8) | (buf[o] << 16)) >>> 0; }
-      const PW = this.PW, PH = this.PH, bg = this.bg || (this.bg = new Uint32Array(this.PS));
-      for (let y = 0; y < PH; y++) {
-        const sy = Math.min(h - 1, Math.floor(y * h / PH)), row = data + (h0 > 0 ? h - 1 - sy : sy) * stride;
-        if (w === PW) for (let x = 0; x < PW; x++) bg[y * PW + x] = lut[buf[row + x]];
-        else for (let x = 0; x < PW; x++) bg[y * PW + x] = lut[buf[row + Math.floor(x * w / PW)]];
+      const target = this.pages[this.bmpTarget || 0];
+      if (!this.replaying) {                              // fallback copy of the polygon background underneath
+        const p0 = this.pages[0], S = this.S, l0 = new Uint8Array(PAGE), h2 = S >> 1;
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const v = p0[(y * S + h2) * this.PW + x * S + h2]; l0[y * W + x] = v < 16 ? v : (this.low0 ? this.low0[y * W + x] : 0); }
+        this.low0 = l0;
       }
-      this.pages[0].fill(16);
+      if (this.bgBuf === buf && this.bg) { target.fill(16); return; }   // same picture already decoded
+      this.bgBuf = buf;
+      const PW = this.PW, PH = this.PH, bg = this.bg || (this.bg = new Uint32Array(this.PS));
+      const rowOf = (sy) => data + (h0 > 0 ? h - 1 - sy : sy) * stride;
+      if (w === PW && h === PH) {
+        for (let y = 0; y < PH; y++) { const row = rowOf(y); for (let x = 0; x < PW; x++) bg[y * PW + x] = lut[buf[row + x]]; }
+      } else {                                              // e.g. Windows 1728x1080 -> 1280x800: bilinear filtering
+        const fx = w / PW, fy = h / PH, ch = (c, sh) => (c >>> sh) & 0xFF;
+        for (let y = 0; y < PH; y++) {
+          const syf = Math.max(0, (y + 0.5) * fy - 0.5), y0 = Math.min(h - 1, syf | 0), y1 = Math.min(h - 1, y0 + 1), wy = syf - y0;
+          const r0 = rowOf(y0), r1 = rowOf(y1);
+          for (let x = 0; x < PW; x++) {
+            const sxf = Math.max(0, (x + 0.5) * fx - 0.5), x0 = Math.min(w - 1, sxf | 0), x1 = Math.min(w - 1, x0 + 1), wx = sxf - x0;
+            const a = lut[buf[r0 + x0]], b = lut[buf[r0 + x1]], c = lut[buf[r1 + x0]], d = lut[buf[r1 + x1]];
+            let o = 0xFF000000;
+            for (const sh of [0, 8, 16]) {
+              const v = (ch(a, sh) * (1 - wx) + ch(b, sh) * wx) * (1 - wy) + (ch(c, sh) * (1 - wx) + ch(d, sh) * wx) * wy;
+              o |= (v + 0.5 | 0) << sh;
+            }
+            bg[y * PW + x] = o >>> 0;
+          }
+        }
+      }
+      target.fill(16);
       return;
     }
     console.warn('[VID] bitmap ' + w + 'x' + h + ' ignored');
@@ -963,6 +1276,7 @@ class Video {
   }
   drawString(color, x, y, id, txt, escaped) {
     if (txt == null) return;
+    this.rec(this.draw, { t: 'text', color, x, y, id, txt, esc: escaped });
     const page = this.pages[this.draw], x0 = x;
     for (let i = 0; i < txt.length; i++) {
       const ch = txt.charCodeAt(i);
@@ -1016,6 +1330,40 @@ class XRScreen {
     session.requestAnimationFrame((t, f) => this.frame(t, f));
   }
   end() { this.session?.end().catch(() => {}); }
+
+  // ---- pause menu inside the headset: same items as the on-screen menu (see menuItems)
+  cycle(key, list, d) {
+    let i = list.indexOf(this[key]); if (i < 0) i = 1;
+    this[key] = list[(i + d + list.length) % list.length];
+    if (key === 'depth') { $('bDepth').value = String(this.depth); this.video.xrDirty = true; this.video.buildLayers?.(); }
+  }
+  menuChanged() { this.menuDirty = true; }
+  drawMenu() {
+    const c = this.menuCanvas || (this.menuCanvas = Object.assign(document.createElement('canvas'), { width: 1024, height: 768 }));
+    const x = c.getContext('2d'), items = menuItems(), sel = MENU.sel;
+    x.clearRect(0, 0, 1024, 768);
+    x.fillStyle = 'rgba(12,14,18,0.92)'; x.strokeStyle = 'rgba(224,166,58,0.9)'; x.lineWidth = 4;
+    x.beginPath(); x.roundRect(8, 8, 1008, 752, 28); x.fill(); x.stroke();
+    x.fillStyle = '#e0a63a'; x.font = 'bold 54px system-ui, sans-serif'; x.textAlign = 'center'; x.fillText('PAUSED', 512, 90);
+    const step = Math.min(74, 560 / items.length);
+    items.forEach((it, i) => {
+      const y = 160 + i * step;
+      if (i === sel) { x.fillStyle = 'rgba(224,166,58,0.22)'; x.beginPath(); x.roundRect(60, y - 50, 904, 66, 14); x.fill(); }
+      x.textAlign = 'left'; x.font = (i === sel ? 'bold ' : '') + '40px system-ui, sans-serif'; x.fillStyle = i === sel ? '#ffffff' : '#c9cdd2';
+      x.fillText(it.label, 100, y);
+      if (it.value) { x.textAlign = 'right'; x.fillStyle = i === sel ? '#e0a63a' : '#8b929b'; x.fillText((it.change ? '◀ ' : '') + it.value + (it.change ? ' ▶' : ''), 924, y); }
+    });
+    x.textAlign = 'center'; x.font = '28px system-ui, sans-serif'; x.fillStyle = '#8b929b';
+    x.fillText('Thumbstick ↑↓ select · ←→ change · Trigger / A choose · B resume', 512, 732);
+    const gl = this.gl;
+    if (!this.texMenu) { this.texMenu = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.texMenu);
+      for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); }
+    gl.bindTexture(gl.TEXTURE_2D, this.texMenu);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    this.menuDirty = false;
+  }
   upload() {
     const gl = this.gl, v = this.video;
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
@@ -1050,6 +1398,16 @@ class XRScreen {
       const pv = mat4.mul(view.projectionMatrix, view.transform.inverse.matrix);
       gl.bindTexture(gl.TEXTURE_2D, this.texBg); gl.uniformMatrix4fv(uM, false, mat4.mul(pv, mBg)); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       if (this.depth > 0) { gl.bindTexture(gl.TEXTURE_2D, this.texFg); gl.uniformMatrix4fv(uM, false, mat4.mul(pv, mFg)); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
+    }
+    if (game && game.paused) {                             // pause menu floats in front of the screen
+      if (this.menuDirty || !this.texMenu) this.drawMenu();
+      gl.uniform1f(gl.getUniformLocation(this.prog, 'dim'), 1);
+      const zm = z + this.depth + 0.5, km = -zm / -z * 0.62, mM = mat4.model(0, 0, zm, hw * km, hw * km * 0.75);
+      for (const view of pose.views) {
+        const vp = layer.getViewport(view); gl.viewport(vp.x, vp.y, vp.width, vp.height);
+        const pv = mat4.mul(view.projectionMatrix, view.transform.inverse.matrix);
+        gl.bindTexture(gl.TEXTURE_2D, this.texMenu); gl.uniformMatrix4fv(uM, false, mat4.mul(pv, mM)); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      }
     }
   }
 }
@@ -1206,23 +1564,25 @@ class Input {
   get up() { return this.k.up || this.touch.up || this.pad.up; }
   get down() { return this.k.down || this.touch.down || this.pad.down; }
   get action() { return this.k.action || this.touch.action || this.pad.action; }
-  pollPads(onPause, onExitXR) {
-    const pads = [...(navigator.getGamepads ? navigator.getGamepads() : [])];
+  pollPads(onPause, onExitXR, onHD) {
+    const pads = [...(navigator.getGamepads ? navigator.getGamepads() : [])].map((g) => g && { g, hand: /left/i.test(g.id) ? 'left' : /right/i.test(g.id) ? 'right' : '' });
     const xs = game && game.xr && game.xr.session;
-    if (xs) for (const src of xs.inputSources) if (src.gamepad) pads.push(src.gamepad);
-    const p = { left:false, right:false, up:false, down:false, action:false }; let start = false, exit = false;
-    for (const g of pads) {
+    if (xs) for (const src of xs.inputSources) if (src.gamepad) pads.push({ g: src.gamepad, hand: src.handedness });
+    const p = { left:false, right:false, up:false, down:false, action:false }; let start = false, exit = false, hd = false;
+    for (const e of pads) {
+      const g = e && e.g;
       if (!g || !g.connected) continue;
       const b = (i) => !!(g.buttons[i] && g.buttons[i].pressed);
       if (g.mapping === 'xr-standard' || /oculus|meta|quest/i.test(g.id)) {
-        // Quest Touch: thumbstick = move, trigger or A/X = action, B/Y = pause, thumbstick click = leave VR
+        // Quest Touch: thumbstick = move, trigger or A/X = action, B = pause / menu, Y = HD <-> original, thumbstick click = leave VR
         const ax = g.axes[2] || g.axes[0] || 0, ay = g.axes[3] || g.axes[1] || 0;
         p.left ||= ax < -0.5; p.right ||= ax > 0.5; p.up ||= ay < -0.5; p.down ||= ay > 0.5;
         p.action ||= b(0) || b(4);
-        start ||= b(5);
+        if (e.hand === 'left') hd ||= b(5); else start ||= b(5);
         exit ||= b(3);
         continue;
       }
+      hd ||= b(8);                                          // Select / Back / View = HD <-> original
       const ax = g.axes[0] || 0, ay = g.axes[1] || 0;
       p.left ||= b(14) || ax < -0.5; p.right ||= b(15) || ax > 0.5;
       p.up ||= b(12) || ay < -0.5; p.down ||= b(13) || ay > 0.5;
@@ -1232,7 +1592,8 @@ class Input {
     this.pad = p;
     if (start && !this.padStart) onPause();
     if (exit && !this.padExit) onExitXR?.();
-    this.padStart = start; this.padExit = exit;
+    if (hd && !this.padHD) onHD?.();
+    this.padStart = start; this.padExit = exit; this.padHD = hd;
   }
 }
 
@@ -1251,7 +1612,7 @@ class VM {
     this.seg = null; this.curPart = 0; this.nextPart = 0;
     this.t = -1; this.threadStarted = false; this.blit = -1;
     this.opts = {};
-    res.onBitmap = (b, kind) => video.loadBitmap(b, kind);
+    res.onBitmap = (b, kind, num) => { if (b) video.loadBitmap(b, kind, num); else video.rec(0, { t: 'hd', num, buf: null }); };
   }
   init(opts) {
     this.opts = opts || {};
@@ -1269,6 +1630,7 @@ class VM {
     if (this.res.kind === 'classic') this.vars[0xE4] = 0x14;
     else { this.vars[0xBF] = this.opts.difficulty ?? 1; this.vars[0xDE] = this.opts.remastered ? 1 : 0; }
     this.seg = this.res.setupPart(part, this.curPart);
+    this.res.lastBg = null; this.vid.low0 = null;
     this.vid.palSeg = this.seg.pal;
     this.code = this.seg.code;
     this.curPart = part;
@@ -1450,6 +1812,101 @@ class VM {
   }
 }
 
+/* ---------------------------------------------------------------------------- in-game menu (all display modes) */
+// One menu model, shown as an on-screen panel (keyboard, mouse, touch, gamepad) or drawn inside the VR/AR headset.
+const MENU = { sel: 0, jumpTo: 0, prev: {} };
+const PART_LIST = [16001, 16002, 16003, 16004, 16005, 16006, 16007, 16009];
+let xrSupport = { vr: false, ar: false };
+const inXR = () => !!(game && game.xr && game.xr.session);
+function cycleSelect(id, d) {
+  const el = $(id), n = el.options.length;
+  el.selectedIndex = (el.selectedIndex + d + n) % n;
+  el.dispatchEvent(new Event('change'));
+}
+function menuItems() {
+  const g = game; if (!g) return [];
+  const xr = inXR() ? g.xr : null, part = MENU.jumpTo || g.vm.curPart || PART_INTRO;
+  const opt = (id) => $(id).options[$(id).selectedIndex].text;
+  const items = [{ label: 'Resume', act: () => togglePause(false) }];
+  items.push({ label: 'Graphics', value: g.video.S > 1 ? 'Sharp HD' : 'Original', change: () => toggleHD() });
+  if (xr) {
+    const depthName = { 0: 'Flat', 0.2: 'Low', 0.35: 'Medium', 0.6: 'High' }[xr.depth] || 'Medium';
+    const sizeName = { 2.2: 'Normal', 3.0: 'Large', 4.2: 'Huge' }[xr.width] || 'Large';
+    items.push({ label: '3D depth', value: depthName, change: (d) => xr.cycle('depth', [0, 0.2, 0.35, 0.6], d) });
+    items.push({ label: 'Screen size', value: sizeName, change: (d) => xr.cycle('width', [2.2, 3.0, 4.2], d) });
+  } else {
+    items.push({ label: 'Aspect', value: opt('bAspect'), change: (d) => cycleSelect('bAspect', d) });
+    items.push({ label: 'Display', value: opt('bFilter'), change: (d) => cycleSelect('bFilter', d) });
+  }
+  items.push({ label: 'Volume', value: g.muted ? 'Muted' : $('vol').value + '%', change: (d) => {
+    const v = Math.max(0, Math.min(100, +$('vol').value + d * 10)); $('vol').value = v; g.muted = false; g.sound.setVolume(v / 100); } });
+  items.push({ label: 'Jump to', value: PART_NAMES[part] || part, change: (d) => { const i = PART_LIST.indexOf(part); MENU.jumpTo = PART_LIST[(i + d + PART_LIST.length) % PART_LIST.length]; },
+    act: () => { g.input.partReq = MENU.jumpTo || part; MENU.jumpTo = 0; togglePause(false); flash(PART_NAMES[g.input.partReq]); } });
+  if (xr) items.push({ label: 'Leave ' + (xr.mode === 'ar' ? 'AR' : 'VR'), act: () => xr.end() });
+  else {
+    items.push({ label: 'Fullscreen', value: isFs() ? 'On' : 'Off', change: () => toggleFull() });
+    if (xrSupport.vr) items.push({ label: 'Play in VR', act: () => enterXR('vr') });
+    if (xrSupport.ar) items.push({ label: 'Play in AR', act: () => enterXR('ar') });
+    items.push({ label: 'Controls & read me', act: () => openHelp(true) });
+    items.push({ label: 'Load other game files', act: () => quitGame() });
+  }
+  return items;
+}
+function menuDo(kind, d) {
+  const items = menuItems(); if (!items.length) return;
+  MENU.sel = Math.min(MENU.sel, items.length - 1);
+  const it = items[MENU.sel];
+  if (kind === 'move') MENU.sel = (MENU.sel + d + items.length) % items.length;
+  else if (kind === 'change') { if (it.change) it.change(d); }
+  else if (kind === 'choose') { if (it.act) it.act(); else if (it.change) it.change(1); }
+  menuRefresh();
+}
+function menuPad(p) {                                       // gamepad / Quest controller edges
+  const prev = MENU.prev; MENU.prev = { ...p };
+  const edge = (k) => p[k] && !prev[k];
+  // holding up/down keeps scrolling: first repeat after 400 ms, then every 150 ms
+  const now = performance.now(), dir = p.up ? -1 : p.down ? 1 : 0;
+  if (dir && (edge('up') || edge('down'))) MENU.rep = now + 400;
+  else if (dir && now >= (MENU.rep || Infinity)) { MENU.rep = now + 150; menuDo('move', dir); return; }
+  if (!dir) MENU.rep = 0;
+  if (edge('up')) menuDo('move', -1); else if (edge('down')) menuDo('move', 1);
+  else if (edge('left')) menuDo('change', -1); else if (edge('right')) menuDo('change', 1);
+  else if (edge('action')) menuDo('choose');
+}
+function menuRefresh() {
+  const g = game;
+  const show = !!(g && g.paused && !inXR() && $('help').classList.contains('hidden'));
+  $('menu').classList.toggle('hidden', !show);
+  if (g && g.xr) g.xr.menuChanged?.();
+  if (!show) return;
+  const items = menuItems(), list = $('menuList');
+  list.innerHTML = '';
+  items.forEach((it, i) => {
+    const row = document.createElement('div');
+    row.className = 'mi' + (i === MENU.sel ? ' sel' : '');
+    row.innerHTML = `<span>${it.label}</span>`;
+    if (it.value != null) {
+      const v = document.createElement('span'); v.className = 'v';
+      if (it.change) {
+        const mk = (t, d) => { const b = document.createElement('button'); b.className = 'arr'; b.textContent = t;
+          b.onclick = (e) => { e.stopPropagation(); MENU.sel = i; menuDo('change', d); }; return b; };
+        v.append(mk('◀', -1), Object.assign(document.createElement('span'), { textContent: it.value }), mk('▶', 1));
+      } else v.textContent = it.value;
+      row.append(v);
+    }
+    row.onclick = () => { MENU.sel = i; menuDo('choose'); };
+    // follow the mouse only when it really moves (a redraw under a resting pointer must not steal the selection)
+    row.onpointermove = (e) => {
+      if (e.pointerType !== 'mouse' || (e.clientX === MENU.mx && e.clientY === MENU.my)) return;
+      MENU.mx = e.clientX; MENU.my = e.clientY;
+      if (MENU.sel !== i) { MENU.sel = i; for (const r of list.children) r.classList.remove('sel'); row.classList.add('sel'); }
+    };
+    list.append(row);
+  });
+  $('menuHint').textContent = document.body.classList.contains('touch') ? 'Tap an option · ◀ ▶ change values · ❚❚ / Resume to continue'
+    : 'Arrows / WASD select and change · Enter or Space choose · Esc or P resume · gamepad works too';
+}
+
 /* ---------------------------------------------------------------------------- UI / main loop */
 const $ = (id) => document.getElementById(id);
 const store = new FileStore();
@@ -1506,22 +1963,12 @@ async function addFiles(list) {
 
 async function detect() {
   detected = null; $('startBtn').disabled = true; $('opts20').hidden = true;
-  if (store.find('DAT/FILE017.DAT')) {
-    const langs = Res20th.languages(store);
-    const sel = $('optLang'); sel.innerHTML = '';
-    const names = { EN:'English', FR:'Français', DE:'Deutsch', ES:'Español', IT:'Italiano' };
-    for (const L of (langs.length ? langs : ['EN'])) sel.add(new Option(names[L] || L, L));
-    const hasRem = store.filter(/(^|\/)WGZ\/FILE\d{3}B?\.WGZ$/).length > 0;
-    const hasOrig = store.filter(/(^|\/)WGZ\/ORIGINAL\//).length > 0;
-    $('optAudio').value = hasOrig ? 'original' : 'remastered';
-    $('opts20').hidden = false;
-    const dats = store.filter(/(^|\/)DAT\/FILE\d{3}\.DAT$/).length;
-    setDetect(`<span class="ok">✔ 20th Anniversary Edition found</span> — ${dats} DAT files, ` +
-      `${store.filter(/(^|\/)BGZ\/FILE\d{3}\.BGZ$/).length} backgrounds, sounds: ${hasOrig ? 'original' : ''}${hasOrig && hasRem ? ' + ' : ''}${hasRem ? 'remastered' : ''}${!hasOrig && !hasRem ? '<span class="warn">none</span>' : ''}, ` +
-      `texts: ${langs.length ? langs.join(', ') : '<span class="warn">none</span>'}.`);
-    detected = { kind:'20th' };
-    $('optGfx').value = 'hd';
-    $('startBtn').disabled = false;
+  const roots = store.filter(/(^|\/)DAT\/FILE017\.DAT$/).map(([k]) => k.slice(0, k.length - 'DAT/FILE017.DAT'.length));
+  if (roots.length) {
+    // several installs picked together (e.g. C:\GOG Games with the 15th and 20th editions): keep the most complete one
+    const score = (r) => store.filter(new RegExp('^' + r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(BGZ|DAT|WGZ|OGG|TXT)/')).length;
+    const root = roots.sort((a, b) => score(b) - score(a))[0];
+    detectNth(store.scoped(root), root, roots.length);
     return;
   }
   let memlist = null, from = '';
@@ -1552,6 +1999,31 @@ async function detect() {
   $('startBtn').disabled = false;
 }
 
+function detectNth(store, root, nRoots) {
+  {
+    const langs = Res20th.languages(store);
+    const sel = $('optLang'); sel.innerHTML = '';
+    const names = { EN:'English', FR:'Français', DE:'Deutsch', ES:'Español', IT:'Italiano' };
+    for (const L of (langs.length ? langs : ['EN'])) sel.add(new Option(names[L] || L, L));
+    const hasRem = store.filter(/(^|\/)WGZ\/FILE\d{3}B?\.WGZ$/).length > 0;
+    const hasOrig = store.filter(/(^|\/)WGZ\/ORIGINAL\//).length > 0;
+    $('optAudio').value = hasOrig ? 'original' : 'remastered';
+    $('opts20').hidden = false;
+    const dats = store.filter(/(^|\/)DAT\/FILE\d{3}\.DAT$/).length;
+    const hd = Res20th.hdFolder(store), font = !!(store.findAny('BGZ/FONT.BGZ') || store.findAny('BMP/FONT.BMP')), upd = store.filter(/(^|\/)DAT\/[A-Z]+2011\.MAC$/).length, hdSets = store.filter(/(^|\/)DAT\/[A-Z]+2011HD\.MAC$/).length;
+    const folder = (root || '').replace(/\/$/, '') || '(top level)';
+    setDetect(`<span class="ok">✔ 20th Anniversary Edition found</span> in <code>${folder}</code>${nRoots > 1 ? ` <span class="warn">(${nRoots} game folders were in your selection — using this one)</span>` : ''}<br>` +
+      `• ${dats} DAT files${upd ? `, ${upd} updated 2011 scripts` : ''}<br>` +
+      `• HD backgrounds: ${hd ? `<span class="ok">${hd.count} at ${hd.size.toLowerCase()} (${hd.kind === 'BMP' ? 'Windows BMP' : 'BGZ'})</span>` : '<span class="bad">none found (no BGZ/data… or BMP/data… folder) — HD mode will only sharpen the shapes</span>'}<br>` +
+      `• HD font: ${font ? '<span class="ok">yes</span>' : '<span class="warn">no (Font.bgz / Font.bmp missing)</span>'}<br>` +
+      `• Sounds: ${hasOrig ? 'original' : ''}${hasOrig && hasRem ? ' + ' : ''}${hasRem ? 'remastered' : ''}${!hasOrig && !hasRem ? '<span class="warn">none</span>' : ''} · Texts: ${langs.length ? langs.join(', ') : '<span class="warn">none</span>'}`);
+    detected = { kind:'20th', store };
+    $('optGfx').value = 'hd';
+    $('startBtn').disabled = false;
+    return;
+  }
+}
+
 function progress(msg, frac) { $('progress').textContent = msg + (frac != null ? ` ${Math.round(frac * 100)}%` : ''); }
 
 async function start() {
@@ -1559,12 +2031,14 @@ async function start() {
   $('startBtn').disabled = true;
   try {
     const opts = { lang: $('optLang').value, audio: $('optAudio').value, difficulty: +$('optDiff').value, hd: $('optGfx').value === 'hd' };
-    const res = detected.kind === '20th' ? new Res20th(store) : new ResClassic(store);
+    const res = detected.kind === '20th' ? new Res20th(detected.store || store) : new ResClassic(store);
     await res.init(progress, detected.kind === '20th' ? opts : detected.memlist);
     if (res.missingBanks?.length) console.warn('Missing banks: ' + res.missingBanks.join(', '));
     const video = new Video($('screen'), opts.hd ? 4 : 1);
     if (res.fontBmp) video.setHdFont(res.fontBmp);
+    if (res.kind === '20th' && opts.hd && !res.hdDir) setTimeout(() => flash('No HD backgrounds in this folder (BGZ/data1280x800) — shapes are sharp, backgrounds stay original', 6000), 300);
     $('bFilter').value = opts.hd ? 'smooth' : 'sharp';
+    setTimeout(hdLabel, 0);
     const sound = new Sound(res);
     await sound.ctx.resume().catch(() => {});
     const input = new Input();
@@ -1583,8 +2057,17 @@ async function start() {
     if (res.missingBanks?.length) flash('Missing ' + res.missingBanks.join(', ') + ' — some parts will not load', 6000);
     else if (res.kind === 'classic' && res.strings.size === 0) flash('No text table found: in-game texts will be blank (add STRINGS.TXT)', 5000);
     else if (res.kind === 'classic' && res.stringsFrom) flash(`${res.strings.size} game texts read from ${res.stringsFrom.split('/').pop()}`, 3000);
-    else flash('Press ? for controls', 2500);
-    game.padTimer = setInterval(() => game && game.input.pollPads(togglePause, () => game.xr && game.xr.end()), 25);
+    else flash('P / Esc / ❚❚ = menu', 3000);
+    game.padTimer = setInterval(() => {
+      if (!game) return;
+      game.input.pollPads(togglePause, () => game.xr && game.xr.end(), () => { toggleHD(); menuRefresh(); });
+      if (!$('help').classList.contains('hidden')) {           // read-me open: stick scrolls, A / Start closes
+        const p = game.input.pad, prev = MENU.prev; MENU.prev = { ...p };
+        const box = $('help').querySelector('.box');
+        if (p.down) box.scrollTop += 12; else if (p.up) box.scrollTop -= 12;
+        if (p.action && !prev.action) openHelp(false);
+      } else if (game.paused) menuPad(game.input.pad);
+    }, 25);
     tick();
   } catch (e) {
     console.error(e);
@@ -1633,10 +2116,10 @@ function tick() {
 function togglePause(force) {
   const g = game; if (!g) return;
   g.paused = typeof force === 'boolean' ? force : !g.paused;
-  $('pauseOv').classList.toggle('hidden', !g.paused);
-  document.body.classList.toggle('paused', g.paused);
-  if (!g.paused) document.body.classList.remove('barshow');          // menu bar shows while paused (also in fullscreen)
-  $('bPause').textContent = g.paused ? '▶ Resume' : '❚❚ Pause';
+  document.body.classList.toggle('gamepaused', g.paused);
+  if (g.paused) { MENU.sel = 0; MENU.jumpTo = 0; MENU.prev = { ...g.input.pad }; for (const k in g.input.k) g.input.k[k] = false; }
+  $('help').classList.add('hidden');
+  menuRefresh();
   if (g.paused) { if (g.timer !== 1) { clearTimeout(g.timer); g.timer = 0; } g.sound.ctx.suspend(); }
   else { g.sound.ctx.resume(); g.lastBlit = performance.now(); g.lastBlitTarget = g.lastBlit; if (!g.timer) tick(); }
 }
@@ -1664,6 +2147,24 @@ const KEYMAP = { ArrowLeft:'left', ArrowRight:'right', ArrowUp:'up', ArrowDown:'
 function onKey(e, down) {
   const g = game; if (!g || $('player').classList.contains('hidden')) return;
   if (e.target && (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') && !KEYMAP[e.code]) return;
+  if (!$('help').classList.contains('hidden')) {                                // read-me open: scroll / close
+    if (!down) return;
+    const box = $('help').querySelector('.box');
+    if (e.code === 'ArrowDown' || e.code === 'KeyS') box.scrollTop += 60;
+    else if (e.code === 'ArrowUp' || e.code === 'KeyW') box.scrollTop -= 60;
+    else if (e.code === 'PageDown') box.scrollTop += box.clientHeight * 0.9;
+    else if (e.code === 'PageUp') box.scrollTop -= box.clientHeight * 0.9;
+    else if (['Escape', 'KeyP', 'Enter', 'Space', 'Backspace'].includes(e.code)) openHelp(false);
+    else return;
+    e.preventDefault(); return;
+  }
+  if (g.paused && !inXR()) {                                                     // keys drive the menu while paused
+    if (!down) return;
+    const nav = { ArrowUp:['move',-1], KeyW:['move',-1], ArrowDown:['move',1], KeyS:['move',1], ArrowLeft:['change',-1], KeyA:['change',-1],
+                  ArrowRight:['change',1], KeyD:['change',1], Enter:['choose'], NumpadEnter:['choose'], Space:['choose'] }[e.code];
+    if (nav) { menuDo(nav[0], nav[1]); e.preventDefault(); return; }
+    if (e.code === 'Escape' || e.code === 'KeyP') { togglePause(false); e.preventDefault(); return; }
+  }
   const codeScreen = g.vm.curPart === 16008 || g.vm.curPart === 16009;
   let dir = KEYMAP[e.code];
   if (codeScreen && /^Key[ADWS]$/.test(e.code)) dir = null;          // letters are for typing the code
@@ -1673,9 +2174,10 @@ function onKey(e, down) {
   if (codeScreen && e.code === 'Backspace') { g.input.lastChar = 8; e.preventDefault(); return; }
   if (e.repeat) return;
   switch (e.code) {
-    case 'KeyP': case 'Escape': if (!$('help').classList.contains('hidden')) $('help').classList.add('hidden'); else togglePause(); e.preventDefault(); break;
+    case 'KeyP': case 'Escape': if (!$('help').classList.contains('hidden')) openHelp(false); else togglePause(); e.preventDefault(); break;
     case 'KeyC': g.input.code = true; break;
     case 'KeyM': setMute(!g.muted); break;
+    case 'KeyH': toggleHD(); break;
     case 'KeyF': toggleFull(); break;
     default:
       if (/^Digit[1-7]$/.test(e.code)) { g.input.partReq = PART_INTRO + (+e.code[5]) - 1; flash(PART_NAMES[g.input.partReq]); }
@@ -1716,10 +2218,32 @@ $('vol').oninput = () => { if (game && !game.muted) game.sound.setVolume($('vol'
 $('bPart').onchange = (e) => { if (game && e.target.value) { game.input.partReq = +e.target.value; if (game.paused) togglePause(false); } e.target.value = ''; e.target.blur(); };
 $('bAspect').onchange = (e) => { layout(); e.target.blur(); };
 $('bFilter').onchange = (e) => { layout(); e.target.blur(); };
-$('bHelp').onclick = () => $('help').classList.remove('hidden');
-$('helpClose').onclick = () => $('help').classList.add('hidden');
+$('bHelp').onclick = () => openHelp(true);
+// controls & read-me panel: on top of everything; the menu comes back when it closes
+function openHelp(open) {
+  $('help').classList.toggle('hidden', !open);
+  if (open) { const d = $('help').querySelector('details'); if (d) d.open = true; $('help').querySelector('.box').scrollTop = 0; }
+  menuRefresh();
+}
+$('bHD').onclick = (e) => { toggleHD(); e.target.blur(); };
+function hdLabel() { if (game) $('bHD').textContent = game.video.S > 1 ? 'HD' : 'SD'; }
+function toggleHD(force) {
+  const g = game; if (!g) return;
+  const hd = typeof force === 'boolean' ? force : g.video.S === 1;
+  g.video.setScale(hd ? 4 : 1);
+  if (g.res.kind === '20th') {
+    g.res.hd = hd;
+    const todo = hd ? g.video.pendingHd() : [];
+    if (todo.length) Promise.all(todo.map((e) => g.res.loadHd(e.num).then((b) => { e.buf = b; })))
+      .then(() => { if (g.video.S > 1) { g.video.rebuild(); g.xr?.menuChanged(); } });
+  }
+  $('bFilter').value = hd ? 'smooth' : 'sharp'; layout(); hdLabel();
+  flash(hd ? 'Sharp HD graphics (1280×800)' : 'Original graphics (320×200)', 1500);
+  g.xr?.menuChanged();
+}
+$('helpClose').onclick = () => openHelp(false);
 $('bFull').onclick = toggleFull;
-XRScreen.support().then((s) => { $('bVR').classList.toggle('hidden', !s.vr); $('bAR').classList.toggle('hidden', !s.ar); $('bDepth').classList.toggle('hidden', !s.vr && !s.ar); });
+XRScreen.support().then((s) => { xrSupport = s; $('bVR').classList.toggle('hidden', !s.vr); $('bAR').classList.toggle('hidden', !s.ar); $('bDepth').classList.toggle('hidden', !s.vr && !s.ar); });
 async function enterXR(mode) {
   if (!game || game.xr) return;
   const xr = new XRScreen();
@@ -1733,15 +2257,17 @@ async function enterXR(mode) {
 $('bVR').onclick = () => enterXR('vr');
 $('bAR').onclick = () => enterXR('ar');
 $('bDepth').onchange = (e) => { if (game && game.xr) game.xr.depth = +e.target.value; e.target.blur(); };
-$('bQuit').onclick = () => {
+$('bQuit').onclick = () => quitGame();
+function quitGame() {
   if (!game) return;
   game.running = false; clearTimeout(game.timer); clearInterval(game.padTimer); game.xr?.end(); document.body.classList.remove('paused'); game.sound.ctx.close(); game = null;
   $('player').classList.add('hidden'); $('setup').classList.remove('hidden'); $('startBtn').disabled = !detected;
-};
+  $('menu').classList.add('hidden'); document.body.classList.remove('gamepaused');
+}
 // ---- fullscreen: hide the toolbar; show it while the mouse is at the bottom edge
 let barT = 0;
 const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
-function onFsChange() { document.body.classList.toggle('fs', isFs()); document.body.classList.remove('barshow'); setTimeout(layout, 60); }
+function onFsChange() { document.body.classList.toggle('fs', isFs()); setTimeout(() => { layout(); menuRefresh(); }, 60); }
 document.addEventListener('webkitfullscreenchange', onFsChange);
 $('player').addEventListener('pointermove', (e) => {
   if (!isFs() || e.pointerType !== 'mouse') return;      // taps on a touch screen don't reveal the bar
@@ -1799,6 +2325,5 @@ $('touch').addEventListener('contextmenu', (e) => e.preventDefault());
 // test hook (used for automated checks; harmless otherwise)
 window.__aw = { addFiles, start, get game() { return game; }, unpackBK, scanMemlist, scanStringTable, readADF, store };
 </script>
-<script data-goatcounter="https://gigajunky.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
