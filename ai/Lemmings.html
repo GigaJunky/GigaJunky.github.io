@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Lemmings (Amiga) – browser player</title>
+<style>
+  html, body { margin:0; height:100%; background:#000; overflow:hidden; color:#cfe; font:15px/1.45 system-ui, sans-serif; }
+  body { display:flex; align-items:center; justify-content:center; }
+  #screen { image-rendering:pixelated; image-rendering:crisp-edges; touch-action:none; display:block; }
+  #pauseBtn { position:fixed; top:8px; right:10px; z-index:5; background:rgba(0,0,0,.35); color:#9f9; border:1px solid #3a5; border-radius:8px; font-size:15px; padding:4px 10px; opacity:.55; }
+  #pauseBtn:hover { opacity:1; }
+  .overlay { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.88); z-index:10; overflow:auto; }
+  .overlay.show { display:flex; }
+  .card { max-width:720px; margin:24px; padding:22px 26px; background:#0b1226; border:2px solid #3a6; border-radius:14px; box-shadow:0 0 40px #0a3; }
+  h1 { margin:0 0 8px; color:#5f5; font-size:26px; } h2 { color:#8f8; font-size:18px; margin:18px 0 6px; }
+  label.btn, button.btn { display:inline-block; background:#1a3; color:#fff; border:0; border-radius:10px; padding:12px 18px; font-size:17px; cursor:pointer; margin:6px 8px 6px 0; }
+  button.ghost { background:#223; color:#aac; }
+  #bootMsg { color:#fc6; min-height:1.4em; margin-top:8px; }
+  table { border-collapse:collapse; width:100%; } td { border-top:1px solid #234; padding:6px 8px; vertical-align:top; } td:first-child { color:#8f8; white-space:nowrap; }
+  #readmeBox .card { max-height:86vh; overflow:auto; }
+  .small { color:#89a; font-size:13px; }
+  code { color:#ff9; }
+</style>
+</head>
+<body>
+<canvas id="screen"></canvas>
+<button id="pauseBtn" title="Menu">❚❚</button>
+
+<div id="boot" class="overlay">
+  <div class="card">
+    <h1>Lemmings — Amiga disks player</h1>
+    <p>Select <b>both</b> of your Lemmings Amiga disk images (<code>.adf</code>) — or a <code>.zip</code> holding them. Everything runs here in your browser; nothing is uploaded.</p>
+    <label class="btn">Choose disk images…<input id="diskInput" type="file" multiple accept=".adf,.zip,application/zip,application/octet-stream" hidden></label>
+    <span id="savedRow" style="display:none"><button class="btn" id="useSaved">Use my saved disks</button><button class="btn ghost" id="forget">Forget saved disks</button></span>
+    <div><label class="small"><input type="checkbox" id="remember" checked> Keep a copy of my disks in this browser so I don’t have to pick them again</label></div>
+    <div id="bootMsg"></div>
+    <p class="small">You can also drag the files onto this window. <a href="#" id="bootReadme" style="color:#8cf">Controls &amp; read me</a></p>
+  </div>
+</div>
+
+<div id="readmeBox" class="overlay">
+  <div class="card">
+<h1>Lemmings (Amiga) — browser player</h1>
+<p>A player for the original <i>Lemmings</i> (DMA Design / Psygnosis, 1991) that runs from <b>your own Amiga disk images</b>. It reads the two game disks directly: their file system, DMA's packed files, the graphics, the lemming animations, the level files and the game's sound effects. No game data is included in this page and nothing is uploaded. Pick the disks once and, if you like, the page keeps a private copy in your browser.</p>
+<p>The game rules are adapted from <a href="https://github.com/tomsoftware/Lemmings.ts" style="color:#8cf">Lemmings.ts</a> by Thomas Zeugner (MIT licence) and extended with steel, one‑way walls and deadly traps. All 120 one‑player levels and the 20 two‑player levels are here in the Amiga order (Fun, Tricky, Taxing, Mayhem), including the special full‑screen levels.</p>
+
+<h2>What you need</h2>
+<p>The two disks of Amiga Lemmings as <code>.adf</code> files (disk 1 is the program disk, disk 2 holds the levels), or a <code>.zip</code> containing them. Select both at once. Standard dumps and cracked single‑file versions both work.</p>
+
+<h2>Playing</h2>
+<p>Pick a skill on the panel at the bottom, then click a lemming to give it that skill. The number on each button is how many you have left. Hover any button and the status line says what it does.</p>
+<table>
+<tr><td>− and +</td><td>The <b>release rate</b>: how quickly lemmings drop out of the hatch (1–99). − slows it down (never below the level's starting rate), + speeds it up. Hold to change quickly.</td></tr>
+<tr><td>Paws</td><td>Pauses the game and opens the menu.</td></tr>
+<tr><td>Mushroom cloud</td><td><b>Nuke</b>: every lemming becomes a bomber. Click it once — it flashes red and asks “click again to nuke!” — then click again within 1½ seconds.</td></tr>
+<tr><td>Small map</td><td>Click or drag on it to jump to that part of the level.</td></tr>
+</table>
+<p>Save the percentage shown before the level starts. Press <b>F</b> (or Y on a gamepad, or Speed in the menu) for fast forward; “&gt;&gt;” shows on the status line while it's on.</p>
+<h2>Music</h2>
+<p>The game's own tunes play from your disks: the original tracker songs and instruments, replayed the way the Amiga's sound chip did, with the Can‑Can, “Lemming 1–3”, Tim's tunes and the special tunes for the Beast, Awesome and Menacing levels. Turn music or sound effects on and off in the menu.</p>
+<h2>Two players</h2>
+<p>Choose <b>2 Player</b> on the title screen for the 20 head‑to‑head levels. The screen splits: <b>Blue</b> plays the left half, <b>Green</b> the right, each with their own skills, panel, map and nuke. You can only give skills to your own lemmings, and every lemming that walks into <i>your</i> exit counts for you — whoever's lemming it is. Most lemmings home wins. Play it on a touch screen (one player each side), with two gamepads (pad 1 Blue, pad 2 Green), or with mouse/pad 1 for Blue and pad 2 for Green.</p>
+
+<h2>Controls</h2>
+<table>
+<tr><td>Mouse</td><td>Click a lemming to give it the selected skill. Click panel buttons. Move to the left or right edge to scroll, or use the wheel or right‑drag. The crosshair (white with a black outline) becomes a yellow box when it's over a lemming; over the panel and menus you get the normal mouse pointer. Hovering a skill button highlights it and shows its name; the status line shows what that lemming is doing.</td></tr>
+<tr><td>Touch screen<br>(phone, tablet, DeX)</td><td>Tap a lemming to give it the skill (taps have a little extra reach). Drag sideways on the level to scroll. Tap or drag on the small map to jump. Tap ❚❚ (top right) for the menu.</td></tr>
+<tr><td>Keyboard</td><td><b>1–8</b> or <b>F3–F10</b> pick a skill · <b>F1/F2</b> or <b>−/=</b> release rate · <b>← →</b> or <b>A D</b> scroll · <b>Space</b> assigns at the cursor · <b>F11</b> pause · <b>N</b> or <b>F12</b> nuke (twice) · <b>F</b> fast forward on/off · <b>G</b> smooth/pixel graphics · <b>P / Esc</b> menu. The mouse wheel over the panel changes skill.</td></tr>
+<tr><td>Gamepad</td><td>Left stick moves the cursor · <b>A</b> assigns · <b>LB/RB</b> pick a skill · <b>LT/RT</b> release rate · right stick or d‑pad scrolls · <b>X</b> pause · <b>Y</b> fast forward · <b>Select</b> nuke (twice) · <b>Start</b> menu. In menus: stick or d‑pad to move, <b>A</b> to choose, <b>B</b> to go back.</td></tr>
+<tr><td>Meta Quest / VR</td><td>Choose <b>Play in VR / AR</b> from the menu. The game floats in front of you; point a controller at it. <b>Trigger</b> clicks · thumbstick left/right scrolls · <b>A/X</b> next/previous skill · <b>grip</b> pause · <b>B/Y</b> menu · thumbstick click leaves VR.</td></tr>
+</table>
+
+<h2>Menu</h2>
+<p>Press P or Esc, the paws button on the panel, the ❚❚ button, Start, or B/Y in VR. It has Resume, Restart level, Speed (normal or fast), Music and Sound effects on/off, Graphics (Smooth rounds off the jagged pixel edges with a pixel‑art upscaler; Pixels shows the original blocky look), Sound on/off, Choose a level, Nuke, Fullscreen, Play in VR/AR, this read me, and Load other disks. Completed levels are remembered in your browser and marked green on the level chooser.</p>
+
+<h2>Not done yet</h2>
+<p>The bomber explosion is drawn with particles rather than the original sprite. Music and sound start once you've clicked or tapped (browsers require that).</p>
+<p class="small">Lemmings is © DMA Design / Psygnosis (now Sony Interactive Entertainment). Use your own copy of the game.</p>
+
+    <button class="btn" id="closeReadme">Close</button>
+  </div>
+</div>
+
+<script>
+// ===== Amiga Lemmings data layer: disk images, DMA unpacker, graphics decoders =====
+const LemData = (() => {
+  const rw = (d, o) => (d[o] << 8) | d[o + 1];
+  const rl = (d, o) => ((d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3]) >>> 0;
+  const amigaRGB = c => [((c >> 8) & 15) * 17, ((c >> 4) & 15) * 17, (c & 15) * 17];
+
+  // DMA Design's packer (ByteKiller variant): decoded backwards from the end of the file.
+  function unpack(src) {
+    let p = src.length;
+    if (p < 12) return null;
+    const rd = () => { p -= 4; if (p < 0) throw 0; return rl(src, p); };
+    try {
+      const size = rd(); if (size === 0 || size > 0x200000) return null;
+      let ck = rd(), d0 = rd(); ck ^= d0;
+      const out = new Uint8Array(size); let a2 = size;
+      const bit = () => {
+        let c = d0 & 1; d0 >>>= 1;
+        if (d0 === 0) { const w = rd(); ck ^= w; c = w & 1; d0 = ((w >>> 1) | 0x80000000) >>> 0; }
+        return c;
+      };
+      const bits = n => { let v = 0; while (n--) v = (v << 1) | bit(); return v; };
+      const copy = (n, off) => { while (n--) { a2--; if (a2 + off >= size || a2 < 0) throw 0; out[a2] = out[a2 + off]; } };
+      const lit = n => { while (n--) { a2--; if (a2 < 0) throw 0; out[a2] = bits(8); } };
+      while (a2 > 0) {
+        if (bit()) {
+          const t = bits(2);
+          if (t < 2) copy(t + 3, bits(9 + t));
+          else if (t === 3) lit(bits(8) + 9);
+          else { const n = bits(8) + 1; copy(n, bits(12)); }
+        } else if (bit()) copy(2, bits(8));
+        else lit(bits(3) + 1);
+      }
+      return ((ck >>> 0) === 0) ? out : null;
+    } catch (e) { return null; }
+  }
+
+  // Lemmings disks use DMA's own file system: a directory of 16-byte entries (12-byte name, 4-byte size)
+  // starting with "Reserved"; files follow one another. Different dumps put the data at different offsets,
+  // so the start is found by checking a known file.
+  function readDisk(buf) {
+    const d = new Uint8Array(buf);
+    const tag = [82, 101, 115, 101, 114, 118, 101, 100]; // "Reserved"
+    let dir = -1;
+    for (let i = 0; i < Math.min(d.length, 0x20000) - 8; i += 2) {
+      let ok = true; for (let k = 0; k < 8; k++) if (d[i + k] !== tag[k]) { ok = false; break; }
+      if (ok) { dir = i; break; }
+    }
+    if (dir < 0) return null;
+    const ents = [];
+    for (let p = dir; p < d.length - 16; p += 16) {
+      if (d[p] === 0 || d[p] === 0xff) break;
+      let name = ''; for (let k = 0; k < 12 && d[p + k] && d[p + k] !== 0xff; k++) name += String.fromCharCode(d[p + k]);
+      ents.push({ name, size: rl(d, p + 12) });
+      if (ents.length > 400) break;
+    }
+    const names = ents.map(e => e.name);
+    const slices = shift => {
+      const m = {}; let off = -shift;
+      for (const e of ents) { if (e.name !== 'Reserved' && off >= 0 && off + e.size <= d.length) m[e.name] = d.subarray(off, off + e.size); off += e.size; }
+      return m;
+    };
+    const shifts = [0, 0x2a00, dir - 0x400]; for (let s = 0; s < 0x8000; s += 0x200) shifts.push(s);
+    let check;
+    if (names.includes('leveldata')) check = m => m.Level000 && rl(m.Level000, m.Level000.length - 4) === 0x2000 && unpack(m.Level000);
+    else if (names.includes('Code')) check = m => m.Code && findSprites(m.Code) >= 0;
+    else return { kind: 'unknown', names };
+    for (const s of shifts) { const m = slices(s); if (check(m)) return { kind: names.includes('Code') ? 'program' : 'data', files: m, names }; }
+    return { kind: 'bad', names };
+  }
+
+  // ---- graphics ----
+  // bitplanes stored one after another; returns palette indices, 255 = transparent (mask clear)
+  function planar(d, off, w, h, planes, maskOff, add = 0) {
+    const bpr = w >> 3, out = new Uint8Array(w * h).fill(255);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const bi = (x >> 3), bm = 0x80 >> (x & 7);
+      if (maskOff != null && !(d[maskOff + y * bpr + bi] & bm)) continue;
+      let v = 0; for (let p = 0; p < planes; p++) if (d[off + (p * h + y) * bpr + bi] & bm) v |= 1 << p;
+      out[y * w + x] = v + add;
+    }
+    return out;
+  }
+
+  function readSet(ld, s, groundRaw, objRaw) {
+    const b = s * 0x590;
+    const pal = []; for (let i = 0; i < 16; i++) pal.push(amigaRGB(rw(ld, b + i * 2)));
+    const panelPal = []; for (let i = 0; i < 8; i++) panelPal.push(amigaRGB(rw(ld, 0x40 + i * 2))); for (let i = 0; i < 8; i++) panelPal.push(amigaRGB(rw(ld, 0x60 + i * 2)));
+    const ground = groundRaw && unpack(groundRaw), objs = objRaw && unpack(objRaw);
+    const objects = [], terrain = [];
+    const oRecs = [], tRecs = [];
+    for (let i = 0; i < 16; i++) {
+      const o = b + 0x70 + i * 34, r = []; for (let k = 0; k < 17; k++) r.push(rw(ld, o + k * 2));
+      oRecs.push(r[3] ? { anim: r[0], frames: r[2], w: r[3], h: r[4], fsize: r[5], psize: r[6], snd: r[7], tx: r[8], ty: r[9], tw: r[10], th: r[11], effect: r[12], ptr: rl(ld, o + 26), prev: rl(ld, o + 30) } : null);
+    }
+    for (let i = 0; i < 64; i++) {
+      const o = b + 0x290 + i * 12, w = rw(ld, o), h = rw(ld, o + 2);
+      tRecs.push(w && w !== 0xffff ? { w, h, ptr: rl(ld, o + 4), mask: rl(ld, o + 8) } : null);
+    }
+    const ob = Math.min(...oRecs.filter(Boolean).map(o => o.ptr)), tb = Math.min(...tRecs.filter(Boolean).map(t => t.ptr));
+    for (const o of oRecs) {
+      if (!o || !objs) { objects.push(null); continue; }
+      const frames = [];
+      for (let f = 0; f < o.frames; f++) { const off = o.ptr - ob + f * o.fsize; frames.push(planar(objs, off, o.w, o.h, 4, off + o.psize)); }
+      objects.push({ ...o, img: frames, prevFrame: Math.max(0, Math.round((o.prev - o.ptr) / o.fsize)) });
+    }
+    for (const t of tRecs) {
+      if (!t || !ground) { terrain.push(null); continue; }
+      terrain.push({ w: t.w, h: t.h, img: planar(ground, t.ptr - tb, t.w, t.h, 3, t.mask - tb, 8) });
+    }
+    return { pal, panelPal, objects, terrain };
+  }
+
+  function ilbm(d) {
+    let p = 12; const ch = {};
+    while (p < d.length - 8) { const id = String.fromCharCode(d[p], d[p + 1], d[p + 2], d[p + 3]); const n = rl(d, p + 4); ch[id] = d.subarray(p + 8, p + 8 + n); p += 8 + n + (n & 1); }
+    const b = ch.BMHD, w = rw(b, 0), h = rw(b, 2), planes = b[8], mask = b[9], comp = b[10];
+    const cm = ch.CMAP || [], pal = []; for (let i = 0; i + 2 < cm.length; i += 3) pal.push([cm[i], cm[i + 1], cm[i + 2]]);
+    const body = ch.BODY, bpr = ((w + 15) >> 4) * 2, np = planes + (mask === 1 ? 1 : 0), need = bpr * np * h;
+    let raw = body;
+    if (comp === 1) {
+      raw = new Uint8Array(need); let q = 0, o = 0;
+      while (o < need && q < body.length) {
+        const c = body[q++];
+        if (c < 128) { for (let k = 0; k <= c; k++) raw[o++] = body[q++]; }
+        else if (c > 128) { const v = body[q++]; for (let k = 0; k < 257 - c; k++) raw[o++] = v; }
+      }
+    }
+    const px = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let pl = 0; pl < planes; pl++) {
+      const row = (y * np + pl) * bpr;
+      for (let x = 0; x < w; x++) if (raw[row + (x >> 3)] & (0x80 >> (x & 7))) px[y * w + x] |= 1 << pl;
+    }
+    return { w, h, planes, pal, px };
+  }
+
+  // ---- lemming sprites, found inside the "Code" file ----
+  function spriteValid(d, o, h, pl) {
+    if (o + 2 * h * pl > d.length) return false;
+    let any = false;
+    for (let y = 0; y < h; y++) {
+      const m = rw(d, o + ((pl - 1) * h + y) * 2); if (m) any = true;
+      for (let q = 0; q < pl - 1; q++) if ((rw(d, o + (q * h + y) * 2) | m) !== m) return false;
+    }
+    return any;
+  }
+  function findSprites(d) {
+    for (let o = 0; o < d.length - 26 * 60; o += 2) {
+      let n = 0; while (n < 26 && spriteValid(d, o + n * 60, 10, 3)) n++;
+      if (n === 26 && spriteValid(d, o + 26 * 60, 14, 4) && !spriteValid(d, o - 60, 10, 3)) return o;
+    }
+    return -1;
+  }
+  // block layout relative to the walker frames: [offset, height, planes(incl. mask), frames]
+  const SPR = [[0, 10, 3, 26], [0x618, 14, 4, 16], [0xd18, 12, 3, 32], [0x1818, 13, 4, 32], [0x2518, 10, 3, 32], [0x2c98, 10, 4, 64],
+    [0x4098, 16, 4, 16], [0x4898, 13, 4, 48], [0x5c18, 10, 3, 16], [0x5fd8, 13, 3, 8], [0x6248, 14, 5, 14], [0x69f0, 10, 3, 32]];
+  function readSprites(code) {
+    const base = findSprites(code); if (base < 0) return null;
+    const blocks = SPR.map(([off, h, pl, n]) => {
+      const fr = []; for (let f = 0; f < n; f++) { const o = base + off + f * 2 * h * pl; fr.push(planar(code, o, 16, h, pl - 1, o + (pl - 1) * 2 * h)); }
+      return { h, fr };
+    });
+    const A = (bi, from, n, dy) => ({ h: blocks[bi].h, frames: blocks[bi].fr.slice(from, from + n), dy: dy ?? -blocks[bi].h });
+    const S = {
+      walkR: A(0, 0, 8), jumpR: A(0, 8, 1), walkL: A(0, 9, 8), jumpL: A(0, 17, 1), fallR: A(0, 18, 4), fallL: A(0, 22, 4),
+      dig: A(1, 0, 16, -12), climbR: A(2, 0, 8), climbL: A(2, 8, 8), hoistR: A(2, 16, 8), hoistL: A(2, 24, 8),
+      buildR: A(3, 0, 16), buildL: A(3, 16, 16), splat: A(4, 0, 16), block: A(4, 16, 16), bashR: A(5, 0, 32), bashL: A(5, 32, 32),
+      floatR: A(6, 0, 8), floatL: A(6, 8, 8), mineR: A(7, 0, 24, -12), mineL: A(7, 24, 24, -12), drown: A(8, 0, 16), exit: A(9, 0, 8),
+      fry: A(10, 0, 14, -10), shrugR: A(11, 0, 8), shrugL: A(11, 8, 8), ohno: A(11, 16, 16)
+    };
+    // terrain-removal masks follow the sprites (two words per row: all-ones, then the mask)
+    const mb = base + 0x71aa;
+    const mask = (o, h, n) => { const r = []; for (let f = 0; f < n; f++) { const m = new Uint8Array(16 * h); for (let y = 0; y < h; y++) { const w = rw(code, o + (f * h + y) * 4 + 2); for (let x = 0; x < 16; x++) m[y * 16 + x] = (w & (0x8000 >> x)) ? 0 : 1; } r.push(m); } return r; };
+    const flip = (ms, h) => ms.map(m => { const r = new Uint8Array(16 * h); for (let y = 0; y < h; y++) for (let x = 0; x < 16; x++) r[y * 16 + x] = m[y * 16 + 15 - x]; return r; });
+    const bashR = mask(mb, 10, 4), bashL = mask(mb + 160, 10, 4), mineR = mask(mb + 320, 13, 2);
+    S.masks = { bashR, bashL, mineR, mineL: flip(mineR, 13) };
+    return S;
+  }
+
+  // level order (from the game): value = layout index (file*4+slot); negative = use odd-table numbers
+  const ORDER = [[91, 95, 96, 92, 93, 94, 97, -6, -12, -32, -42, -7, 16, -17, -22, -24, -27, -43, -51, -63, -84, 13, -41, -57, -60, -71, -46, -61, -65, -82],
+    [0, -16, -21, -30, -31, -33, -34, -47, -62, -73, -77, -80, -83, 2, -91, -93, -94, -95, -97, 3, 5, 6, 7, 10, 11, 12, 14, 15, 20, 17],
+    [22, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 35, 36, 37, 1, 40, 41, 42, 43, 44, 45, 46, 47, 50, 51, 52, 53, 54, 21, 67],
+    [55, 56, 57, 60, 61, 62, 63, 64, 65, 66, -67, 70, 71, 72, 73, 74, 75, 76, 77, -92, 80, 4, 81, 82, 83, 84, 85, 86, 87, 90]];
+  const RATINGS = ['Fun', 'Tricky', 'Taxing', 'Mayhem', '2 Player'];
+
+  function readLevel(files, rating, num) {
+    const c = rating === 4 ? 80 + num : ORDER[rating][num], L = rating === 4 ? c : (Math.abs(c) / 10 | 0) * 8 + Math.abs(c) % 10;
+    const pack = unpack(files['Level' + String(L >> 2).padStart(3, '0')]); if (!pack) return null;
+    const d = pack.subarray((L & 3) * 2048, (L & 3) * 2048 + 2048);
+    const lv = { layout: L, releaseRate: rw(d, 0), count: rw(d, 2), need: rw(d, 4), time: rw(d, 6), skills: [], startX: rw(d, 0x18), set: rw(d, 0x1a), special: rw(d, 0x1c), objects: [], terrain: [], steel: [] };
+    for (let i = 0; i < 8; i++) lv.skills.push(rw(d, 8 + i * 2));
+    lv.name = String.fromCharCode(...d.subarray(0x7e0, 0x800)).trim();
+    if (c < 0 && files.oddtable) {
+      const o = files.oddtable, b = L * 56;
+      if (b + 56 <= o.length) {
+        lv.releaseRate = rw(o, b); lv.count = rw(o, b + 2); lv.need = rw(o, b + 4); lv.time = rw(o, b + 6);
+        for (let i = 0; i < 8; i++) lv.skills[i] = rw(o, b + 8 + i * 2);
+        lv.name = String.fromCharCode(...o.subarray(b + 24, b + 56)).trim();
+      }
+    }
+    for (let i = 0; i < 32; i++) {
+      const o = 0x20 + i * 8, fl = rw(d, o + 6); if (!fl) continue;
+      let x = rw(d, o), y = rw(d, o + 2); if (x & 0x8000) x -= 65536; if (y & 0x8000) y -= 65536;
+      lv.objects.push({ x: x - 16, y, id: rw(d, o + 4), upside: !!(fl & 0x80), noOverwrite: !!(fl & 0x8000), onlyOnTerrain: !!(fl & 0x4000) });
+    }
+    for (let i = 0; i < 400; i++) {
+      const v = rl(d, 0x120 + i * 4); if (v === 0xffffffff) continue;
+      const yv = (v >>> 7) & 0x1ff, fl = (v >>> 29) & 7;
+      lv.terrain.push({ x: ((v >>> 16) & 0xfff) - 16, y: yv - (yv > 256 ? 516 : 4), id: v & 0x3f, upside: !!(fl & 2), noOverwrite: !!(fl & 4), erase: !!(fl & 1) });
+    }
+    for (let i = 0; i < 32; i++) {
+      const o = 0x760 + i * 4, pos = rw(d, o), sz = d[o + 2];
+      if (!pos && !sz) continue;
+      lv.steel.push({ x: (pos >> 7) * 4 - 16, y: (pos & 0x7f) * 4, w: (sz >> 4) * 4 + 4, h: (sz & 15) * 4 + 4 });
+    }
+    lv.rating = rating; lv.num = num;
+    return lv;
+  }
+
+  return { unpack, readDisk, readSet, ilbm, readSprites, readLevel, planar, amigaRGB, ORDER, RATINGS, rw, rl };
+})();
+if (false) module.exports = LemData;
+
+// ===== Lemmings game engine (logic adapted from Lemmings.ts by Thomas Zeugner, MIT licence) =====
+const LW = 1600, LH = 160;
+const SK = { CLIMB: 0, FLOAT: 1, BOMB: 2, BLOCK: 3, BUILD: 4, BASH: 5, MINE: 6, DIG: 7 };
+const SKILL_NAMES = ['CLIMBER', 'FLOATER', 'BOMBER', 'BLOCKER', 'BUILDER', 'BASHER', 'MINER', 'DIGGER'];
+const T = { NONE: 0, EXIT: 1, TRAP: 4, DROWN: 5, KILL: 6, ONEWAY_L: 7, ONEWAY_R: 8, BLOCK_L: 20, BLOCK_R: 21 };
+
+class World {
+  constructor(lv, set, special, sprites, twoP = false) {
+    this.lv = lv; this.set = set; this.S = sprites; this.twoP = twoP;
+    this.pal = set.pal.map(c => c.slice());
+    this.rgba = new Uint32Array(LW * LH);           // ground colours (0 = empty)
+    this.solid = new Uint8Array(LW * LH);
+    this.steel = new Uint8Array(LW * LH);
+    this.oneway = new Int8Array(LW * LH);           // -1 only diggable leftwards, +1 rightwards
+    this.dirty = true;
+    const pack = c => (255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0];
+    this.packPal = this.pal.map(pack);
+    if (special) {
+      const sp = special, spal = sp.pal.map(pack);
+      for (let y = 0; y < Math.min(LH, sp.h); y++) for (let x = 0; x < sp.w; x++) {
+        const v = sp.px[y * sp.w + x], X = x + 304; if (!v || X < 0 || X >= LW) continue;
+        this.rgba[y * LW + X] = spal[v]; this.solid[y * LW + X] = 1;
+      }
+    } else {
+      for (const t of lv.terrain) {
+        const img = set.terrain[t.id]; if (!img) continue;
+        for (let yy = 0; yy < img.h; yy++) {
+          const sy = t.upside ? img.h - 1 - yy : yy, Y = t.y + yy; if (Y < 0 || Y >= LH) continue;
+          for (let xx = 0; xx < img.w; xx++) {
+            const v = img.img[sy * img.w + xx], X = t.x + xx; if (v === 255 || X < 0 || X >= LW) continue;
+            const i = Y * LW + X;
+            if (t.erase) { this.solid[i] = 0; this.rgba[i] = 0; continue; }
+            if (t.noOverwrite && this.solid[i]) continue;
+            this.solid[i] = 1; this.rgba[i] = this.packPal[v];
+          }
+        }
+      }
+    }
+    for (const s of lv.steel) for (let y = s.y; y < s.y + s.h; y++) for (let x = s.x; x < s.x + s.w; x++) if (x >= 0 && x < LW && y >= 0 && y < LH) this.steel[y * LW + x] = 1;
+    // objects
+    this.objects = []; this.triggers = []; this.entrances = [];
+    for (const o of lv.objects) {
+      const info = set.objects[o.id]; if (!info) continue;
+      const ob = { ...o, info, frame: info.anim === 2 ? 0 : (info.anim === 3 ? 0 : 0), playing: false };
+      if (o.id === 1) { ob.frame = 0; ob.owner = this.entrances.length & 1; this.entrances.push(ob); }
+      if (o.id === 0) { ob.owner = (this.exitCount = (this.exitCount || 0) + 1) - 1 & 1; }
+      this.objects.push(ob);
+      const e = info.effect;
+      if (e === T.ONEWAY_L || e === T.ONEWAY_R) {
+        const dir = e === T.ONEWAY_L ? -1 : 1, img = info.img[0];
+        for (let y = 0; y < info.h; y++) for (let x = 0; x < info.w; x++) {
+          const X = o.x + x, Y = o.y + y; if (X < 0 || X >= LW || Y < 0 || Y >= LH) continue;
+          if (this.solid[Y * LW + X]) this.oneway[Y * LW + X] = dir;
+        }
+      } else if (e && e !== 2 && e !== 3) {
+        const x1 = o.x + info.tx * 4, y1 = o.y + info.ty * 4 - 4;
+        this.triggers.push({ type: e === 11 ? T.KILL : e, x1, y1, x2: x1 + info.tw * 4, y2: y1 + info.th * 4, obj: ob, until: 0, exitOwner: ob.owner || 0 });
+      }
+    }
+    if (!twoP) this.entrances.sort((a, b) => a.x - b.x);
+    // game state
+    this.lems = []; this.tick = 0;
+    this.skillsP = [lv.skills.slice(), lv.skills.slice()]; this.skills = this.skillsP[0];
+    this.savedP = [0, 0]; this.nukeP = [false, false]; this.released = 0;
+    this.minRate = lv.releaseRate; this.rate = lv.releaseRate;
+    this.toRelease = lv.count; this.out = 0; this.saved = 0;
+    this.timeLeft = lv.time * 60 * 17; // ticks (≈17 per second)
+    this.releaseTick = this.rate - 30; this.nukeIdx = -1; this.nuking = false;
+    this.doorOpen = false; this.doorTimer = 0; this.nextEntrance = 0;
+    this.done = false; this.events = [];
+  }
+  idx(x, y) { return y * LW + x; }
+  ground(x, y) { return x >= 0 && x < LW && y >= 0 && y < LH && this.solid[y * LW + x] === 1; }
+  clear(x, y) { if (x < 0 || x >= LW || y < 0 || y >= LH) return; const i = y * LW + x; this.solid[i] = 0; this.rgba[i] = 0; this.dirty = true; }
+  setGround(x, y, c) { if (x < 0 || x >= LW || y < 0 || y >= LH) return; const i = y * LW + x; this.solid[i] = 1; this.rgba[i] = c; this.dirty = true; }
+  isSteel(x, y) { return x >= 0 && x < LW && y >= 0 && y < LH && this.steel[y * LW + x] && this.solid[y * LW + x]; }
+  // remove ground with a 16xh mask; returns 'steel' or 'oneway' if blocked
+  clearMask(m, h, x, y, dir) {
+    x -= 8; y -= (h === 10 ? 10 : 12);
+    let blocked = null;
+    for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < 16; dx++) {
+      if (!m[dy * 16 + dx]) continue;
+      const X = x + dx, Y = y + dy; if (!this.ground(X, Y)) continue;
+      if (this.steel[Y * LW + X]) { blocked = 'steel'; continue; }
+      const ow = this.oneway[Y * LW + X]; if (ow && dir && ow !== dir) { blocked = 'oneway'; continue; }
+      this.clear(X, Y);
+    }
+    return blocked;
+  }
+  nuke(player = 0) { if (this.twoP) { this.nukeP[player] = true; this.toReleaseP = this.toReleaseP; } this.nuking = true; if (this.nukeIdx < 0) this.nukeIdx = 0; else if (this.twoP) this.nukeIdx = 0; }
+  emit(name, x) { this.events.push({ name, x }); }
+
+  // ---------- lemmings ----------
+  addLemming(x, y, owner = 0) { const l = { owner, x, y, right: true, action: 'fall', frame: 0, state: 0, climber: false, floater: false, countdown: 0, disabled: false, removed: false, id: this.lems.length }; this.lems.push(l); return l; }
+  setAction(l, a) { if (a === 'out') { l.removed = true; l.action = null; return; } l.action = a; l.frame = 0; l.state = 0; }
+  removeTriggersOf(l) { this.triggers = this.triggers.filter(t => t.owner !== l); }
+
+  assign(l, sk, player = 0) {
+    const skills = this.skillsP[player];
+    if (!l || l.removed || l.disabled || skills[sk] <= 0) return false;
+    if (this.twoP && l.owner !== player) return false;
+    const a = l.action;
+    if (['drown', 'splat', 'exit', 'explode', 'ohno', 'fry'].includes(a)) return false;
+    let ok = false;
+    switch (sk) {
+      case SK.CLIMB: if (!l.climber) { l.climber = true; ok = true; } break;
+      case SK.FLOAT: if (!l.floater) { l.floater = true; ok = true; } break;
+      case SK.BOMB: if (!l.countdown) { l.countdown = 80; ok = true; } break;
+      case SK.BLOCK: if (['walk', 'shrug', 'build', 'bash', 'mine', 'dig'].includes(a)) { this.setAction(l, 'block'); ok = true; } break;
+      case SK.BUILD: if (['walk', 'shrug', 'bash', 'mine', 'dig'].includes(a)) { this.setAction(l, 'build'); ok = true; } break;
+      case SK.BASH: if (['walk', 'shrug', 'build', 'mine', 'dig'].includes(a)) { this.setAction(l, 'bash'); ok = true; } break;
+      case SK.MINE: if (['walk', 'shrug', 'build', 'bash', 'dig'].includes(a)) { this.setAction(l, 'mine'); ok = true; } break;
+      case SK.DIG: if (['walk', 'shrug', 'build', 'bash', 'mine'].includes(a)) { this.setAction(l, 'dig'); ok = true; } break;
+    }
+    if (ok) { skills[sk]--; this.emit('assign', l.x); }
+    return ok;
+  }
+
+  lemmingAt(x, y, radius = 0, player = -1) {
+    let best = null, bd = 1e9;
+    for (const l of this.lems) {
+      if (l.removed || l.disabled) continue;
+      if (player >= 0 && this.twoP && l.owner !== player) continue;
+      const cx = l.x, cy = l.y - 5;
+      const inBox = x >= cx - 5 - radius && x <= cx + 5 + radius && y >= cy - 6 - radius && y < cy + 7 + radius;
+      if (!inBox) continue;
+      const d = (cy - y) ** 2 + (cx - x) ** 2; if (d < bd) { bd = d; best = l; }
+    }
+    return best;
+  }
+
+  step() {
+    if (this.done) return;
+    this.tick++; this.events.length = 0;
+    // door / release
+    if (!this.doorOpen) {
+      this.doorTimer++;
+      if (this.doorTimer === 20) this.emit('door');
+      if (this.doorTimer > 20) for (const e of this.entrances) e.frame = Math.min(e.info.frames - 1, ((this.doorTimer - 20) >> 1) + 1);
+      if (this.doorTimer >= 20 + 2 * (this.entrances[0] ? this.entrances[0].info.frames : 10)) { this.doorOpen = true; if (this.tick > 1) this.emit('letsgo'); }
+    } else if (this.toRelease > 0 && !(this.nuking && !this.twoP) && !(this.twoP && this.nukeP[0] && this.nukeP[1]) && this.entrances.length) {
+      this.releaseTick++;
+      if (this.releaseTick >= 104 - this.rate) {
+        this.releaseTick = 0;
+        const e = this.entrances[this.nextEntrance++ % this.entrances.length];
+        const owner = !this.twoP ? 0 : this.entrances.length > 1 ? e.owner : (this.released & 1);
+        this.addLemming(e.x + 24, e.y + 14, owner); this.toRelease--; this.out++; this.released++;
+      }
+    }
+    if (this.doorOpen && this.timeLeft > 0) this.timeLeft--;
+    // nuke
+    if (this.nuking) {
+      while (this.nukeIdx < this.lems.length) {
+        const l = this.lems[this.nukeIdx++];
+        if (!l.removed && !l.disabled && !l.countdown && l.action !== 'exit' && (!this.twoP || this.nukeP[l.owner])) { l.countdown = 80; break; }
+      }
+    }
+    for (const l of this.lems) {
+      if (l.removed) continue;
+      let r = this.process(l);
+      if (r) this.setAction(l, r);
+      if (l.removed) { if (l.action !== 'saved') this.out--; continue; }
+      if (!l.disabled) { r = this.runTrigger(l); if (r) this.setAction(l, r); }
+      if (l.removed) this.out--;
+    }
+    // animate objects
+    for (const o of this.objects) {
+      const a = o.info.anim;
+      if (a === 2) o.frame = (o.frame + 1) % o.info.frames;
+      else if (a === 1 && o.playing) { o.frame++; if (o.frame >= o.info.frames) { o.frame = 0; o.playing = false; } }
+    }
+    if (this.timeLeft <= 0 && this.doorOpen) this.done = 'time';
+    if (this.doorOpen && this.toRelease === 0 && this.out <= 0) this.done = 'all';
+    if (this.nuking && !this.twoP && this.out <= 0 && this.nukeIdx >= this.lems.length) this.done = 'nuke';
+    if (this.twoP && this.nukeP[0] && this.nukeP[1] && this.out <= 0) this.done = 'nuke';
+  }
+
+  runTrigger(l) {
+    for (const t of this.triggers) {
+      if (l.x < t.x1 || l.x > t.x2 || l.y < t.y1 || l.y > t.y2) continue;
+      if (t.until > this.tick) continue;
+      switch (t.type) {
+        case T.EXIT: l.exitBy = t.exitOwner; return 'exit';
+        case T.DROWN: this.emit('splash', l.x); return 'drown';
+        case T.KILL: this.emit('fire', l.x); return 'fry';
+        case T.TRAP:
+          if (t.obj.playing) continue;
+          t.obj.playing = true; t.obj.frame = 0; t.until = this.tick + t.obj.info.frames;
+          this.emit('trap', l.x); l.disabled = true; this.setAction(l, 'out'); return null;
+        case T.BLOCK_L: if (t.owner !== l && l.right && !['climb', 'hoist'].includes(l.action)) { l.right = false; if (l.action === 'build' || l.action === 'bash' || l.action === 'mine') return 'walk'; } break;
+        case T.BLOCK_R: if (t.owner !== l && !l.right && !['climb', 'hoist'].includes(l.action)) { l.right = true; if (l.action === 'build' || l.action === 'bash' || l.action === 'mine') return 'walk'; } break;
+      }
+    }
+    return null;
+  }
+
+  process(l) {
+    if (l.x < 0 || l.x >= LW || l.y < 0 || l.y >= LH + 6) { this.emit('die', l.x); return 'out'; }
+    if (l.countdown > 0 && !['explode', 'ohno'].includes(l.action)) {
+      l.countdown--;
+      if (l.countdown === 0) {
+        if (['drown', 'splat', 'exit', 'fry'].includes(l.action)) {}
+        else { this.emit('ohno', l.x); return (l.action === 'fall' || l.action === 'float') ? 'explode' : 'ohno'; }
+      }
+    }
+    const g = (x, y) => this.ground(x, y), dir = l.right ? 1 : -1;
+    switch (l.action) {
+      case 'walk': {
+        l.frame++; l.x += dir;
+        let up = 0; while (up < 8 && g(l.x, l.y - up)) up++;
+        if (up === 8) { if (l.climber) return 'climb'; l.right = !l.right; return null; }
+        if (up > 0) { l.y -= up - 1; return up > 3 ? 'jump' : null; }
+        let dn = 1; while (dn < 4 && !g(l.x, l.y + dn)) dn++;
+        l.y += dn; return dn === 4 ? 'fall' : null;
+      }
+      case 'fall': {
+        l.frame++;
+        if (l.state > 16 && l.floater) return 'float';
+        let i = 0; while (i < 3 && !g(l.x, l.y + i)) i++;
+        l.y += i;
+        if (i === 3) { l.state += 3; return null; }
+        if (l.state > 60) { this.emit('splat', l.x); return 'splat'; }
+        return 'walk';
+      }
+      case 'jump': {
+        l.frame++; let i = 0; while (i < 2 && g(l.x, l.y + i - 1)) i++;
+        l.y -= i; return i < 2 ? 'walk' : null;
+      }
+      case 'climb': {
+        l.frame = (l.frame + 1) % 8;
+        if (l.frame < 4) { if (!g(l.x, l.y - l.frame - 7)) { l.y = l.y - l.frame + 2; return 'hoist'; } return null; }
+        l.y--;
+        if (g(l.x - dir, l.y - 8)) { l.right = !l.right; l.x += l.right ? 2 : -2; return 'fall'; }
+        return null;
+      }
+      case 'hoist': { l.frame++; if (l.frame <= 4) { l.y -= 2; return null; } return l.frame >= 8 ? 'walk' : null; }
+      case 'float': {
+        const SPD = [3, 3, 3, 3, -1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2];
+        l.frame++; if (l.frame >= 16) l.frame = 8;
+        const sp = SPD[l.frame];
+        for (let i = 0; i < sp; i++) if (g(l.x, l.y + i)) { l.y += i; return 'walk'; }
+        l.y += sp; return null;
+      }
+      case 'dig': {
+        const row = y => { let n = 0; for (let x = l.x - 4; x < l.x + 5; x++) if (g(x, y)) { if (this.isSteel(x, y)) { l.hitSteel = true; continue; } this.clear(x, y); n++; } return n > 0; };
+        if (l.state === 0) { row(l.y - 2); row(l.y - 1); l.state = 1; }
+        else l.frame = (l.frame + 1) % 16;
+        if (!(l.frame & 7)) {
+          l.y++; if (l.y >= LH) return 'fall';
+          l.hitSteel = false;
+          const ok = row(l.y - 1);
+          if (l.hitSteel) { this.emit('steel', l.x); return 'walk'; }
+          if (!ok) return 'fall';
+        }
+        return null;
+      }
+      case 'build': {
+        l.frame = (l.frame + 1) % 16;
+        if (l.frame === 9) { const x = l.x + (l.right ? 0 : -4); for (let i = 0; i < 6; i++) if (!g(x + i, l.y - 1)) this.setGround(x + i, l.y - 1, this.packPal[7] || 0xff4080c0); if (l.state >= 9) this.emit('chink', l.x); return null; }
+        if (l.frame === 0) {
+          l.y--;
+          for (let i = 0; i < 2; i++) { l.x += dir; if (g(l.x, l.y - 1)) { l.right = !l.right; return 'walk'; } }
+          l.state++;
+          if (l.state >= 12) return 'shrug';
+          if (g(l.x + (l.right ? 2 : -2), l.y - 9)) { l.right = !l.right; return 'walk'; }
+        }
+        return null;
+      }
+      case 'bash': {
+        l.frame++; const st = l.frame % 16;
+        if (st > 10) { l.x += dir; let i = 0; while (i < 3 && !g(l.x, l.y + i)) i++; l.y += i; if (i === 3) return 'fall'; }
+        if (st > 1 && st < 6) {
+          const b = this.clearMask((l.right ? this.S.masks.bashR : this.S.masks.bashL)[st - 2], 10, l.x, l.y, dir);
+          if (b) { this.emit('steel', l.x); return 'walk'; }
+        }
+        if (st === 5) { let x = l.x + dir * 8, n = 0; while (n < 4 && !g(x, l.y - 6)) { x += dir; n++; } if (n === 4) return 'walk'; }
+        return null;
+      }
+      case 'mine': {
+        l.frame = (l.frame + 1) % 24;
+        if (l.frame === 1 || l.frame === 2) {
+          const b = this.clearMask((l.right ? this.S.masks.mineR : this.S.masks.mineL)[l.frame - 1], 13, l.x, l.y, dir);
+          if (b) { this.emit('steel', l.x); return 'walk'; }
+        }
+        if (l.frame === 3 || l.frame === 15) {
+          if (l.frame === 3) l.y++;
+          l.x += dir; if (!g(l.x, l.y)) return 'fall';
+        }
+        return null;
+      }
+      case 'block': {
+        if (l.state === 0) {
+          this.triggers.push({ type: T.BLOCK_L, x1: l.x - 6, y1: l.y - 10, x2: l.x - 3, y2: l.y + 4, owner: l, until: 0 });
+          this.triggers.push({ type: T.BLOCK_R, x1: l.x + 4, y1: l.y - 10, x2: l.x + 7, y2: l.y + 4, owner: l, until: 0 });
+          l.state = 1;
+        }
+        l.frame++;
+        if (!g(l.x, l.y + 1)) { this.removeTriggersOf(l); return 'fall'; }
+        return null;
+      }
+      case 'shrug': l.frame++; return l.frame >= 8 ? 'walk' : null;
+      case 'ohno': {
+        l.frame++; if (l.frame === 16) { this.removeTriggersOf(l); return 'explode'; }
+        if (!g(l.x, l.y + 1)) l.y++;
+        return null;
+      }
+      case 'explode': {
+        l.disabled = true; l.frame++;
+        if (l.frame === 1) {
+          this.removeTriggersOf(l); this.emit('boom', l.x);
+          // rounded 16x22 crater centred on the lemming
+          for (let dy = 0; dy < 22; dy++) for (let dx = 0; dx < 16; dx++) {
+            const nx = (dx - 7.5) / 8, ny = (dy - 12) / 11; if (nx * nx + ny * ny > 1) continue;
+            const X = l.x - 8 + dx, Y = l.y - 14 + dy; if (this.ground(X, Y) && !this.steel[Y * LW + X]) this.clear(X, Y);
+          }
+          l.particles = []; for (let i = 0; i < 80; i++) { const a = Math.random() * Math.PI * 2, s = Math.random() * 3 + 0.5; l.particles.push([0, -6, Math.cos(a) * s, Math.sin(a) * s - 2.5, 1 + (i % 7)]); }
+        }
+        if (l.particles) for (const p of l.particles) { p[0] += p[2]; p[1] += p[3]; p[3] += 0.25; }
+        return l.frame >= 52 ? 'out' : null;
+      }
+      case 'splat': l.disabled = true; l.frame++; return l.frame >= 16 ? 'out' : null;
+      case 'fry': l.disabled = true; l.frame++; return l.frame >= 14 ? 'out' : null;
+      case 'drown': {
+        l.disabled = true; l.frame++; if (l.frame >= 16) return 'out';
+        if (!g(l.x + dir * 8, l.y)) l.x += dir; else l.right = !l.right;
+        return null;
+      }
+      case 'exit': {
+        l.disabled = true; l.frame++;
+        if (l.frame === 1) this.emit('yippee', l.x);
+        if (l.frame >= 8) { this.saved++; this.savedP[this.twoP ? (l.exitBy || 0) : 0]++; l.action = 'saved'; this.out--; l.removed = true; return null; }
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // sprite for drawing: {img(16xh indices), h, dy}
+  spriteOf(l) {
+    const S = this.S, R = l.right;
+    const pick = (a, f) => a.frames[((f % a.frames.length) + a.frames.length) % a.frames.length] && { img: a.frames[((f % a.frames.length) + a.frames.length) % a.frames.length], h: a.h, dy: a.dy };
+    switch (l.action) {
+      case 'walk': return pick(R ? S.walkR : S.walkL, l.frame);
+      case 'jump': return pick(R ? S.jumpR : S.jumpL, 0);
+      case 'fall': return pick(R ? S.fallR : S.fallL, l.frame);
+      case 'climb': return pick(R ? S.climbR : S.climbL, l.frame);
+      case 'hoist': return pick(R ? S.hoistR : S.hoistL, l.frame);
+      case 'float': return pick(R ? S.floatR : S.floatL, [0, 1, 3, 5, 5, 5, 5, 5, 5, 6, 7, 7, 6, 5, 4, 4][l.frame] ?? 4);
+      case 'dig': return pick(S.dig, l.frame);
+      case 'build': return pick(R ? S.buildR : S.buildL, l.frame);
+      case 'bash': return pick(R ? S.bashR : S.bashL, l.frame);
+      case 'mine': return pick(R ? S.mineR : S.mineL, l.frame);
+      case 'block': return pick(S.block, l.frame);
+      case 'shrug': return pick(R ? S.shrugR : S.shrugL, l.frame);
+      case 'ohno': return pick(S.ohno, l.frame);
+      case 'splat': return pick(S.splat, l.frame);
+      case 'drown': return pick(S.drown, l.frame);
+      case 'fry': return pick(S.fry, l.frame);
+      case 'exit': return pick(S.exit, l.frame);
+    }
+    return null;
+  }
+  actionName(l) {
+    const m = { walk: 'WALKER', fall: 'FALLER', jump: 'WALKER', climb: 'CLIMBER', hoist: 'CLIMBER', float: 'FLOATER', dig: 'DIGGER', build: 'BUILDER', bash: 'BASHER', mine: 'MINER', block: 'BLOCKER', shrug: 'SHRUGGER', ohno: 'BOMBER', explode: 'BOMBER', splat: 'SPLATTER', drown: 'DROWNER', fry: 'FRIED', exit: 'EXITING' };
+    let n = m[l.action] || '';
+    if (n === 'WALKER' || n === 'FALLER') { if (l.climber && l.floater) n = 'ATHLETE'; else if (l.climber) n = 'CLIMBER'; else if (l.floater) n = 'FLOATER'; }
+    return n;
+  }
+}
+if (false) module.exports = { World, SK, LW, LH };
+
+// ===== Player UI: screens, rendering, input =====
+const CW = 640, CH = 400, VIEW_W = 320, PANEL_Y = 352;
+const cv = document.getElementById('screen'), ctx = cv.getContext('2d');
+cv.width = CW * 2; cv.height = CH * 2; ctx.imageSmoothingEnabled = false;
+// pixel-art upscaler (Scale2x / EPX); applied twice gives Scale4x
+function scale2x(src, w, h) {
+  const out = new Uint32Array(w * h * 4), W2 = w * 2;
+  for (let y = 0; y < h; y++) {
+    const yu = y > 0 ? y - 1 : y, yd = y < h - 1 ? y + 1 : y;
+    for (let x = 0; x < w; x++) {
+      const E = src[y * w + x], B = src[yu * w + x], H = src[yd * w + x], D = src[y * w + (x > 0 ? x - 1 : x)], F = src[y * w + (x < w - 1 ? x + 1 : x)];
+      const o = (y * 2) * W2 + x * 2;
+      if (B !== H && D !== F) {
+        out[o] = D === B ? D : E; out[o + 1] = B === F ? F : E;
+        out[o + W2] = D === H ? D : E; out[o + W2 + 1] = H === F ? F : E;
+      } else { out[o] = out[o + 1] = out[o + W2] = out[o + W2 + 1] = E; }
+    }
+  }
+  return out;
+}
+function canvasFrom(u32, w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'), id = x.createImageData(w, h); new Uint32Array(id.data.buffer).set(u32); x.putImageData(id, 0, 0); return c; }
+function smoothCanvas(c, times = 1) {
+  let w = c.width, h = c.height, d = new Uint32Array(c.getContext('2d').getImageData(0, 0, w, h).data.buffer);
+  for (let i = 0; i < times; i++) { d = scale2x(d, w, h); w *= 2; h *= 2; }
+  return canvasFrom(d, w, h);
+}
+const big = document.createElement('canvas'); big.width = VIEW_W * 4; big.height = 640;
+const bctx = big.getContext('2d'), bimg = bctx.createImageData(VIEW_W * 4, 640), b32 = new Uint32Array(bimg.data.buffer);
+const fb = document.createElement('canvas'); fb.width = VIEW_W; fb.height = 160;
+const fctx = fb.getContext('2d'), fimg = fctx.createImageData(VIEW_W, 160), f32 = new Uint32Array(fimg.data.buffer);
+const pc = document.createElement('canvas'); pc.width = 640; pc.height = 40; const pctx = pc.getContext('2d');
+const GREEN = '#00dd00', BLUE = '#4060ff';
+const FONT = s => `bold ${s}px "Lucida Console", "Courier New", monospace`;
+
+const App = {
+  files: null, sprites: null, leveldata: null, sets: {}, specials: {},
+  screen: 'boot', world: null, lv: null, rating: 0, num: 0, twoP: false,
+  P: [{ view: 0, skill: SK.DIG, hover: null, hoverCount: 0, nukeArm: 0 }, { view: 0, skill: SK.DIG, hover: null, hoverCount: 0, nukeArm: 0 }],
+  get viewX() { return this.P[0].view; }, set viewX(v) { this.P[0].view = v; },
+  get skill() { return this.P[0].skill; }, set skill(v) { this.P[0].skill = v; },
+  get hoverLem() { return this.P[0].hover; },
+  paused: false, fast: false, menuOpen: false, uiSel: 0, rateHold: 0,
+  cursor: { x: 320, y: 200, shown: false }, cursor2: { x: 480, y: 160, shown: false },
+  smooth: (() => { try { return localStorage.getItem('lemmings.smooth') !== '0'; } catch { return true; } })(),
+  progress: (() => { try { return JSON.parse(localStorage.getItem('lemmings.progress') || '{}'); } catch { return {}; } })(),
+  saveProgress() { try { localStorage.setItem('lemmings.progress', JSON.stringify(this.progress)); } catch { } },
+};
+const viewW = () => App.twoP ? 160 : 320;                    // game pixels shown per player
+const playerAt = x => App.twoP && x >= 320 ? 1 : 0;          // which half of the screen
+const clampView = v => Math.max(0, Math.min(LW - viewW(), v));
+function scrollView(p, dx) { App.P[p].view = clampView(App.P[p].view + dx); }
+
+// ---------- loading ----------
+async function loadDisks(buffers) {
+  const found = {}; let prog = null, data = null;
+  for (const b of buffers) {
+    const r = LemData.readDisk(b);
+    if (r && r.kind === 'program') prog = r; else if (r && r.kind === 'data') data = r;
+  }
+  if (!prog || !data) return { ok: false, prog: !!prog, data: !!data };
+  App.files = { ...prog.files, ...data.files };
+  App.sprites = LemData.readSprites(App.files.Code);
+  App.leveldata = LemData.unpack(App.files.leveldata);
+  App.icons = App.files.Icons ? LemData.ilbm(App.files.Icons) : null;
+  const pp = LemData.unpack(App.files.panel1);
+  App.panelPix = pp ? LemData.planar(pp, 0, 640, 40, 4, null) : null;
+  App.sets = {}; App.specials = {};
+  return { ok: !!(App.sprites && App.leveldata) };
+}
+function getSet(i) { return App.sets[i] || (App.sets[i] = LemData.readSet(App.leveldata, i, App.files['Ground' + (i + 1)], App.files['Objects' + (i + 1)])); }
+function getSpecial(i) { return App.specials[i] || (App.specials[i] = LemData.ilbm(LemData.unpack(App.files['special' + i]))); }
+
+function buildPanel(pal) {
+  const id = pctx.createImageData(640, 40), u = new Uint32Array(id.data.buffer);
+  const P = pal.map(c => (255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0]);
+  if (App.panelPix) for (let i = 0; i < u.length; i++) u[i] = P[App.panelPix[i]];
+  pctx.putImageData(id, 0, 0); App.pcSmooth = null;
+}
+
+function startLevel(rating, num) {
+  App.rating = rating; App.num = num; App.twoP = rating === 4;
+  const lv = LemData.readLevel(App.files, rating, num); App.lv = lv;
+  const set = getSet(lv.set);
+  const w = App.world = new World(lv, set, lv.special ? getSpecial(lv.special - 1) : null, App.sprites, App.twoP);
+  const first = w.skills.findIndex(n => n > 0);
+  for (let p = 0; p < 2; p++) Object.assign(App.P[p], { skill: first < 0 ? SK.DIG : first, hover: null, nukeArm: 0 });
+  if (App.twoP) {
+    const e = w.entrances, ex = w.objects.filter(o => o.id === 0);
+    const focus = p => (e.length > 1 ? e[p] : ex[p] || e[0]) || { x: lv.startX + 160 };
+    for (let p = 0; p < 2; p++) App.P[p].view = clampView(focus(p).x + 24 - 80);
+  } else App.P[0].view = clampView(lv.startX);
+  buildPanel(set.panelPal);
+  App.paused = false; App.acc = 0; App.miniDirty = true; App.screen = 'preview'; App.uiSel = 0;
+  Music.stop();
+}
+
+// ---------- drawing helpers ----------
+function text(s, x, y, size = 16, color = GREEN, align = 'left') {
+  ctx.font = FONT(size); ctx.textAlign = align; ctx.textBaseline = 'top';
+  ctx.fillStyle = '#000'; ctx.fillText(s, x + 2, y + 2);
+  ctx.fillStyle = color; ctx.fillText(s, x, y);
+}
+function drawIconsBg(dim = 0.55) {
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, CW, CH);
+  if (App.icons) {
+    if (!App.iconsCanvas) {
+      const ic = App.icons, c = document.createElement('canvas'); c.width = ic.w; c.height = ic.h;
+      const cx = c.getContext('2d'), id = cx.createImageData(ic.w, ic.h), u = new Uint32Array(id.data.buffer);
+      const P = ic.pal.map(c => (255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0]);
+      for (let i = 0; i < u.length; i++) u[i] = P[ic.px[i]] || 0xff000000;
+      cx.putImageData(id, 0, 0); App.iconsCanvas = c;
+    }
+    if (App.smooth && !App.iconsSmooth) App.iconsSmooth = smoothCanvas(App.iconsCanvas, 1);
+    if (App.smooth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(App.iconsSmooth, 0, 0, 1280, 208, 0, 0, 640, 208); ctx.imageSmoothingEnabled = false; }
+    else ctx.drawImage(App.iconsCanvas, 0, 0, 640, 104, 0, 0, 640, 208);
+    if (dim) { ctx.fillStyle = `rgba(0,0,0,${dim})`; ctx.fillRect(0, 208, CW, CH - 208); }
+  }
+}
+
+// UI widgets (canvas buttons usable with mouse, touch, keys, gamepad and VR rays)
+let widgets = [];
+function button(id, label, x, y, w, h, opt = {}) {
+  const i = widgets.length; widgets.push({ id, x, y, w, h, ...opt });
+  const sel = App.uiSel === i, hov = App.cursor.shown && App.cursor.x >= x && App.cursor.x < x + w && App.cursor.y >= y && App.cursor.y < y + h;
+  ctx.fillStyle = opt.done ? '#123d12' : '#101830'; ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = sel ? '#ffff40' : (hov ? '#80ff80' : (opt.dim ? '#334' : '#4a5')); ctx.lineWidth = sel ? 3 : 1.5; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  text(label, x + w / 2, y + (h - (opt.size || 16)) / 2, opt.size || 16, opt.dim ? '#668' : (opt.color || GREEN), 'center');
+}
+function hitWidget(x, y) { for (let i = widgets.length - 1; i >= 0; i--) { const w = widgets[i]; if (x >= w.x && x < w.x + w.w && y >= w.y && y < w.y + w.h) return i; } return -1; }
+
+// ---------- screens ----------
+const RCOL = ['#40ff40', '#40c0ff', '#ffd040', '#ff5050', '#ff80ff'];
+function drawTitle() {
+  widgets = [];
+  drawIconsBg(0.3);
+  text('Choose a rating', 320, 212, 18, '#fff', 'center');
+  LemData.RATINGS.forEach((r, i) => button('rating' + i, r, 14 + i * 124, 236, 116, 40, { color: RCOL[i], size: i === 4 ? 15 : 16 }));
+  const done = Object.keys(App.progress).filter(k => /^[0-3]:/.test(k)).length;
+  text(`${done} of 120 levels completed`, 320, 284, 14, '#9c9', 'center');
+  button('continue', 'Continue: ' + LemData.RATINGS[App.progress._r | 0] + ' ' + ((App.progress._n | 0) + 1), 170, 306, 300, 36);
+  button('readme', 'Controls & read me', 170, 352, 300, 36, { size: 14 });
+}
+const thumbs = {}; let thumbQueue = 0;
+function levelThumb(r, n) {
+  const k = r + ':' + n; if (thumbs[k]) return thumbs[k];
+  if (thumbQueue >= 2) return null;                       // build a couple per frame so the screen stays responsive
+  thumbQueue++;
+  const lv = LemData.readLevel(App.files, r, n); if (!lv) return null;
+  const w = new World(lv, getSet(lv.set), lv.special ? getSpecial(lv.special - 1) : null, App.sprites, r === 4);
+  const full = document.createElement('canvas'); full.width = LW; full.height = LH;
+  const fx = full.getContext('2d'), id = fx.createImageData(LW, LH);
+  new Uint32Array(id.data.buffer).set(w.rgba.map(v => v || 0xff000000)); fx.putImageData(id, 0, 0);
+  for (const o of w.objects) { const sv = App.world; App.world = w; blitObject(fx, o); App.world = sv; }
+  // trim empty columns at both ends so the level fills the tile
+  let x0 = 0, x1 = LW - 1; const col = x => { for (let y = 0; y < LH; y++) if (w.solid[y * LW + x]) return true; return false; };
+  while (x0 < x1 && !col(x0)) x0 += 4; while (x1 > x0 && !col(x1)) x1 -= 4;
+  x0 = Math.max(0, x0 - 8); x1 = Math.min(LW - 1, x1 + 8);
+  const c = document.createElement('canvas'); c.width = 600; c.height = 72;
+  const cx = c.getContext('2d'); cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high';
+  cx.fillStyle = '#000'; cx.fillRect(0, 0, 600, 72);
+  const sw = x1 - x0 + 1, scale = Math.min(600 / sw, 72 / LH), dw = sw * scale, dh = LH * scale;
+  cx.drawImage(full, x0, 0, sw, LH, (600 - dw) / 2, (72 - dh) / 2, dw, dh);
+  return (thumbs[k] = c);
+}
+const PER_PAGE = 12;
+function drawLevelSelect() {
+  widgets = []; thumbQueue = 0;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, CW, CH);
+  const r = App.selRating, total = r === 4 ? 20 : 30, pages = Math.ceil(total / PER_PAGE);
+  App.levelPage = Math.max(0, Math.min(pages - 1, App.levelPage | 0));
+  text((r === 4 ? 'Two player levels' : LemData.RATINGS[r] + ' levels') + `   (page ${App.levelPage + 1} of ${pages})`, 320, 6, 17, '#fff', 'center');
+  const first = App.levelPage * PER_PAGE;
+  for (let i = first; i < Math.min(total, first + PER_PAGE); i++) {
+    const j = i - first, x = 14 + (j % 2) * 310, y = 30 + (j >> 1) * 52, done = App.progress[r + ':' + i];
+    const idx = widgets.length; widgets.push({ id: 'lvl' + i, x, y, w: 302, h: 48 });
+    const sel = App.uiSel === idx, hov = App.cursor.shown && App.cursor.x >= x && App.cursor.x < x + 302 && App.cursor.y >= y && App.cursor.y < y + 48;
+    ctx.fillStyle = done ? '#103010' : '#0c1428'; ctx.fillRect(x, y, 302, 48);
+    const th = levelThumb(r, i);
+    if (th) { ctx.imageSmoothingEnabled = true; ctx.drawImage(th, x + 2, y + 2, 298, 32); ctx.imageSmoothingEnabled = false; }
+    else { text('…', x + 151, y + 8, 14, '#557', 'center'); }
+    ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(x + 2, y + 33, 298, 14);
+    text(`${i + 1}`, x + 6, y + 34, 12, done ? '#9f9' : '#ffff60');
+    text(levelName(r, i).slice(0, 34), x + 30, y + 34, 11, done ? '#bfb' : '#ddd');
+    if (done) text('✓', x + 288, y + 34, 12, '#6f6', 'center');
+    ctx.strokeStyle = sel ? '#ffff40' : hov ? '#80ff80' : (done ? '#3a6' : '#345'); ctx.lineWidth = sel ? 3 : 1.5; ctx.strokeRect(x + 1, y + 1, 300, 46);
+  }
+  if (pages > 1) button('prevpage', '◀ Prev', 14, 348, 140, 40, { dim: App.levelPage === 0 });
+  button('back', 'Back', 250, 348, 140, 40);
+  if (pages > 1) button('nextpage', 'Next ▶', 486, 348, 140, 40, { dim: App.levelPage === pages - 1 });
+}
+const nameCache = {};
+function levelName(r, n) { const k = r + ':' + n; if (!(k in nameCache)) { const lv = LemData.readLevel(App.files, r, n); nameCache[k] = lv ? lv.name : '?'; } return nameCache[k]; }
+
+function drawPreview() {
+  widgets = [];
+  const lv = App.lv;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, CW, CH);
+  drawWorldScaled(0, 10, 640, 64);
+  const L = App.twoP ?
+    [[`Two player level ${lv.num + 1}`, '#fff'], [lv.name, '#ff6060'], [`Number of Lemmings ${lv.count}`, BLUE], ['Blue: left half · Green: right half', '#40ff40'],
+      [`Release Rate ${lv.releaseRate}`, '#ffff40'], [`Time ${lv.time} Minute${lv.time === 1 ? '' : 's'}`, '#40ffff'], ['Most lemmings in your exit wins', '#ff60ff']] :
+    [[`Level ${lv.num + 1}`, '#fff'], [lv.name, '#ff6060'], [`Number of Lemmings ${lv.count}`, BLUE], [`${Math.round(lv.need / lv.count * 100) | 0}% To Be Saved`, '#40ff40'],
+      [`Release Rate ${lv.releaseRate}`, '#ffff40'], [`Time ${lv.time} Minute${lv.time === 1 ? '' : 's'}`, '#40ffff'], [`Rating  ${LemData.RATINGS[lv.rating]}`, '#ff60ff']];
+  L.forEach(([s, c], i) => text(s, 320, 86 + i * 28, i < 2 ? 20 : 18, c, 'center'));
+  button('go', 'Start', 170, 290, 300, 44, { size: 20 });
+  button('levels', 'Choose another level', 170, 344, 300, 36, { size: 14 });
+}
+function drawResults() {
+  widgets = [];
+  const w = App.world, lv = App.lv;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, CW, CH);
+  text(w.done === 'time' ? 'Your time is up!' : 'All lemmings accounted for.', 320, 40, 20, '#fff', 'center');
+  let won;
+  if (App.twoP) {
+    const [a, b] = w.savedP;
+    text(`Blue  player rescued ${a} lemming${a === 1 ? '' : 's'}`, 320, 100, 20, BLUE, 'center');
+    text(`Green player rescued ${b} lemming${b === 1 ? '' : 's'}`, 320, 136, 20, '#40ff40', 'center');
+    text(a === b ? "It's a draw!" : (a > b ? 'Blue' : 'Green') + ' player wins!', 320, 186, 22, '#ffd060', 'center');
+    won = true;
+  } else {
+    const pct = Math.floor(w.saved * 100 / lv.count), need = Math.floor(lv.need * 100 / lv.count);
+    text(`You rescued ${pct}%`, 320, 100, 22, '#40ff40', 'center');
+    text(`You needed ${need}%`, 320, 136, 22, BLUE, 'center');
+    won = w.saved >= lv.need;
+    const msg = !won ? (pct === 0 ? "Oh dear, not even one. Try again!" : need - pct < 10 ? 'So close! Have another go.' : 'You need to rescue more.') :
+      pct === 100 ? 'Superb! You rescued every lemming.' : pct > need + 20 ? 'You totally stormed that level!' : 'Well done, on to the next one.';
+    text(msg, 320, 186, 16, '#ffd060', 'center');
+  }
+  const last = lv.num >= (App.twoP ? 19 : 29);
+  if (won) button('next', last ? 'Back to levels' : 'Next level', 170, 250, 300, 44, { size: 18 });
+  button('retry', 'Retry this level', 170, won ? 306 : 250, 300, 40);
+  button('levels', 'Choose a level', 170, won ? 356 : 300, 300, 40);
+}
+
+// world rendering
+function drawWorldScaled(dx, dy, dw, dh) {
+  const w = App.world; if (!w) return;
+  if (!App.prevCanvas) { App.prevCanvas = document.createElement('canvas'); App.prevCanvas.width = LW; App.prevCanvas.height = LH; }
+  const c = App.prevCanvas, cx = c.getContext('2d'), id = cx.createImageData(LW, LH);
+  new Uint32Array(id.data.buffer).set(w.rgba.map(v => v || 0xff000000));
+  cx.putImageData(id, 0, 0);
+  for (const o of w.objects) blitObject(cx, o);
+  ctx.imageSmoothingEnabled = true; ctx.drawImage(c, dx, dy, dw, dh); ctx.imageSmoothingEnabled = false;
+}
+function blitObject(cx, o) {
+  const info = o.info, img = info.img[o.frame] || info.img[0], P = App.world.packPal;
+  const id = cx.createImageData(info.w, info.h), u = new Uint32Array(id.data.buffer);
+  for (let y = 0; y < info.h; y++) for (let x = 0; x < info.w; x++) { const v = img[(o.upside ? info.h - 1 - y : y) * info.w + x]; if (v !== 255) u[y * info.w + x] = P[v]; }
+  const t = document.createElement('canvas'); t.width = info.w; t.height = info.h; t.getContext('2d').putImageData(id, 0, 0); cx.drawImage(t, o.x, o.y);
+}
+
+const halfFb = document.createElement('canvas'); halfFb.width = 160; halfFb.height = 160;
+const hctx = halfFb.getContext('2d'), himg = hctx.createImageData(160, 160), h32 = new Uint32Array(himg.data.buffer);
+const halfBig = document.createElement('canvas'); halfBig.width = 640; halfBig.height = 640;
+const hbctx = halfBig.getContext('2d'), hbimg = hbctx.createImageData(640, 640), hb32 = new Uint32Array(hbimg.data.buffer);
+
+function renderLevel(p = 0) {
+  const w = App.world, vw = viewW(), vx = App.P[p].view | 0, P = w.packPal, dx = p * 320;
+  const buf = vw === 320 ? f32 : h32;
+  const PS = P.slice(); PS[1] = P[2]; PS[2] = P[1];            // green player's lemmings: colours swapped
+  for (let y = 0; y < 160; y++) { const row = y * LW + vx; for (let x = 0; x < vw; x++) buf[y * vw + x] = w.rgba[row + x] || 0xff000000; }
+  const put = (X, Y, c) => { const x = X - vx; if (x >= 0 && x < vw && Y >= 0 && Y < 160) buf[Y * vw + x] = c; };
+  for (const o of w.objects) {
+    const info = o.info; if (o.x + info.w < vx || o.x > vx + vw) continue;
+    const img = info.img[o.frame] || info.img[0];
+    for (let y = 0; y < info.h; y++) {
+      const Y = o.y + y; if (Y < 0 || Y >= 160) continue;
+      for (let x = 0; x < info.w; x++) {
+        const v = img[(o.upside ? info.h - 1 - y : y) * info.w + x]; if (v === 255) continue;
+        const X = o.x + x; if (X < 0 || X >= LW) continue;
+        const s = w.solid[Y * LW + X];
+        if (o.noOverwrite && s) continue; if (o.onlyOnTerrain && !s) continue;
+        put(X, Y, P[v]);
+      }
+    }
+  }
+  for (const l of w.lems) {
+    if (l.removed || l.x < vx - 20 || l.x > vx + vw + 20) continue;
+    const LP = l.owner ? PS : P;
+    if (l.action === 'explode') {
+      if (l.particles && l.frame < 52) for (const q of l.particles) put(Math.round(l.x + q[0]), Math.round(l.y + q[1]), LP[q[4]]);
+      continue;
+    }
+    const s = w.spriteOf(l); if (!s) continue;
+    const x0 = l.x - 8, y0 = l.y + s.dy;
+    for (let y = 0; y < s.h; y++) for (let x = 0; x < 16; x++) { const v = s.img[y * 16 + x]; if (v !== 255) put(x0 + x, y0 + y, LP[v]); }
+    if (l.countdown > 0) drawDigit(Math.ceil(l.countdown / 16), l.x - 1, y0 - 6, put, P[3]);
+  }
+  if (App.smooth) {
+    const sc = scale2x(scale2x(buf, vw, 160), vw * 2, 320);
+    if (vw === 320) { b32.set(sc); bctx.putImageData(bimg, 0, 0); } else { hb32.set(sc); hbctx.putImageData(hbimg, 0, 0); }
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(vw === 320 ? big : halfBig, dx * 2, 0); ctx.restore();
+  } else {
+    if (vw === 320) { fctx.putImageData(fimg, 0, 0); ctx.drawImage(fb, 0, 0, 320, 160, 0, 0, 640, 320); }
+    else { hctx.putImageData(himg, 0, 0); ctx.drawImage(halfFb, 0, 0, 160, 160, dx, 0, 320, 320); }
+  }
+}
+const DIG = ['111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001', '111100111001111'];
+function drawDigit(n, x, y, put, c) { const g = DIG[Math.max(0, Math.min(5, n))]; for (let i = 0; i < 15; i++) if (g[i] === '1') put(x + i % 3, y + (i / 3 | 0), c); }
+
+// panel button under a screen position: {p, b} (b: 0/1 rate, 2..9 skills, 10 pause, 11 nuke, 'map')
+function panelHit(x, y) {
+  if (y < PANEL_Y - 8) return null;
+  const p = playerAt(x), lx = x - p * 320, bw = App.twoP ? 16 : 32;
+  if (lx < bw * 12) return { p, b: lx / bw | 0 };
+  const m = miniRect(p); if (lx >= m.x - p * 320 - 4 && lx < m.x - p * 320 + m.w + 4) return { p, b: 'map', lx };
+  return null;
+}
+function miniRect(p) { return App.twoP ? { x: p * 320 + 196, y: PANEL_Y + 4, w: 120, h: 40 } : { x: 416, y: PANEL_Y + 4, w: 200, h: 40 }; }
+const HINT = ['RELEASE RATE -  (slower)', 'RELEASE RATE +  (faster)', ...SKILL_NAMES, 'PAUSE + MENU', 'NUKE - click twice'];
+const HINT2 = ['RATE -', 'RATE +', ...SKILL_NAMES, 'MENU', 'NUKE x2'];
+
+function renderPanel() {
+  const w = App.world, two = App.twoP;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 320, CW, CH - 320);
+  const src = App.smooth ? (App.pcSmooth || (App.pcSmooth = smoothCanvas(pc, 1))) : pc, k = App.smooth ? 2 : 1;
+  ctx.imageSmoothingEnabled = App.smooth;
+  if (!two) ctx.drawImage(src, 0, 16 * k, 640 * k, 24 * k, 0, PANEL_Y, 640, 48);
+  else for (let p = 0; p < 2; p++) {
+    ctx.drawImage(src, 0, 16 * k, 384 * k, 24 * k, p * 320, PANEL_Y, 192, 48);
+    const m = miniRect(p); ctx.drawImage(src, 412 * k, 16 * k, 208 * k, 24 * k, m.x - 4, PANEL_Y, m.w + 8, 48);
+  }
+  ctx.imageSmoothingEnabled = false;
+  const t = Math.max(0, Math.ceil(w.timeLeft / 17)), tstr = `TIME ${t / 60 | 0}-${String(t % 60).padStart(2, '0')}`;
+  const hit = App.cursor.shown && !App.menuOpen ? panelHit(App.cursor.x, App.cursor.y) : null;
+  const now = performance.now();
+  for (let p = 0; p < (two ? 2 : 1); p++) {
+    const st = App.P[p], x0 = p * 320, bw = two ? 16 : 32, skills = w.skillsP[p];
+    // status line
+    let label = '', col = GREEN;
+    if (st.nukeArm > now) { label = two ? 'AGAIN TO NUKE!' : 'CLICK AGAIN TO NUKE!'; col = (now / 150 | 0) % 2 ? '#ff4040' : '#ffff40'; }
+    else if (hit && hit.p === p && typeof hit.b === 'number') { label = (two ? HINT2 : HINT)[hit.b]; col = '#ffff40'; }
+    else if (st.hover) label = `${w.actionName(st.hover)} ${st.hoverCount}`;
+    else if (!two) { label = SKILL_NAMES[st.skill]; col = '#88aa88'; }
+    if (!two) {
+      text(label, 8, 326, 18, col);
+      if (!label.startsWith('RELEASE') && !label.startsWith('CLICK') && !label.startsWith('NUKE')) {
+        text(`OUT ${w.out}`, 250, 326, 18, GREEN);
+        text(`IN ${String(Math.floor(w.saved * 100 / App.lv.count)).padStart(2)}%`, 370, 326, 18, GREEN);
+      }
+      text(tstr, 480, 326, 18, GREEN);
+      if (App.fast) text('>>', 612, 326, 18, '#ffff40');
+    } else {
+      const lx = p ? 384 : 6;
+      text(label || (p ? 'GREEN' : 'BLUE'), lx, 328, 14, label ? col : (p ? '#40ff40' : '#6080ff'));
+      text(`IN ${w.savedP[p]}`, p ? 634 : 256, 328, 15, GREEN, 'right');
+    }
+    // counts on the buttons
+    const nums = [w.minRate, w.rate, ...skills];
+    for (let i = 0; i < 10; i++) { const n = nums[i]; if (n <= 0 && i >= 2) continue; text(String(n).padStart(2, ' '), x0 + i * bw + bw / 2, PANEL_Y + 2, two ? 9 : 13, '#ffffff', 'center'); }
+    // highlights
+    if (hit && hit.p === p && typeof hit.b === 'number') { ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(x0 + hit.b * bw, PANEL_Y, bw, 48); }
+    ctx.lineWidth = two ? 2 : 3; ctx.strokeStyle = '#ffff40'; ctx.strokeRect(x0 + (st.skill + 2) * bw + 1.5, PANEL_Y + 1.5, bw - 3, 45);
+    if (App.paused) { ctx.strokeStyle = '#ffff40'; ctx.strokeRect(x0 + 10 * bw + 1, PANEL_Y + 1, bw - 2, 46); }
+    if (st.nukeArm > now) { ctx.strokeStyle = (now / 150 | 0) % 2 ? '#ff3030' : '#ffff40'; ctx.lineWidth = 3; ctx.strokeRect(x0 + 11 * bw + 1.5, PANEL_Y + 1.5, bw - 3, 45); }
+    // minimap
+    const m = miniRect(p);
+    if (App.miniDirty || !App.mini) { App.mini = makeMini(200, 20); App.miniDirty = false; }
+    ctx.imageSmoothingEnabled = true; ctx.drawImage(App.mini, m.x, m.y, m.w, m.h); ctx.imageSmoothingEnabled = false;
+    for (const l of w.lems) if (!l.removed) { ctx.fillStyle = l.owner ? '#40ff40' : '#ffff00'; ctx.fillRect(m.x + l.x * m.w / LW, m.y + l.y * m.h / LH - 1, 2, 2); }
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(m.x + st.view * m.w / LW, m.y, viewW() * m.w / LW, m.h);
+  }
+  if (two) { text(tstr, 320, 328, 15, GREEN, 'center'); if (App.fast) text('>>', 320, 342, 10, '#ffff40', 'center'); ctx.fillStyle = '#334'; ctx.fillRect(319, 0, 2, 320); }
+}
+function makeMini(mw, mh) {
+  const w = App.world, c = document.createElement('canvas'); c.width = mw; c.height = mh;
+  const cx = c.getContext('2d'), id = cx.createImageData(mw, mh), u = new Uint32Array(id.data.buffer);
+  for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
+    const X = (x * LW / mw) | 0, Y = (y * LH / mh) | 0; let v = 0;
+    for (let dy = 0; dy < LH / mh && !v; dy++) for (let dx = 0; dx < LW / mw; dx += 2) if (w.solid[(Y + dy) * LW + X + dx]) { v = w.rgba[(Y + dy) * LW + X + dx]; break; }
+    u[y * mw + x] = v || 0xff000000;
+  }
+  cx.putImageData(id, 0, 0); return c;
+}
+
+function renderGame() {
+  renderLevel(0); if (App.twoP) renderLevel(1);
+  renderPanel();
+  if (App.paused && !App.menuOpen) text('PAUSED', 320, 140, 26, '#ff0', 'center');
+}
+
+function drawCursorAt(c, hover, color) {
+  const { x, y } = c;
+  if (App.screen === 'game' && y < 320 && !App.menuOpen) {
+    const shape = () => {
+      ctx.beginPath();
+      if (hover) ctx.rect(x - 16, y - 16, 32, 32);
+      else { ctx.moveTo(x - 18, y); ctx.lineTo(x - 5, y); ctx.moveTo(x + 5, y); ctx.lineTo(x + 18, y); ctx.moveTo(x, y - 18); ctx.lineTo(x, y - 5); ctx.moveTo(x, y + 5); ctx.lineTo(x, y + 18); }
+      ctx.stroke();
+    };
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 6; shape();
+    ctx.strokeStyle = hover ? '#ffff40' : color; ctx.lineWidth = 2.5; shape();
+    ctx.fillStyle = '#fff'; ctx.fillRect(x - 1, y - 1, 2, 2);
+  } else if (Input.lastPointer !== 'mouse') {
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+function drawCursor() {
+  if (App.cursor.shown) drawCursorAt(App.cursor, App.P[playerAt(App.cursor.x)].hover && App.P[playerAt(App.cursor.x)].hoverBy === 1, '#fff');
+  if (App.twoP && App.cursor2.shown && App.screen === 'game') drawCursorAt(App.cursor2, App.P[1].hover && App.P[1].hoverBy === 2, '#80ff80');
+}
+
+// ---------- pause menu (one model for every display mode, incl. VR) ----------
+function menuItems() {
+  const it = [['resume', 'Resume'], ['restart', 'Restart level'], ['fast', 'Speed: ' + (App.fast ? 'Fast  (F)' : 'Normal  (F)')], ['gfx', 'Graphics: ' + (App.smooth ? 'Smooth' : 'Pixels')],
+    ['music', 'Music: ' + (Music.on ? 'On' : 'Off')], ['sound', 'Sound effects: ' + (Sound.on ? 'On' : 'Off')], ['levels', 'Choose a level'], ['nuke', 'Nuke (armageddon)']];
+  if (!XR.active) it.push(['full', document.fullscreenElement ? 'Leave fullscreen' : 'Fullscreen']);
+  if (XR.supported && !XR.active) it.push(['vr', 'Play in VR / AR']);
+  if (XR.active) it.push(['exitvr', 'Exit VR / AR']);
+  if (!XR.active) it.push(['readme', 'Controls & read me'], ['disks', 'Load other disks']);
+  return it;
+}
+function drawMenu() {
+  const it = menuItems(); widgets = [];
+  ctx.fillStyle = 'rgba(0,0,0,0.78)'; ctx.fillRect(0, 0, CW, CH);
+  const two = it.length > 9, rows = two ? Math.ceil(it.length / 2) : it.length, h = 34, top = Math.max(40, (CH - rows * (h + 6)) / 2 + 14);
+  text('PAUSED', 320, top - 32, 20, '#ff0', 'center');
+  App.uiSel = Math.min(App.uiSel, it.length - 1);
+  it.forEach(([id, label], i) => {
+    const col = two ? (i < rows ? 0 : 1) : 0, row = two ? i % rows : i;
+    button('m_' + id, label, two ? 40 + col * 290 : 170, top + row * (h + 6), two ? 270 : 300, h, { size: 15 });
+  });
+}
+function menuAction(id) {
+  switch (id) {
+    case 'resume': closeMenu(); break;
+    case 'restart': closeMenu(); startLevel(App.rating, App.num); App.screen = 'game'; Music.play(App.lv); break;
+    case 'fast': App.fast = !App.fast; break;
+    case 'gfx': App.smooth = !App.smooth; try { localStorage.setItem('lemmings.smooth', App.smooth ? '1' : '0'); } catch { } break;
+    case 'music': Music.toggle(); break;
+    case 'sound': Sound.toggle(); break;
+    case 'levels': closeMenu(); Music.stop(); openLevels(App.rating, App.num); break;
+    case 'nuke': closeMenu(); App.world.nuke(0); if (App.twoP) App.world.nuke(1); break;
+    case 'full': toggleFullscreen(); break;
+    case 'vr': closeMenu(); XR.start(); break;
+    case 'exitvr': closeMenu(); XR.stop(); break;
+    case 'readme': showReadme(true); break;
+    case 'disks': closeMenu(); Music.stop(); showBoot(); break;
+  }
+}
+function openMenu() { if (App.screen !== 'game') return; App.menuOpen = true; App.paused = true; App.uiSel = 0; }
+function closeMenu() { App.menuOpen = false; App.paused = false; }
+
+// ---------- actions from widgets ----------
+function activate(i) {
+  const w = widgets[i]; if (!w) return; const id = w.id;
+  Sound.unlock();
+  if (id.startsWith('m_')) return menuAction(id.slice(2));
+  if (id.startsWith('rating')) { openLevels(+id.slice(6), firstUnplayed(+id.slice(6))); return; }
+  if (id === 'prevpage' || id === 'nextpage') { App.levelPage += id === 'nextpage' ? 1 : -1; App.uiSel = id === 'nextpage' ? Math.min(widgets.length - 1, 0) : 0; return; }
+  if (id.startsWith('lvl')) { startLevel(App.selRating, +id.slice(3)); return; }
+  switch (id) {
+    case 'continue': startLevel(App.progress._r | 0, App.progress._n | 0); break;
+    case 'readme': showReadme(true); break;
+    case 'back': App.screen = 'title'; App.uiSel = 0; break;
+    case 'go': App.screen = 'game'; App.uiSel = 0; Music.play(App.lv); break;
+    case 'levels': openLevels(App.rating, App.num); break;
+    case 'retry': startLevel(App.rating, App.num); break;
+    case 'next': if (App.num < (App.twoP ? 19 : 29)) startLevel(App.rating, App.num + 1); else openLevels(App.rating, 0); break;
+  }
+}
+function openLevels(r, n) { App.selRating = r; App.levelPage = (n / PER_PAGE) | 0; App.screen = 'levels'; App.uiSel = n % PER_PAGE; }
+function firstUnplayed(r) { for (let i = 0; i < (r === 4 ? 20 : 30); i++) if (!App.progress[r + ':' + i]) return i; return 0; }
+
+// ---------- game input ----------
+function panelClick(x, y) {
+  const h = panelHit(x, y); if (!h) return false;
+  const w = App.world, st = App.P[h.p];
+  if (h.b === 'map') { scrollToMini(h.p, x); return true; }
+  if (h.b === 0) App.rateHold = -1; else if (h.b === 1) App.rateHold = 1;
+  else if (h.b < 10) { st.skill = h.b - 2; Sound.play('click'); }
+  else if (h.b === 10) openMenu();
+  else if (h.b === 11) {
+    if (st.nukeArm > performance.now()) { w.nuke(h.p); st.nukeArm = 0; }
+    else st.nukeArm = performance.now() + 1500;
+  }
+  return true;
+}
+function scrollToMini(p, x) { const m = miniRect(p); App.P[p].view = clampView((x - m.x) * LW / m.w - viewW() / 2); }
+function levelClick(x, y, touch, forceP) {
+  const w = App.world; if (!w) return;
+  const p = forceP ?? playerAt(x), lx = App.P[p].view + (x - p * 320) / 2, ly = y / 2;
+  const l = w.lemmingAt(lx, ly, touch ? 6 : 3, App.twoP ? p : -1);
+  if (l && w.assign(l, App.P[p].skill, p)) Sound.play('assign');
+}
+function hoverFor(c, p, by, touchy) {
+  const w = App.world, lx = App.P[p].view + (c.x - p * 320) / 2, ly = c.y / 2;
+  const l = w.lemmingAt(lx, ly, touchy ? 6 : 3, App.twoP ? p : -1); if (!l) return;
+  App.P[p].hover = l; App.P[p].hoverBy = by; let n = 0;
+  for (const m of w.lems) if (!m.removed && (!App.twoP || m.owner === p) && m.x >= lx - 6 && m.x <= lx + 6 && m.y - 5 >= ly - 7 && m.y - 5 <= ly + 7) n++;
+  App.P[p].hoverCount = n;
+}
+function updateHover() {
+  App.P[0].hover = App.P[1].hover = null;
+  if (App.screen !== 'game' || !App.world) return;
+  if (App.cursor.shown && App.cursor.y < 320) hoverFor(App.cursor, playerAt(App.cursor.x), 1, Input.lastPointer === 'touch');
+  if (App.twoP && App.cursor2.shown && App.cursor2.y < 320) hoverFor(App.cursor2, 1, 2, true);
+}
+
+// ---------- main loop ----------
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(100, now - last); last = now;
+  Input.poll(dt);
+  if (App.screen === 'game' && App.world) {
+    const w = App.world;
+    if (!App.paused) {
+      App.acc = (App.acc || 0) + dt * (App.fast ? 3 : 1);
+      while (App.acc >= 1000 / 17) {
+        App.acc -= 1000 / 17;
+        if (App.rateHold) w.rate = Math.max(w.minRate, Math.min(99, w.rate + App.rateHold));
+        w.step();
+        if (w.twoP) for (const l of w.lems) if (!l.removed && !l.countdown && w.nukeP[l.owner] && !['exit', 'explode', 'ohno', 'splat', 'drown', 'fry'].includes(l.action)) l.countdown = 80;
+        for (const e of w.events) Sound.event(e);
+        if (w.dirty && w.tick % 8 === 0) App.miniDirty = true;
+        if (w.done) { finishLevel(); break; }
+      }
+    } else if (App.rateHold) { if (!App._rh || now - App._rh > 60) { App._rh = now; w.rate = Math.max(w.minRate, Math.min(99, w.rate + App.rateHold)); } }
+    // edge scrolling with the mouse / pad cursors
+    const edge = (c, p) => {
+      if (!c.shown || c.y >= 320 || App.menuOpen) return;
+      const lx = c.x - p * 320, half = App.twoP ? 320 : 640;
+      if (lx < 12) scrollView(p, -dt * 0.25); else if (lx > half - 12) scrollView(p, dt * 0.25);
+    };
+    if (Input.lastPointer !== 'touch') edge(App.cursor, playerAt(App.cursor.x));
+    if (App.twoP) edge(App.cursor2, 1);
+    scrollView(0, Input.scroll * dt * 0.3); if (App.twoP) scrollView(1, Input.scroll2 * dt * 0.3);
+    updateHover();
+  }
+  const wantNone = App.screen === 'game' && !App.menuOpen && App.cursor.shown && App.cursor.y < 320 && Input.lastPointer === 'mouse';
+  const cur = wantNone ? 'none' : 'default'; if (cv.style.cursor !== cur) cv.style.cursor = cur;
+  draw();
+  requestAnimationFrame(frame);
+}
+function draw() {
+  ctx.setTransform(2, 0, 0, 2, 0, 0); ctx.imageSmoothingEnabled = false;
+  cv.style.imageRendering = App.smooth ? 'auto' : 'pixelated';
+  switch (App.screen) {
+    case 'boot': ctx.fillStyle = '#000'; ctx.fillRect(0, 0, CW, CH); widgets = []; break;
+    case 'title': drawTitle(); break;
+    case 'levels': drawLevelSelect(); break;
+    case 'preview': drawPreview(); break;
+    case 'game': renderGame(); widgets = []; if (App.menuOpen) drawMenu(); break;
+    case 'results': drawResults(); break;
+  }
+  drawCursor();
+}
+function finishLevel() {
+  const w = App.world, lv = App.lv;
+  if (App.twoP) App.progress['4:' + lv.num] = 1;
+  else if (w.saved >= lv.need) {
+    App.progress[lv.rating + ':' + lv.num] = 1;
+    let r = lv.rating, n = lv.num + 1; if (n >= 30) { n = 0; r = Math.min(3, r + 1); }
+    App.progress._r = r; App.progress._n = n;
+  }
+  App.saveProgress();
+  App.screen = 'results'; App.uiSel = 0; Music.stop();
+}
+
+// ===== Music: DMA's own 3-channel tracker format, replayed like the game's Paula driver =====
+const PERIODS = [1076, 1016, 960, 856, 808, 762, 720, 678, 640, 604, 570, 538, 508, 480, 453, 428, 404, 381, 360, 339, 320, 302, 285, 269, 254, 240, 226, 214, 202, 190, 180, 170, 160, 151, 143, 135, 127, 120, 113];
+const Music = {
+  on: (() => { try { return localStorage.getItem('lemmings.music') !== '0'; } catch { return true; } })(),
+  vol: 0.55, songs: null, inst: {}, songData: {}, cur: null, timer: null,
+  // song table and instrument names live at the end of "leveldata"
+  parseTables() {
+    const ld = App.leveldata, names = [];
+    const str = (o, n) => { let s = ''; for (let i = 0; i < n; i++) { const c = ld[o + i]; if (c === 0 || c === 0xff) break; s += String.fromCharCode(c); } return s; };
+    let base = -1; for (let i = 0x1bd0; i < ld.length - 8; i++) if (str(i, 8) === 'acoustic') { base = i; break; }
+    if (base < 0) return false;
+    const letter = c => (c >= 65 && c <= 90) || (c >= 97 && c <= 122);
+    let o = base; while (o + 24 <= ld.length && letter(ld[o]) && letter(ld[o + 12])) { names.push(str(o, 12)); o += 12; }
+    if (!letter(ld[o])) return false;
+    const songs = {}; this.order = [];
+    for (; o + 28 <= ld.length; o += 28) {
+      const n = str(o, 12); if (!n) break;
+      const slots = []; for (let i = 0; i < 16; i++) { const v = ld[o + 12 + i]; slots.push(v ? names[v - 1] : null); }
+      if (!songs[n]) { songs[n] = slots; this.order.push(n); }
+    }
+    this.songs = songs; this.names = names; return true;
+  },
+  sample(name) {
+    if (this.inst[name] !== undefined) return this.inst[name];
+    let d = App.files[name]; let r = null;
+    if (d && !(d[0] === 0x46 && d[1] === 0x4f)) d = LemData.unpack(d);
+    if (d && d[0] === 0x46 && d[1] === 0x4f && Sound.ac) {
+      const rl = LemData.rl; let q = 12, one = 0, rep = 0, body = null;
+      while (q < d.length - 8) { const id = String.fromCharCode(d[q], d[q + 1], d[q + 2], d[q + 3]), n = rl(d, q + 4); if (id === 'VHDR') { one = rl(d, q + 8); rep = rl(d, q + 12); } if (id === 'BODY') body = d.subarray(q + 8, q + 8 + n); q += 8 + n + (n & 1); }
+      if (body) {
+        const len = Math.max(2, Math.min(body.length, one + rep || body.length)), b = Sound.ac.createBuffer(1, len, 8363), ch = b.getChannelData(0);
+        for (let i = 0; i < len; i++) ch[i] = ((body[i] << 24) >> 24) / 128;
+        r = { buf: b, one: Math.min(one || len, len), rep: Math.min(rep, len - Math.min(one || len, len)) };
+      }
+    }
+    return (this.inst[name] = r);
+  },
+  songFor(lv) {
+    if (!this.songs && !this.parseTables()) return null;
+    const n = (lv.name || '').toLowerCase();
+    if (lv.special) { if (n.includes('awesome')) return 'awesome'; if (n.includes('menac')) return 'menace'; if (n.includes('beastii')) return 'beastII'; if (n.includes('beast')) return 'beastI'; }
+    const normal = this.order.filter(s => !['awesome', 'menace', 'beastII', 'beastI'].includes(s));
+    return normal[(lv.rating * 30 + lv.num) % normal.length];
+  },
+  play(lv) {
+    this.stop(); if (!this.on || !Sound.ac || !lv) return;
+    const name = this.songFor(lv), raw = name && App.files[name]; if (!raw) return;
+    const data = this.songData[name] || (this.songData[name] = LemData.unpack(raw) || raw);
+    const slots = this.songs[name].map(n => n && this.sample(n));
+    const ac = Sound.ac, out = ac.createGain(); out.gain.value = this.vol; out.connect(ac.destination);
+    const hz = 709379 / ((data[1] << 8 | data[0]) || 14500), mask = data[2] || 7;
+    const ch = [0, 1, 2, 3].map(c => {
+      const g = ac.createGain(); g.gain.value = 0; g.connect(out);
+      return { on: !!(mask & (1 << c)), ptr: 3 - 12, start: 3 - 12, loopPtr: 0, loopCnt: 0xff, delay: 0, vol: 0, fadeDir: 0, fadeSpd: 0, fadeCnt: 0, noLoop: false, src: null, g };
+    });
+    const s = this.cur = { data, slots, ch, out, hz, counter: 0, t: ac.currentTime + 0.1, name };
+    this.timer = setInterval(() => this.pump(), 40); this.pump();
+  },
+  stop() { if (this.timer) clearInterval(this.timer); this.timer = null; const s = this.cur; this.cur = null; if (s) { const t = Sound.ac.currentTime; for (const c of s.ch) try { c.src && c.src.stop(t + 0.05); } catch { } s.out.gain.setTargetAtTime(0, t, 0.02); setTimeout(() => s.out.disconnect(), 300); } },
+  toggle() { this.on = !this.on; try { localStorage.setItem('lemmings.music', this.on ? '1' : '0'); } catch { } if (!this.on) this.stop(); else if (App.screen === 'game') this.play(App.lv); },
+  pump() {
+    const s = this.cur, ac = Sound.ac; if (!s) return;
+    if (s.t < ac.currentTime) s.t = ac.currentTime + 0.02;
+    while (s.t < ac.currentTime + 0.25) { this.call(s, s.t); s.t += 1 / s.hz; }
+  },
+  setVol(c, t) { c.g.gain.setValueAtTime(c.vol / 64 * 0.5, t); },
+  call(s, t) {
+    // every call: volume fades
+    for (const c of s.ch) {
+      if (!c.on || !c.fadeSpd) continue;
+      if (--c.fadeCnt > 0) continue;
+      c.fadeCnt = c.fadeSpd;
+      if (c.fadeDir) { if (c.vol > 0) { c.vol--; this.setVol(c, t); } else c.fadeSpd = 0; }
+      else { if (c.vol < 63) { c.vol++; this.setVol(c, t); } else c.fadeSpd = 0; }
+    }
+    if (s.counter === 0) s.counter = 5; else s.counter--;
+    if (s.counter !== 0) return;
+    const d = s.data;
+    s.ch.forEach((c, i) => {
+      if (!c.on) return;
+      if (c.delay) { c.delay--; if (c.delay) return; }
+      c.ptr += 12;
+      if (c.ptr + 12 > d.length) c.ptr = c.start + 12;
+      const o = c.ptr + i * 3, note = d[o], inst = d[o + 1], eff = d[o + 2];
+      if (note && inst && s.slots[inst - 1]) this.trigger(s, c, s.slots[inst - 1], note, t);
+      this.effect(s, c, eff, t);
+    });
+  },
+  trigger(s, c, smp, note, t) {
+    const ac = Sound.ac, per = PERIODS[Math.max(0, Math.min(PERIODS.length - 1, note - 1))];
+    if (c.src) try { c.src.stop(t); } catch { }
+    const src = ac.createBufferSource(); src.buffer = smp.buf; src.playbackRate.value = (3546895 / per) / 8363;
+    if (c.noLoop) { src.loop = true; src.loopStart = 0; src.loopEnd = smp.one / 8363; }
+    else if (smp.rep > 2) { src.loop = true; src.loopStart = smp.one / 8363; src.loopEnd = (smp.one + smp.rep) / 8363; }
+    src.connect(c.g); src.start(t); c.src = src; this.setVol(c, t);
+  },
+  effect(s, c, e, t) {
+    if (!e) return;
+    if (e >= 0x03 && e <= 0x42) { c.vol = e - 3; this.setVol(c, t); }
+    else if (e === 0x43) { if (c.src) try { c.src.stop(t); } catch { } c.src = null; }
+    else if (e >= 0x57 && e <= 0x88) { if (!c.delay) c.delay = e - 0x56; }
+    else if (e >= 0xa7 && e <= 0xb0) { c.fadeDir = 0; c.fadeSpd = c.fadeCnt = e - 0xa6; }
+    else if (e >= 0xb1 && e <= 0xba) { c.fadeDir = 1; c.fadeSpd = c.fadeCnt = e - 0xb0; }
+    else if (e === 0xcf) c.noLoop = true;
+    else if (e === 0xd0) c.noLoop = false;
+    else if (e >= 0xd2 && e <= 0xdb) { if (c.loopCnt === 0xff) { c.loopPtr = c.ptr; c.loopCnt = e - 0xd1; } }
+    else if (e === 0xdc) { if (c.loopCnt === 0) c.loopCnt = 0xff; else if (c.loopCnt !== 0xff) { c.loopCnt--; c.ptr = c.loopPtr; } }
+    else if (e === 0xdd) c.ptr -= 12;
+    else if (e === 0xde) c.ptr = c.start;
+  },
+};
+
+// ===== Sound: the game's own 8SVX samples =====
+const Sound = {
+  on: (() => { try { return localStorage.getItem('lemmings.sound') !== '0'; } catch { return true; } })(),
+  ac: null, basic: [], full: [], gain: null,
+  unlock() {
+    if (this.ac) { if (this.ac.state === 'suspended') this.ac.resume(); return; }
+    try { this.ac = new (window.AudioContext || window.webkitAudioContext)(); this.gain = this.ac.createGain(); this.gain.gain.value = 0.6; this.gain.connect(this.ac.destination); } catch { return; }
+    if (App.files) { this.basic = this.bank(App.files.BasicFX); this.full = this.bank(App.files.FullFX); }
+  },
+  bank(d) {
+    const out = []; if (!d) return out; const rl = LemData.rl, rw = LemData.rw; let p = 0;
+    while (p < d.length - 12 && d[p] === 0x46 && d[p + 1] === 0x4f) {
+      const n = rl(d, p + 4); let q = p + 12, rate = 8363, body = null;
+      while (q < p + 8 + n) { const id = String.fromCharCode(d[q], d[q + 1], d[q + 2], d[q + 3]), cn = rl(d, q + 4); if (id === 'VHDR') rate = rw(d, q + 8 + 12); if (id === 'BODY') body = d.subarray(q + 8, q + 8 + cn); q += 8 + cn + (cn & 1); }
+      if (body && this.ac) { const b = this.ac.createBuffer(1, body.length, Math.max(3000, rate)); const ch = b.getChannelData(0); for (let i = 0; i < body.length; i++) ch[i] = ((body[i] << 24) >> 24) / 128; out.push(b); } else out.push(null);
+      p += 8 + n + (n & 1);
+    }
+    return out;
+  },
+  buf(b, rate = 1) { if (!this.on || !this.ac || !b) return; const s = this.ac.createBufferSource(); s.buffer = b; s.playbackRate.value = rate; s.connect(this.gain); s.start(); },
+  play(name) { const m = { click: 0, door: 1, letsgo: 2, assign: 3, ohno: 4, splat: 5, chink: 6, die: 8, boom: 9, yippee: 10 }; this.buf(this.basic[m[name]]); },
+  event(e) {
+    switch (e.name) {
+      case 'splash': this.buf(this.full[0]); break;
+      case 'trap': this.buf(this.full[1]); break;
+      case 'fire': this.buf(this.full[3]); break;
+      case 'steel': this.play('click'); break;
+      default: this.play(e.name);
+    }
+  },
+  toggle() { this.on = !this.on; try { localStorage.setItem('lemmings.sound', this.on ? '1' : '0'); } catch { } },
+};
+
+// ===== Input: mouse, touch, keyboard, gamepad, VR controllers =====
+const Input = {
+  scroll: 0, lastPointer: 'mouse', keys: {}, pad: { prev: [] }, touches: new Map(),
+  toCanvas(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * CW / r.width, y: (e.clientY - r.top) * CH / r.height }; },
+  init() {
+    cv.addEventListener('pointerdown', e => this.down(e));
+    cv.addEventListener('pointermove', e => this.move(e));
+    cv.addEventListener('pointerup', e => this.up(e));
+    cv.addEventListener('pointercancel', e => this.up(e, true));
+    cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') App.cursor.shown = false; });
+    cv.addEventListener('contextmenu', e => e.preventDefault());
+    cv.addEventListener('wheel', e => { if (App.screen !== 'game') return; const q = this.toCanvas(e), P = App.P[playerAt(q.x)]; if (q.y >= PANEL_Y - 8) { P.skill = (P.skill + (e.deltaY > 0 ? 1 : 7)) % 8; Sound.play('click'); } else scrollView(playerAt(q.x), (e.deltaX || e.deltaY) * 0.5); e.preventDefault(); }, { passive: false });
+    addEventListener('keydown', e => this.key(e, true));
+    addEventListener('keyup', e => this.key(e, false));
+  },
+  down(e) {
+    Sound.unlock(); try { cv.setPointerCapture(e.pointerId); } catch { }
+    this.lastPointer = e.pointerType === 'touch' ? 'touch' : 'mouse';
+    const p = this.toCanvas(e); App.cursor = { x: p.x, y: p.y, shown: true };
+    this.touches.set(e.pointerId, { x0: p.x, y0: p.y, x: p.x, y: p.y, pl: playerAt(p.x), view0: App.P[playerAt(p.x)].view, drag: false, btn: e.button, t: performance.now() });
+    if (e.pointerType === 'mouse' && e.button === 2 && App.screen === 'game') { this.touches.get(e.pointerId).drag = true; return; }
+    if (App.screen === 'game' && !App.menuOpen) {
+      if (p.y >= PANEL_Y - 8) { if (panelClick(p.x, p.y)) this.touches.get(e.pointerId).panel = true; }
+      else if (e.pointerType === 'mouse' && p.y < 320) levelClick(p.x, p.y, false);
+    }
+  },
+  move(e) {
+    const p = this.toCanvas(e), t = this.touches.get(e.pointerId);
+    if (e.pointerType === 'mouse' || t) App.cursor = { x: p.x, y: p.y, shown: true };
+    if (e.pointerType === 'mouse') this.lastPointer = 'mouse';
+    if (!t) { if (App.screen !== 'game' || App.menuOpen) { const i = hitWidget(p.x, p.y); if (i >= 0) App.uiSel = i; } return; }
+    t.x = p.x; t.y = p.y;
+    if (App.screen === 'game' && !App.menuOpen) {
+      if (t.panel) { const h = panelHit(p.x, p.y); if (h && h.b === 'map') scrollToMini(h.p, p.x); return; }
+      if (!t.drag && Math.abs(p.x - t.x0) > 14 && (e.pointerType === 'touch')) t.drag = true;
+      if (t.drag) App.P[t.pl].view = clampView(t.view0 - (p.x - t.x0) / 2);
+    }
+  },
+  up(e, cancel) {
+    const t = this.touches.get(e.pointerId); this.touches.delete(e.pointerId); App.rateHold = 0;
+    if (!t || cancel) return;
+    const p = this.toCanvas(e);
+    if (App.screen === 'game' && !App.menuOpen) {
+      if (e.pointerType === 'touch' && !t.drag && !t.panel && p.y < 320) {
+        // tap: pause button area (top-right corner) or assign
+        if (p.x > CW - 50 && p.y < 40) { openMenu(); return; }
+        levelClick(p.x, p.y, true);
+      }
+      return;
+    }
+    const i = hitWidget(p.x, p.y); if (i >= 0) { App.uiSel = i; activate(i); }
+  },
+  key(e, down) {
+    const k = e.key; this.keys[k] = down;
+    if (!down) { if (k === '-' || k === '=' || k === '+' || k === 'F1' || k === 'F2') App.rateHold = 0; return; }
+    Sound.unlock();
+    if (document.getElementById('readmeBox').classList.contains('show')) { if (k === 'Escape' || k === 'Enter') showReadme(false); return; }
+    const nav = App.screen !== 'game' || App.menuOpen;
+    if (k === 'Escape' || k === 'p' || k === 'P') {
+      if (App.screen === 'game') { App.menuOpen ? closeMenu() : openMenu(); e.preventDefault(); return; }
+      if (App.screen === 'levels') { App.screen = 'title'; App.uiSel = 0; return; }
+    }
+    if (nav && App.screen === 'levels' && (k === 'PageDown' || k === 'PageUp')) { App.levelPage += k === 'PageDown' ? 1 : -1; App.uiSel = 0; return; }
+    if (nav) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 's', 'a', 'd'].includes(k)) { navMove(k); e.preventDefault(); }
+      if (k === 'Enter' || k === ' ') { activate(App.uiSel); e.preventDefault(); }
+      return;
+    }
+    if (/^[1-8]$/.test(k)) { App.skill = +k - 1; Sound.play('click'); }
+    const fk = /^F(\d+)$/.exec(k); if (fk) { const n = +fk[1]; e.preventDefault(); if (n === 1) App.rateHold = -1; else if (n === 2) App.rateHold = 1; else if (n <= 10) { App.skill = n - 3; Sound.play('click'); } else if (n === 11) App.paused = !App.paused; else if (n === 12) panelClick(11 * (App.twoP ? 16 : 32) + 5, PANEL_Y + 5); }
+    if (k === '-') App.rateHold = -1; if (k === '=' || k === '+') App.rateHold = 1;
+    if (k === 'f' || k === 'F') App.fast = !App.fast;
+    if (k === 'g' || k === 'G') menuAction('gfx');
+    if (k === 'n' || k === 'N') panelClick(11 * (App.twoP ? 16 : 32) + 5, PANEL_Y + 5);
+    if (k === ' ' && App.cursor.shown) { levelClick(App.cursor.x, App.cursor.y, false); e.preventDefault(); }
+  },
+  poll(dt) {
+    let s = 0;
+    if (!App.menuOpen && App.screen === 'game') {
+      if (this.keys.ArrowLeft || this.keys.a || this.keys.A) s -= 1;
+      if (this.keys.ArrowRight || this.keys.d || this.keys.D) s += 1;
+    }
+    const pads = (navigator.getGamepads ? [...navigator.getGamepads()] : []).filter(g => g && g.mapping !== 'xr-standard');
+    let s2 = 0;
+    pads.forEach((g, gi) => {
+      const prev = this.pad['prev' + gi] || [];
+      const b = i => !!(g.buttons[i] && g.buttons[i].pressed), edge = i => b(i) && !prev[i];
+      const ax = g.axes[0] || 0, ay = g.axes[1] || 0, rx = g.axes[2] || 0;
+      const nav = App.screen !== 'game' || App.menuOpen;
+      const p = App.twoP && gi === 1 ? 1 : 0, cur = p ? App.cursor2 : App.cursor, st = App.P[p];
+      if (nav) {
+        if (gi > 0 && App.twoP) { this.pad['prev' + gi] = g.buttons.map(x => x.pressed); return; }
+        const dir = b(12) || ay < -0.6 ? 'ArrowUp' : b(13) || ay > 0.6 ? 'ArrowDown' : b(14) || ax < -0.6 ? 'ArrowLeft' : b(15) || ax > 0.6 ? 'ArrowRight' : null;
+        if (dir && (!this.pad.navT || performance.now() - this.pad.navT > 220)) { navMove(dir); this.pad.navT = performance.now(); }
+        if (!dir && gi === 0) this.pad.navT = 0;
+        if (edge(0)) activate(App.uiSel);
+        if (edge(1) || edge(9)) { if (App.menuOpen) closeMenu(); else if (App.screen === 'levels') { App.screen = 'title'; App.uiSel = 0; } }
+      } else {
+        // left stick moves the cursor, right stick / d-pad scrolls
+        if (Math.abs(ax) > 0.15 || Math.abs(ay) > 0.15) {
+          if (!cur.shown) Object.assign(cur, { x: p ? 480 : (App.twoP ? 160 : 320), y: 160, shown: true });
+          if (!p) this.lastPointer = 'pad';
+          const lo = App.twoP ? p * 320 : 0, hi = App.twoP ? lo + 319 : CW - 1;
+          cur.x = Math.max(lo, Math.min(hi, cur.x + ax * dt * 0.45));
+          cur.y = Math.max(0, Math.min(319, cur.y + ay * dt * 0.45));
+        }
+        let sc = 0; if (Math.abs(rx) > 0.2) sc += rx; if (b(14)) sc -= 1; if (b(15)) sc += 1;
+        if (p) s2 += sc; else s += sc;
+        if (edge(0) && cur.shown) levelClick(cur.x, cur.y, true, p);
+        if (edge(4)) { st.skill = (st.skill + 7) % 8; Sound.play('click'); }
+        if (edge(5)) { st.skill = (st.skill + 1) % 8; Sound.play('click'); }
+        if (b(6) || b(7)) { App.rateHold = b(6) ? -1 : 1; this.pad['rh' + gi] = true; } else if (this.pad['rh' + gi]) { App.rateHold = 0; this.pad['rh' + gi] = false; }
+        if (edge(2)) App.paused = !App.paused;
+        if (edge(3)) App.fast = !App.fast;
+        if (edge(8)) panelClick(p * 320 + 11 * (App.twoP ? 16 : 32) + 5, PANEL_Y + 5);
+        if (edge(9)) openMenu();
+      }
+      this.pad['prev' + gi] = g.buttons.map(x => x.pressed);
+    });
+    this.scroll2 = Math.max(-1.5, Math.min(1.5, s2));
+    this.scroll = Math.max(-1.5, Math.min(1.5, s));
+    XR.pollControllers(dt);
+  },
+};
+function navMove(k) {
+  const n = widgets.length; if (!n) return;
+  const cur = widgets[App.uiSel] || widgets[0];
+  const dx = (k === 'ArrowLeft' || k === 'a') ? -1 : (k === 'ArrowRight' || k === 'd') ? 1 : 0, dy = (k === 'ArrowUp' || k === 'w') ? -1 : (k === 'ArrowDown' || k === 's') ? 1 : 0;
+  let best = -1, bd = 1e9;
+  widgets.forEach((w, i) => {
+    if (i === App.uiSel) return;
+    const vx = (w.x + w.w / 2) - (cur.x + cur.w / 2), vy = (w.y + w.h / 2) - (cur.y + cur.h / 2);
+    if (dx && Math.sign(vx) !== dx) return; if (dy && Math.sign(vy) !== dy) return;
+    if (dx && Math.abs(vy) > Math.abs(vx) * 2 + 10) return; if (dy && Math.abs(vx) > Math.abs(vy) * 3 + 60) return;
+    const d = vx * vx + vy * vy * (dx ? 4 : 1) + (dy ? vx * vx * 2 : 0); if (d < bd) { bd = d; best = i; }
+  });
+  if (best >= 0) App.uiSel = best;
+}
+
+// ===== WebXR: the game screen on a floating panel, controller rays as the pointer =====
+const XR = {
+  supported: false, active: false, session: null, frameDirty: true,
+  async check() { try { this.supported = !!(navigator.xr && (await navigator.xr.isSessionSupported('immersive-vr') || await navigator.xr.isSessionSupported('immersive-ar'))); } catch { } this.ar = navigator.xr && await navigator.xr.isSessionSupported('immersive-ar').catch(() => false); },
+  async start() {
+    if (!navigator.xr) return;
+    const mode = this.ar ? 'immersive-ar' : 'immersive-vr';
+    let s; try { s = await navigator.xr.requestSession(mode, { optionalFeatures: ['local-floor'] }); } catch (e) { alert('Could not start VR/AR: ' + e.message); return; }
+    this.session = s; this.active = true;
+    const gc = document.createElement('canvas'), gl = gc.getContext('webgl', { xrCompatible: true, alpha: true });
+    await gl.makeXRCompatible?.();
+    s.updateRenderState({ baseLayer: new XRWebGLLayer(s, gl) });
+    this.gl = gl; this.ref = await s.requestReferenceSpace('local-floor').catch(() => s.requestReferenceSpace('local'));
+    this.setupGL();
+    s.addEventListener('end', () => { this.active = false; this.session = null; });
+    s.addEventListener('selectstart', e => this.select(e, true));
+    s.addEventListener('selectend', e => this.select(e, false));
+    s.requestAnimationFrame((t, f) => this.onFrame(t, f));
+  },
+  stop() { this.session && this.session.end(); },
+  setupGL() {
+    const gl = this.gl;
+    const vs = 'attribute vec3 p;attribute vec2 uv;uniform mat4 P,V,M;varying vec2 v;void main(){v=uv;gl_Position=P*V*M*vec4(p,1.0);}';
+    const fs = 'precision mediump float;varying vec2 v;uniform sampler2D t;uniform vec4 c;uniform float useTex;void main(){gl_FragColor=useTex>0.5?texture2D(t,v):c;}';
+    const sh = (ty, src) => { const s = gl.createShader(ty); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+    const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(pr); this.pr = pr;
+    this.buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 0, 0, 1, 1, -1, 0, 1, 1, -1, 1, 0, 0, 0, 1, 1, 0, 1, 0]), gl.STATIC_DRAW);
+    this.tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    // panel: 2.4 m wide, 1.5 m tall, 2.2 m in front at eye height
+    this.W = 2.4; this.H = this.W * CH / CW; this.pos = [0, 1.45, -2.2];
+  },
+  // ray → screen coordinates
+  rayHit(pose) {
+    const m = pose.transform.matrix, o = [m[12], m[13], m[14]], d = [-m[8], -m[9], -m[10]];
+    if (Math.abs(d[2]) < 1e-4) return null; const t = (this.pos[2] - o[2]) / d[2]; if (t <= 0) return null;
+    const hx = o[0] + d[0] * t - this.pos[0], hy = o[1] + d[1] * t - this.pos[1];
+    const x = (hx / this.W + 0.5) * CW, y = (0.5 - hy / this.H) * CH;
+    return { x, y, t, o, end: [o[0] + d[0] * t, o[1] + d[1] * t, o[2] + d[2] * t], in: x >= 0 && x < CW && y >= 0 && y < CH };
+  },
+  select(e, down) {
+    const f = e.frame, pose = f.getPose(e.inputSource.targetRaySpace, this.ref); if (!pose) return;
+    const h = this.rayHit(pose); if (!h || !h.in) return;
+    Sound.unlock(); Input.lastPointer = 'xr'; App.cursor = { x: h.x, y: h.y, shown: true };
+    const fake = { pointerId: 999, pointerType: 'xr', button: 0, clientX: 0, clientY: 0 };
+    if (down) {
+      if (App.screen === 'game' && !App.menuOpen) { if (!panelClick(h.x, h.y) && h.y < 320) levelClick(h.x, h.y, true); }
+    } else { App.rateHold = 0; if (App.screen !== 'game' || App.menuOpen) { const i = hitWidget(h.x, h.y); if (i >= 0) { App.uiSel = i; activate(i); } } }
+  },
+  pollControllers(dt) {
+    if (!this.active || !this.session) return;
+    for (const src of this.session.inputSources) {
+      const g = src.gamepad; if (!g) continue;
+      const ax = g.axes[2] || 0, ay = g.axes[3] || 0;
+      if (App.screen === 'game' && !App.menuOpen && Math.abs(ax) > 0.25) scrollView(playerAt(App.cursor.x), ax * dt * 0.35);
+      const prev = this['prev_' + src.handedness] || [];
+      const edge = i => g.buttons[i] && g.buttons[i].pressed && !prev[i];
+      if (edge(5)) { App.menuOpen ? closeMenu() : openMenu(); }               // B / Y: menu
+      if (edge(4) && App.screen === 'game') { const P = App.P[playerAt(App.cursor.x)]; P.skill = (P.skill + (src.handedness === 'left' ? 7 : 1)) % 8; Sound.play('click'); } // A / X: skill
+      if (edge(1) && App.screen === 'game') App.paused = !App.paused;          // grip: pause
+      if (edge(3)) this.stop();                                              // stick click: leave
+      if (Math.abs(ay) > 0.7 && (App.screen !== 'game' || App.menuOpen) && (!this.navT || performance.now() - this.navT > 250)) { navMove(ay < 0 ? 'ArrowUp' : 'ArrowDown'); this.navT = performance.now(); }
+      this['prev_' + src.handedness] = g.buttons.map(b => b.pressed);
+    }
+  },
+  onFrame(t, f) {
+    const s = this.session; if (!s) return; s.requestAnimationFrame((t2, f2) => this.onFrame(t2, f2));
+    const gl = this.gl, layer = s.renderState.baseLayer, pose = f.getViewerPose(this.ref); if (!pose) return;
+    // pointer from the first controller ray that hits the screen
+    this.rays = [];
+    for (const src of s.inputSources) { const p = src.targetRaySpace && f.getPose(src.targetRaySpace, this.ref); if (!p) continue; const h = this.rayHit(p); if (h) { this.rays.push(h); if (h.in) { App.cursor = { x: h.x, y: h.y, shown: true }; Input.lastPointer = 'xr'; } } }
+    gl.bindTexture(gl.TEXTURE_2D, this.tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
+    gl.clearColor(0, 0, 0, this.ar ? 0 : 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST);
+    gl.useProgram(this.pr);
+    const P = gl.getUniformLocation(this.pr, 'P'), V = gl.getUniformLocation(this.pr, 'V'), M = gl.getUniformLocation(this.pr, 'M');
+    const pl = gl.getAttribLocation(this.pr, 'p'), ul = gl.getAttribLocation(this.pr, 'uv');
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buf); gl.enableVertexAttribArray(pl); gl.enableVertexAttribArray(ul);
+    gl.vertexAttribPointer(pl, 3, gl.FLOAT, false, 20, 0); gl.vertexAttribPointer(ul, 2, gl.FLOAT, false, 20, 12);
+    const Wh = this.W / 2, Hh = this.H / 2, [px, py, pz] = this.pos;
+    for (const view of pose.views) {
+      const vp = layer.getViewport(view); gl.viewport(vp.x, vp.y, vp.width, vp.height);
+      gl.uniformMatrix4fv(P, false, view.projectionMatrix); gl.uniformMatrix4fv(V, false, view.transform.inverse.matrix);
+      gl.uniform1f(gl.getUniformLocation(this.pr, 'useTex'), 1);
+      gl.uniformMatrix4fv(M, false, [Wh, 0, 0, 0, 0, Hh, 0, 0, 0, 0, 1, 0, px, py, pz, 1]);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      // rays: thin quads from controller to hit point
+      gl.uniform1f(gl.getUniformLocation(this.pr, 'useTex'), 0); gl.uniform4f(gl.getUniformLocation(this.pr, 'c'), 0.6, 1, 0.6, 1);
+      for (const r of this.rays) {
+        const [ox, oy, oz] = r.o, [ex, ey, ez] = r.end, dx = ex - ox, dy = ey - oy, dz = ez - oz;
+        gl.uniformMatrix4fv(M, false, [0.003, 0, 0, 0, 0, 0.003, 0, 0, dx / 2, dy / 2, dz / 2, 0, (ox + ex) / 2, (oy + ey) / 2, (oz + ez) / 2, 1]);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      }
+    }
+  },
+};
+
+// ===== boot screen: pick the two disks; optional local copy for next time =====
+const DB = {
+  open() { return new Promise((res, rej) => { const r = indexedDB.open('lemmings-disks', 1); r.onupgradeneeded = () => r.result.createObjectStore('d'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); },
+  async put(v) { const db = await this.open(); return new Promise(r => { const t = db.transaction('d', 'readwrite'); t.objectStore('d').put(v, 'disks'); t.oncomplete = r; t.onerror = r; }); },
+  async get() { const db = await this.open(); return new Promise(r => { const q = db.transaction('d').objectStore('d').get('disks'); q.onsuccess = () => r(q.result); q.onerror = () => r(null); }); },
+  async clear() { const db = await this.open(); return new Promise(r => { const t = db.transaction('d', 'readwrite'); t.objectStore('d').delete('disks'); t.oncomplete = r; }); },
+};
+function showBoot() { App.screen = 'boot'; document.getElementById('boot').classList.add('show'); }
+async function useBuffers(bufs, remember) {
+  const msg = document.getElementById('bootMsg');
+  const r = await loadDisks(bufs);
+  if (!r.ok) {
+    msg.textContent = (r.prog === false && r.data === false) ? 'Those files don’t look like Lemmings disks. Pick both .adf disk images.' :
+      !r.prog ? 'Disk 1 (the program disk) is missing — select both disks together.' : !r.data ? 'Disk 2 (the levels disk) is missing — select both disks together.' : 'Could not read the game data from these disks.';
+    return false;
+  }
+  if (remember) { try { await DB.put(bufs); } catch { } }
+  document.getElementById('boot').classList.remove('show');
+  App.screen = 'title'; App.uiSel = 0; Sound.ac = null; Music.songs = null; Music.inst = {}; Sound.unlock();
+  return true;
+}
+async function readFiles(fileList) {
+  const bufs = [];
+  for (const f of fileList) {
+    const b = await f.arrayBuffer(), u = new Uint8Array(b);
+    if (u[0] === 0x50 && u[1] === 0x4b) { for (const e of await unzip(b)) bufs.push(e); }
+    else bufs.push(b);
+  }
+  return bufs;
+}
+// minimal zip reader (stored + deflate via DecompressionStream)
+async function unzip(buf) {
+  const d = new Uint8Array(buf), out = [], dv = new DataView(buf);
+  let eocd = -1; for (let i = d.length - 22; i >= Math.max(0, d.length - 70000); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) return out;
+  let p = dv.getUint32(eocd + 16, true); const n = dv.getUint16(eocd + 10, true);
+  for (let k = 0; k < n; k++) {
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lo = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(d.subarray(p + 46, p + 46 + nl)); p += 46 + nl + el + cl;
+    if (!/\.adf$/i.test(name)) continue;
+    const ds = lo + 30 + dv.getUint16(lo + 26, true) + dv.getUint16(lo + 28, true), raw = d.slice(ds, ds + csize);
+    if (method === 0) out.push(raw.buffer);
+    else if (method === 8 && 'DecompressionStream' in window) { const s = new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw')); out.push(await new Response(s).arrayBuffer()); }
+  }
+  return out;
+}
+function showReadme(on) { document.getElementById('readmeBox').classList.toggle('show', on); }
+function toggleFullscreen() { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => { }); }
+
+async function boot() {
+  Input.init(); XR.check();
+  const inp = document.getElementById('diskInput'), rem = document.getElementById('remember');
+  inp.addEventListener('change', async () => { await useBuffers(await readFiles(inp.files), rem.checked); inp.value = ''; });
+  const drop = document.getElementById('boot');
+  drop.addEventListener('dragover', e => { e.preventDefault(); });
+  drop.addEventListener('drop', async e => { e.preventDefault(); await useBuffers(await readFiles(e.dataTransfer.files), rem.checked); });
+  document.getElementById('forget').addEventListener('click', async () => { await DB.clear(); document.getElementById('bootMsg').textContent = 'The saved copy of your disks was removed from this browser.'; document.getElementById('savedRow').style.display = 'none'; });
+  document.getElementById('bootReadme').addEventListener('click', () => showReadme(true));
+  document.getElementById('closeReadme').addEventListener('click', () => showReadme(false));
+  document.getElementById('pauseBtn').addEventListener('click', () => { if (App.screen === 'game') (App.menuOpen ? closeMenu() : openMenu()); });
+  addEventListener('resize', fit); fit();
+  showBoot();
+  try { const saved = await DB.get(); if (saved && saved.length) { document.getElementById('savedRow').style.display = ''; document.getElementById('useSaved').onclick = () => useBuffers(saved, false); } } catch { }
+  requestAnimationFrame(frame);
+}
+function fit() {
+  const r = Math.min(innerWidth / CW, innerHeight / CH);
+  cv.style.width = (CW * r) + 'px'; cv.style.height = (CH * r) + 'px';
+  document.body.classList.toggle('touch', matchMedia('(pointer:coarse)').matches);
+}
+boot();
+
+</script>
+<script data-goatcounter="https://gigajunky.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lemmings 2: The Tribes (Amiga) – browser player</title>
+<style>
+ html,body{margin:0;height:100%;background:#000;overflow:hidden;color:#cde;font:15px system-ui,sans-serif}
+ body{display:flex;align-items:center;justify-content:center}
+ #screen{display:block;touch-action:none;image-rendering:pixelated}
+ .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.9);z-index:5}
+ .overlay.show{display:flex}
+ .card{max-width:660px;margin:20px;padding:20px 24px;background:#0b1226;border:2px solid #3a6;border-radius:14px}
+ h1{margin:0 0 8px;color:#5f5;font-size:24px}
+ label.btn,button.btn{display:inline-block;background:#1a3;color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:17px;cursor:pointer;margin:8px 8px 8px 0}
+ #msg{color:#fc6;min-height:1.3em} .small{color:#89a;font-size:13px}
+</style></head><body>
+<canvas id="screen"></canvas>
+<div id="boot" class="overlay show"><div class="card">
+ <h1>Lemmings 2: The Tribes — Amiga disks player</h1>
+ <p>Select <b>all three</b> of your Amiga disk images (<code>Lemmings2_1.adf</code>, <code>_2</code>, <code>_3</code>) or a .zip holding them. Everything runs here in your browser; nothing is uploaded.</p>
+ <label class="btn">Choose disk images…<input id="disks" type="file" multiple accept=".adf,.zip" hidden></label>
+ <button class="btn" id="useSaved" style="display:none">Use my saved disks</button>
+ <div><label class="small"><input type="checkbox" id="remember" checked> Keep a copy in this browser</label></div>
+ <div id="msg"></div>
+ <p class="small">All 12 tribes and all 51 skills are in, the tribes' own music and the game's sound effects play from your disks. Skills are recreated from how the original game behaves, so a few details may differ. The <b>fan</b> button (or V) turns the pointer into a fan: hold it down near floating lemmings (floaters, balloons, gliders, jet packs) to blow them away from the pointer.<br>
+ Controls: click a lemming to give it the selected skill · 1–8 or the wheel over the panel picks a skill · arrows/WASD, mouse at the edges, right-drag or touch-drag scroll · Space pause · F fast · N nuke (twice) · G smooth/pixels · P/Esc menu. Gamepad: left stick cursor, A assign, LB/RB skill, right stick scroll, Start menu.</p>
+</div></div>
+<script>
+// ===== Lemmings 2 (Amiga) data layer: AmigaDOS disks, RNC ProPack, FORM chunks, levels, tiles =====
+const L2 = (() => {
+  const be16 = (d, o) => (d[o] << 8) | d[o + 1], be32 = (d, o) => ((d[o] << 24) | (d[o + 1] << 16) | (d[o + 2] << 8) | d[o + 3]) >>> 0;
+  const le16 = (d, o) => d[o] | (d[o + 1] << 8);
+
+  // --- AmigaDOS (OFS/FFS) disk image → { "path/name": Uint8Array }
+  function readADF(buf) {
+    const d = new Uint8Array(buf); if (d[0] !== 0x44 || d[1] !== 0x4f || d[2] !== 0x53) return null;
+    const ffs = d[3] & 1, blk = n => d.subarray(n * 512, n * 512 + 512), files = {};
+    const name = b => { let s = ''; for (let i = 0; i < b[432]; i++) s += String.fromCharCode(b[433 + i]); return s; };
+    const readFile = hdr => {
+      const size = be32(blk(hdr), 324), out = new Uint8Array(size); let pos = 0, h = hdr;
+      while (h && pos < size) {
+        const hb = blk(h), n = be32(hb, 8);
+        for (let i = 0; i < n && pos < size; i++) {
+          const db = blk(be32(hb, 308 - 4 * i));
+          const part = ffs ? db : db.subarray(24, 24 + be32(db, 12));
+          const take = Math.min(part.length, size - pos); out.set(part.subarray(0, take), pos); pos += take;
+        }
+        h = be32(hb, 504);
+      }
+      return out;
+    };
+    const walk = (dirBlk, path, depth) => {
+      if (depth > 8) return; const b = blk(dirBlk);
+      for (let i = 0; i < 72; i++) {
+        let e = be32(b, 24 + 4 * i), guard = 0;
+        while (e && e < d.length / 512 && guard++ < 200) {
+          const eb = blk(e), t = (be32(eb, 508) | 0), p = path + name(eb);
+          if (t === 2) walk(e, p + '/', depth + 1); else if (t === -3) files[p.toLowerCase()] = readFile(e);
+          e = be32(eb, 496);
+        }
+      }
+    };
+    walk(880, '', 0);
+    return files;
+  }
+
+  // --- RNC ProPack method 1
+  function unrnc(src) {
+    if (!(src[0] === 0x52 && src[1] === 0x4e && src[2] === 0x43 && src[3] === 1)) return src;
+    const usize = be32(src, 4), d = new Uint8Array(src.length + 8); d.set(src);
+    const out = new Uint8Array(usize); let o = 0;
+    const lword = q => (d[q] | (d[q + 1] << 8) | (d[q + 2] << 16) | (d[q + 3] << 24)) >>> 0;
+    let p = 18, buf = lword(p), cnt = 16;
+    const adv = n => { buf = buf >>> n; cnt -= n; if (cnt < 16) { p += 2; buf = (buf | (lword(p) << cnt)) >>> 0; cnt += 16; } };
+    const rd = (mask, n) => { const v = buf & mask; adv(n); return v; };
+    const mirror = (x, n) => { let r = 0; for (let i = 0; i < n; i++) r = (r << 1) | ((x >> i) & 1); return r; };
+    const table = () => {
+      const num = rd(0x1f, 5); if (!num) return [];
+      const ll = []; for (let i = 0; i < num; i++) ll.push(rd(0xf, 4));
+      const t = []; let code = 0;
+      for (let k = 1; k <= 16; k++) { for (let i = 0; i < num; i++) if (ll[i] === k) { t.push([mirror(code, k), k, i]); code++; } code <<= 1; }
+      return t;
+    };
+    const huf = t => {
+      for (const [code, len, val] of t) if ((buf & ((1 << len) - 1)) === code) {
+        adv(len); if (val >= 2) { let v = 1 << (val - 1); v |= rd(v - 1, val - 1); return v; } return val;
+      }
+      throw new Error('rnc');
+    };
+    adv(2);
+    while (o < usize) {
+      const raw = table(), dist = table(), len = table(); let n = rd(0xffff, 16);
+      for (;;) {
+        let l = huf(raw);
+        if (l) { while (l-- && o < usize) out[o++] = d[p++]; cnt -= 16; buf = (buf & ((1 << cnt) - 1)) >>> 0; buf = (buf | (lword(p) << cnt)) >>> 0; cnt += 16; }
+        if (--n <= 0) break;
+        const pos = huf(dist) + 1; let c = huf(len) + 2;
+        while (c-- && o < usize) { out[o] = out[o - pos]; o++; }
+      }
+    }
+    return out;
+  }
+
+  function chunks(d) {
+    const ch = {}; let i = 12;
+    while (i < d.length - 8) { const id = String.fromCharCode(d[i], d[i + 1], d[i + 2], d[i + 3]), n = be32(d, i + 4); ch[id] = d.subarray(i + 8, i + 8 + n); i += 8 + n + (n & 1); }
+    return ch;
+  }
+
+  const TRIBES = ['classic', 'beach', 'cavelem', 'circus', 'egyptian', 'highland', 'medieval', 'outdoor', 'polar', 'shadow', 'space', 'sports'];
+  const TRIBE_NAMES = ['Classic', 'Beach', 'Cavelem', 'Circus', 'Egyptian', 'Highland', 'Medieval', 'Outdoor', 'Polar', 'Shadow', 'Space', 'Sports'];
+  const WIDTHS = [82, 66, 52, 42, 34, 26, 22];
+
+  // levels are packed inside the main program: blocks of 10 × 8648-byte FORM L2LV
+  function findLevels(exe) {
+    const blocks = [];
+    for (let i = 0; i < exe.length - 18; i += 2) {
+      if (exe[i] !== 0x52 || exe[i + 1] !== 0x4e || exe[i + 2] !== 0x43 || exe[i + 3] !== 1) continue;
+      const ps = be32(exe, i + 8);
+      try {
+        const u = unrnc(exe.subarray(i, i + 18 + ps));
+        if (u[8] === 0x4c && u[9] === 0x32 && u[10] === 0x4c && u[11] === 0x56) blocks.push(u);
+      } catch (e) { }
+    }
+    return blocks;
+  }
+  function parseLevel(d, skillNames) {
+    const ch = chunks(d), lh = ch.L2LH, mh = ch.L2MH, mp = ch.L2MP, bo = ch.L2BO;
+    let name = ''; for (let i = 0; i < 24; i++) name += String.fromCharCode(lh[i]); name = name.trim();
+    const skills = [], counts = [];
+    for (let i = 0; i < 8; i++) { const s = lh[24 + i * 2]; if (s) { skills.push(s); counts.push(lh[40 + i]); } }
+    const mode = mh[2], W = WIDTHS[mode] || 82, H = Math.floor((mp.length / 4) / W);
+    const cells = new Uint16Array(W * H), flags = new Uint16Array(W * H);
+    for (let i = 0; i < W * H; i++) { cells[i] = be16(mp, i * 4 + 2); flags[i] = be16(mp, i * 4); }
+    const objects = [];
+    for (let i = 0; i + 10 <= bo.length; i += 10) {
+      if (bo[i] === 0xff && bo[i + 1] === 0xff) continue;
+      let x = le16(bo, i + 2), y = le16(bo, i + 4); if (x & 0x8000) x -= 65536; if (y & 0x8000) y -= 65536;
+      objects.push({ type: le16(bo, i), x, y, d5: le16(bo, i + 6), d6: le16(bo, i + 8) });
+    }
+    return { name, skills, skillNames: skills.map(s => skillNames[s] || '?'), counts, tribe: lh[52], mode, W, H, cells, flags, objects, rate: lh[48], time: lh[48] };
+  }
+  function skillTable(exe) {
+    const pat = '              Jumper'; let at = -1;
+    outer: for (let i = 0; i < exe.length - 20; i++) { for (let k = 0; k < 20; k++) if (exe[i + k] !== pat.charCodeAt(k)) continue outer; at = i; break; }
+    const names = []; if (at < 0) return names;
+    for (let i = 0; i < 52; i++) { let s = ''; for (let k = 0; k < 14; k++) s += String.fromCharCode(exe[at + i * 14 + k]); names.push(s.trim()); }
+    return names;
+  }
+
+  function readStyle(d) {
+    const ch = chunks(unrnc(d));
+    const pal = []; for (let i = 0; i < 16; i++) { const w = be16(ch.L2CL, i * 2); pal.push([((w >> 8) & 15) * 17, ((w >> 4) & 15) * 17, (w & 15) * 17]); }
+    const bl = ch.L2BL, n = be16(bl, 0), tiles = [];
+    for (let t = 0; t < n; t++) {
+      const o = 2 + t * 64, px = new Uint8Array(128);
+      for (let p = 0; p < 4; p++) for (let y = 0; y < 8; y++) { const w = be16(bl, o + (p * 8 + y) * 2); for (let x = 0; x < 16; x++) if (w & (0x8000 >> x)) px[y * 16 + x] |= 1 << p; }
+      tiles.push(px);
+    }
+    return { pal, tiles, ch };
+  }
+
+  // load everything from the three disks
+  function load(buffers) {
+    let files = {};
+    for (const b of buffers) { const f = readADF(b); if (f) Object.assign(files, f); }
+    if (!files.lemmings2) return { error: 'Disk 2 (with the Lemmings2 program) is missing.' };
+    if (!files['classic/astyle.dat']) return { error: 'Disk 3 (with the tribe graphics) is missing.' };
+    const exe = unrnc(files.lemmings2), skillNames = skillTable(exe);
+    const blocks = findLevels(exe), tribes = [];
+    for (const b of blocks) {
+      const lvls = []; for (let k = 0; k * 8648 < b.length; k++) lvls.push(parseLevel(b.subarray(k * 8648, (k + 1) * 8648), skillNames));
+      if (lvls.length === 10) tribes[lvls[0].tribe] = lvls; else tribes.practice = lvls;
+    }
+    return { files, exe, skillNames, tribes, styles: {} };
+  }
+  function style(game, t) { return game.styles[t] || (game.styles[t] = readStyle(game.files[TRIBES[t] + '/astyle.dat'])); }
+
+  return { readADF, unrnc, chunks, load, style, TRIBES, TRIBE_NAMES, be16, be32 };
+})();
+if (false) module.exports = L2;
+// lemming animations (alemms.comp: FORM L2AL, chunks LMxx). Each plane: row-mask word, then only the rows present.
+L2.readAnims = function (d) {
+  const ch = L2.chunks(L2.unrnc(d)), out = [];
+  for (const name of Object.keys(ch)) {
+    const a = ch[name], h = a[0], planes = a[1], nf = a[2]; let p = 4; const frames = [];
+    for (let f = 0; f < nf; f++) {
+      const n = L2.be16(a, p); let q = p + 2; const px = new Uint8Array(16 * h);
+      for (let pl = 0; pl < planes; pl++) {
+        const m = L2.be16(a, q); q += 2;
+        for (let y = 0; y < 16; y++) if (m & (1 << y)) { const w = L2.be16(a, q); q += 2; if (y < h) for (let x = 0; x < 16; x++) if (w & (0x8000 >> x)) px[y * 16 + x] |= 1 << pl; }
+      }
+      frames.push(px); p += 2 + n;
+    }
+    out.push({ name, h, planes, frames });
+  }
+  return out;
+};
+// ---- objects: L2OB records stamp animated tile blocks (L2BI) into the map; 0x8000 parts are trigger zones
+L2.readObjects = function (raw) {
+  const st = L2.chunks(raw), be16 = L2.be16, be32 = L2.be32, s16 = (d, o) => (be16(d, o) << 16) >> 16;
+  const ob = st.L2OB, recs = []; let p = 2;
+  for (let i = 0, n = be16(ob, 0); i < n; i++) {
+    const np = be16(ob, p), parts = [];
+    for (let k = 0; k < np; k++) { const q = p + 20 + k * 12; parts.push({ fl: be16(ob, q), dx: s16(ob, q + 2), dy: s16(ob, q + 4), d3: be32(ob, q + 6), d4: be16(ob, q + 10) }); }
+    recs.push({ kind: be16(ob, p + 2), parts }); p += 20 + 12 * np;
+  }
+  const bi = st.L2BI, blocks = [];
+  for (let i = 0, n = be16(bi, 0); i < n; i++) {
+    const q = be32(bi, 2 + 4 * i), cnt = be16(raw, q), w = be16(raw, q + 2), h = be16(raw, q + 4), frames = [];
+    for (let f = 0; f < cnt; f++) { const fp = be32(raw, q + 6 + 4 * f), t = []; for (let j = 0; j < w * h; j++) t.push(be16(raw, fp + j * 2)); frames.push(t); }
+    blocks.push({ w, h, frames });
+  }
+  return { recs, blocks };
+};
+L2.styleFull = function (game, t) {
+  const s = L2.style(game, t); if (!s.obj) s.obj = L2.readObjects(L2.unrnc(game.files[L2.TRIBES[t] + '/astyle.dat'])); return s;
+};
+
+// ===== Lemmings game engine (logic adapted from Lemmings.ts by Thomas Zeugner, MIT licence) =====
+let LW = 1600, LH = 160;
+const SK = { CLIMB: 0, FLOAT: 1, BOMB: 2, BLOCK: 3, BUILD: 4, BASH: 5, MINE: 6, DIG: 7 };
+const SKILL_NAMES = ['CLIMBER', 'FLOATER', 'BOMBER', 'BLOCKER', 'BUILDER', 'BASHER', 'MINER', 'DIGGER'];
+const T = { NONE: 0, EXIT: 1, TRAP: 4, DROWN: 5, KILL: 6, ONEWAY_L: 7, ONEWAY_R: 8, BLOCK_L: 20, BLOCK_R: 21 };
+
+class World {
+  constructor(lv, set, special, sprites, twoP = false) {
+    this.lv = lv; this.set = set; this.S = sprites; this.twoP = twoP;
+    this.pal = set.pal.map(c => c.slice());
+    this.rgba = new Uint32Array(LW * LH);           // ground colours (0 = empty)
+    this.solid = new Uint8Array(LW * LH);
+    this.steel = new Uint8Array(LW * LH);
+    this.oneway = new Int8Array(LW * LH);           // -1 only diggable leftwards, +1 rightwards
+    this.dirty = true;
+    const pack = c => (255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0];
+    this.packPal = this.pal.map(pack);
+    if (special) {
+      const sp = special, spal = sp.pal.map(pack);
+      for (let y = 0; y < Math.min(LH, sp.h); y++) for (let x = 0; x < sp.w; x++) {
+        const v = sp.px[y * sp.w + x], X = x + 304; if (!v || X < 0 || X >= LW) continue;
+        this.rgba[y * LW + X] = spal[v]; this.solid[y * LW + X] = 1;
+      }
+    } else {
+      for (const t of lv.terrain) {
+        const img = set.terrain[t.id]; if (!img) continue;
+        for (let yy = 0; yy < img.h; yy++) {
+          const sy = t.upside ? img.h - 1 - yy : yy, Y = t.y + yy; if (Y < 0 || Y >= LH) continue;
+          for (let xx = 0; xx < img.w; xx++) {
+            const v = img.img[sy * img.w + xx], X = t.x + xx; if (v === 255 || X < 0 || X >= LW) continue;
+            const i = Y * LW + X;
+            if (t.erase) { this.solid[i] = 0; this.rgba[i] = 0; continue; }
+            if (t.noOverwrite && this.solid[i]) continue;
+            this.solid[i] = 1; this.rgba[i] = this.packPal[v];
+          }
+        }
+      }
+    }
+    for (const s of lv.steel) for (let y = s.y; y < s.y + s.h; y++) for (let x = s.x; x < s.x + s.w; x++) if (x >= 0 && x < LW && y >= 0 && y < LH) this.steel[y * LW + x] = 1;
+    // objects
+    this.objects = []; this.triggers = []; this.entrances = [];
+    for (const o of lv.objects) {
+      const info = set.objects[o.id]; if (!info) continue;
+      const ob = { ...o, info, frame: info.anim === 2 ? 0 : (info.anim === 3 ? 0 : 0), playing: false };
+      if (o.id === 1) { ob.frame = 0; ob.owner = this.entrances.length & 1; this.entrances.push(ob); }
+      if (o.id === 0) { ob.owner = (this.exitCount = (this.exitCount || 0) + 1) - 1 & 1; }
+      this.objects.push(ob);
+      const e = info.effect;
+      if (e === T.ONEWAY_L || e === T.ONEWAY_R) {
+        const dir = e === T.ONEWAY_L ? -1 : 1, img = info.img[0];
+        for (let y = 0; y < info.h; y++) for (let x = 0; x < info.w; x++) {
+          const X = o.x + x, Y = o.y + y; if (X < 0 || X >= LW || Y < 0 || Y >= LH) continue;
+          if (this.solid[Y * LW + X]) this.oneway[Y * LW + X] = dir;
+        }
+      } else if (e && e !== 2 && e !== 3) {
+        const x1 = o.x + info.tx * 4, y1 = o.y + info.ty * 4 - 4;
+        this.triggers.push({ type: e === 11 ? T.KILL : e, x1, y1, x2: x1 + info.tw * 4, y2: y1 + info.th * 4, obj: ob, until: 0, exitOwner: ob.owner || 0 });
+      }
+    }
+    if (!twoP) this.entrances.sort((a, b) => a.x - b.x);
+    // game state
+    this.lems = []; this.tick = 0;
+    this.skillsP = [lv.skills.slice(), lv.skills.slice()]; this.skills = this.skillsP[0];
+    this.savedP = [0, 0]; this.nukeP = [false, false]; this.released = 0;
+    this.minRate = lv.releaseRate; this.rate = lv.releaseRate;
+    this.toRelease = lv.count; this.out = 0; this.saved = 0;
+    this.timeLeft = lv.time * 60 * (typeof TPS !== 'undefined' ? TPS : 17); // ticks
+    this.releaseTick = this.rate - 30; this.nukeIdx = -1; this.nuking = false;
+    this.doorOpen = false; this.doorTimer = 0; this.nextEntrance = 0;
+    this.done = false; this.events = [];
+  }
+  idx(x, y) { return y * LW + x; }
+  ground(x, y) { return x >= 0 && x < LW && y >= 0 && y < LH && this.solid[y * LW + x] === 1; }
+  clear(x, y) { if (x < 0 || x >= LW || y < 0 || y >= LH) return; const i = y * LW + x; this.solid[i] = 0; this.rgba[i] = 0; this.dirty = true; }
+  setGround(x, y, c) { if (x < 0 || x >= LW || y < 0 || y >= LH) return; const i = y * LW + x; this.solid[i] = 1; this.rgba[i] = c; this.dirty = true; }
+  isSteel(x, y) { return x >= 0 && x < LW && y >= 0 && y < LH && this.steel[y * LW + x] && this.solid[y * LW + x]; }
+  // remove ground with a 16xh mask; returns 'steel' or 'oneway' if blocked
+  clearMask(m, h, x, y, dir) {
+    x -= 8; y -= (h === 10 ? 10 : 12);
+    let blocked = null;
+    for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < 16; dx++) {
+      if (!m[dy * 16 + dx]) continue;
+      const X = x + dx, Y = y + dy; if (!this.ground(X, Y)) continue;
+      if (this.steel[Y * LW + X]) { blocked = 'steel'; continue; }
+      const ow = this.oneway[Y * LW + X]; if (ow && dir && ow !== dir) { blocked = 'oneway'; continue; }
+      this.clear(X, Y);
+    }
+    return blocked;
+  }
+  nuke(player = 0) { if (this.twoP) { this.nukeP[player] = true; this.toReleaseP = this.toReleaseP; } this.nuking = true; if (this.nukeIdx < 0) this.nukeIdx = 0; else if (this.twoP) this.nukeIdx = 0; }
+  emit(name, x) { this.events.push({ name, x }); }
+
+  // ---------- lemmings ----------
+  addLemming(x, y, owner = 0) { const l = { owner, x, y, right: true, action: 'fall', frame: 0, state: 0, climber: false, floater: false, countdown: 0, disabled: false, removed: false, id: this.lems.length }; this.lems.push(l); return l; }
+  setAction(l, a) { if (a === 'out') { l.removed = true; l.action = null; return; } l.action = a; l.frame = 0; l.state = 0; }
+  removeTriggersOf(l) { this.triggers = this.triggers.filter(t => t.owner !== l); }
+
+  assign(l, sk, player = 0) {
+    const skills = this.skillsP[player];
+    if (!l || l.removed || l.disabled || skills[sk] <= 0) return false;
+    if (this.twoP && l.owner !== player) return false;
+    const a = l.action;
+    if (['drown', 'splat', 'exit', 'explode', 'ohno', 'fry'].includes(a)) return false;
+    let ok = false;
+    switch (sk) {
+      case SK.CLIMB: if (!l.climber) { l.climber = true; ok = true; } break;
+      case SK.FLOAT: if (!l.floater) { l.floater = true; ok = true; } break;
+      case SK.BOMB: if (!l.countdown) { l.countdown = 80; ok = true; } break;
+      case SK.BLOCK: if (['walk', 'shrug', 'build', 'bash', 'mine', 'dig'].includes(a)) { this.setAction(l, 'block'); ok = true; } break;
+      case SK.BUILD: if (['walk', 'shrug', 'bash', 'mine', 'dig'].includes(a)) { this.setAction(l, 'build'); ok = true; } break;
+      case SK.BASH: if (['walk', 'shrug', 'build', 'mine', 'dig'].includes(a)) { this.setAction(l, 'bash'); ok = true; } break;
+      case SK.MINE: if (['walk', 'shrug', 'build', 'bash', 'dig'].includes(a)) { this.setAction(l, 'mine'); ok = true; } break;
+      case SK.DIG: if (['walk', 'shrug', 'build', 'bash', 'mine'].includes(a)) { this.setAction(l, 'dig'); ok = true; } break;
+    }
+    if (ok) { skills[sk]--; this.emit('assign', l.x); }
+    return ok;
+  }
+
+  lemmingAt(x, y, radius = 0, player = -1) {
+    let best = null, bd = 1e9;
+    for (const l of this.lems) {
+      if (l.removed || l.disabled) continue;
+      if (player >= 0 && this.twoP && l.owner !== player) continue;
+      const cx = l.x, cy = l.y - 5;
+      const inBox = x >= cx - 5 - radius && x <= cx + 5 + radius && y >= cy - 6 - radius && y < cy + 7 + radius;
+      if (!inBox) continue;
+      const d = (cy - y) ** 2 + (cx - x) ** 2; if (d < bd) { bd = d; best = l; }
+    }
+    return best;
+  }
+
+  step() {
+    if (this.done) return;
+    this.tick++; this.events.length = 0;
+    // door / release
+    if (!this.doorOpen) {
+      this.doorTimer++;
+      if (this.doorTimer === 20) this.emit('door');
+      if (this.doorTimer > 20) for (const e of this.entrances) e.frame = Math.min(e.info.frames - 1, ((this.doorTimer - 20) >> 1) + 1);
+      if (this.doorTimer >= 20 + 2 * (this.entrances[0] ? this.entrances[0].info.frames : 10)) { this.doorOpen = true; if (this.tick > 1) this.emit('letsgo'); }
+    } else if (this.toRelease > 0 && !(this.nuking && !this.twoP) && !(this.twoP && this.nukeP[0] && this.nukeP[1]) && this.entrances.length) {
+      this.releaseTick++;
+      if (this.releaseTick >= 104 - this.rate) {
+        this.releaseTick = 0;
+        const e = this.entrances[this.nextEntrance++ % this.entrances.length];
+        const owner = !this.twoP ? 0 : this.entrances.length > 1 ? e.owner : (this.released & 1);
+        this.addLemming(e.x + 24, e.y + 14, owner); this.toRelease--; this.out++; this.released++;
+      }
+    }
+    if (this.doorOpen && this.timeLeft > 0) this.timeLeft--;
+    // nuke
+    if (this.nuking) {
+      while (this.nukeIdx < this.lems.length) {
+        const l = this.lems[this.nukeIdx++];
+        if (!l.removed && !l.disabled && !l.countdown && l.action !== 'exit' && (!this.twoP || this.nukeP[l.owner])) { l.countdown = 80; break; }
+      }
+    }
+    for (const l of this.lems) {
+      if (l.removed) continue;
+      let r = this.process(l);
+      if (r) this.setAction(l, r);
+      if (l.removed) { if (l.action !== 'saved') this.out--; continue; }
+      if (!l.disabled) { r = this.runTrigger(l); if (r) this.setAction(l, r); }
+      if (l.removed) this.out--;
+    }
+    // animate objects
+    for (const o of this.objects) {
+      const a = o.info.anim;
+      if (a === 2) o.frame = (o.frame + 1) % o.info.frames;
+      else if (a === 1 && o.playing) { o.frame++; if (o.frame >= o.info.frames) { o.frame = 0; o.playing = false; } }
+    }
+    if (this.timeLeft <= 0 && this.doorOpen) this.done = 'time';
+    if (this.doorOpen && this.toRelease === 0 && this.out <= 0) this.done = 'all';
+    if (this.nuking && !this.twoP && this.out <= 0 && this.nukeIdx >= this.lems.length) this.done = 'nuke';
+    if (this.twoP && this.nukeP[0] && this.nukeP[1] && this.out <= 0) this.done = 'nuke';
+  }
+
+  runTrigger(l) {
+    for (const t of this.triggers) {
+      if (l.x < t.x1 || l.x > t.x2 || l.y < t.y1 || l.y > t.y2) continue;
+      if (t.until > this.tick) continue;
+      switch (t.type) {
+        case T.EXIT: l.exitBy = t.exitOwner; return 'exit';
+        case T.DROWN: this.emit('splash', l.x); return 'drown';
+        case T.KILL: this.emit('fire', l.x); return 'fry';
+        case T.TRAP:
+          if (t.obj.playing) continue;
+          t.obj.playing = true; t.obj.frame = 0; t.until = this.tick + t.obj.info.frames;
+          this.emit('trap', l.x); l.disabled = true; this.setAction(l, 'out'); return null;
+        case T.BLOCK_L: if (t.owner !== l && l.right && !['climb', 'hoist'].includes(l.action)) { l.right = false; if (l.action === 'build' || l.action === 'bash' || l.action === 'mine') return 'walk'; } break;
+        case T.BLOCK_R: if (t.owner !== l && !l.right && !['climb', 'hoist'].includes(l.action)) { l.right = true; if (l.action === 'build' || l.action === 'bash' || l.action === 'mine') return 'walk'; } break;
+      }
+    }
+    return null;
+  }
+
+  process(l) {
+    if (l.x < 0 || l.x >= LW || l.y < 0 || l.y >= LH + 6) { this.emit('die', l.x); return 'out'; }
+    if (l.countdown > 0 && !['explode', 'ohno'].includes(l.action)) {
+      l.countdown--;
+      if (l.countdown === 0) {
+        if (['drown', 'splat', 'exit', 'fry'].includes(l.action)) {}
+        else { this.emit('ohno', l.x); return (l.action === 'fall' || l.action === 'float') ? 'explode' : 'ohno'; }
+      }
+    }
+    const g = (x, y) => this.ground(x, y), dir = l.right ? 1 : -1;
+    switch (l.action) {
+      case 'walk': {
+        l.frame++; l.x += dir;
+        // Lemmings 2 walker: steps up at most 4 px; 6+ solid rows is a wall
+        let up = 0; while (up < 6 && g(l.x, l.y - up)) up++;
+        if (up === 6) { if (l.climber) return 'climb'; l.right = !l.right; l.x -= dir; return null; }
+        if (up > 0) { l.y -= up - 1; return null; }
+        let dn = 1; while (dn < 4 && !g(l.x, l.y + dn)) dn++;
+        l.y += dn; return dn === 4 ? 'fall' : null;
+      }
+      case 'fall': {
+        l.frame++;
+        if (l.state > 16 && l.floater) return 'float';
+        let i = 0; while (i < 3 && !g(l.x, l.y + i)) i++;
+        l.y += i;
+        if (i === 3) { l.state += 3; return null; }
+        // Lemmings 2 landing: <=64 px safe, 65-99 px stunned, 100+ px splat
+        if (l.state > 99) { this.emit('splat', l.x); return 'splat'; }
+        if (l.state > 64 && typeof XACT !== 'undefined' && XACT.stun) return 'stun';
+        return 'walk';
+      }
+      case 'jump': {
+        l.frame++; let i = 0; while (i < 2 && g(l.x, l.y + i - 1)) i++;
+        l.y -= i; return i < 2 ? 'walk' : null;
+      }
+      case 'climb': {
+        l.frame = (l.frame + 1) % 8;
+        if (l.frame < 4) { if (!g(l.x, l.y - l.frame - 7)) { l.y = l.y - l.frame + 2; return 'hoist'; } return null; }
+        l.y--;
+        if (g(l.x - dir, l.y - 8)) { l.right = !l.right; l.x += l.right ? 2 : -2; return 'fall'; }
+        return null;
+      }
+      case 'hoist': { l.frame++; if (l.frame <= 4) { l.y -= 2; return null; } return l.frame >= 8 ? 'walk' : null; }
+      case 'float': {
+        const SPD = [3, 3, 3, 3, -1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2];
+        l.frame++; if (l.frame >= 16) l.frame = 8;
+        const sp = SPD[l.frame];
+        for (let i = 0; i < sp; i++) if (g(l.x, l.y + i)) { l.y += i; return 'walk'; }
+        l.y += sp; return null;
+      }
+      case 'dig': {
+        const row = y => { let n = 0; for (let x = l.x - 4; x < l.x + 5; x++) if (g(x, y)) { if (this.isSteel(x, y)) { l.hitSteel = true; continue; } this.clear(x, y); n++; } return n > 0; };
+        if (l.state === 0) { row(l.y - 2); row(l.y - 1); l.state = 1; }
+        else l.frame = (l.frame + 1) % 16;
+        if (!(l.frame & 7)) {
+          l.y++; if (l.y >= LH) return 'fall';
+          l.hitSteel = false;
+          const ok = row(l.y - 1);
+          if (l.hitSteel) { this.emit('steel', l.x); return 'walk'; }
+          if (!ok) return 'fall';
+        }
+        return null;
+      }
+      case 'build': {
+        l.frame = (l.frame + 1) % 16;
+        if (l.frame === 9) { const x = l.x + (l.right ? 0 : -4); for (let i = 0; i < 6; i++) if (!g(x + i, l.y - 1)) this.setGround(x + i, l.y - 1, this.packPal[7] || 0xff4080c0); if (l.state >= 9) this.emit('chink', l.x); return null; }
+        if (l.frame === 0) {
+          l.y--;
+          for (let i = 0; i < 2; i++) { l.x += dir; if (g(l.x, l.y - 1)) { l.right = !l.right; return 'walk'; } }
+          l.state++;
+          if (l.state >= 12) return 'shrug';
+          if (g(l.x + (l.right ? 2 : -2), l.y - 9)) { l.right = !l.right; return 'walk'; }
+        }
+        return null;
+      }
+      case 'bash': {
+        l.frame++; const st = l.frame % 16;
+        if (st > 10) { l.x += dir; let i = 0; while (i < 3 && !g(l.x, l.y + i)) i++; l.y += i; if (i === 3) return 'fall'; }
+        if (st > 1 && st < 6) {
+          const b = this.clearMask((l.right ? this.S.masks.bashR : this.S.masks.bashL)[st - 2], 10, l.x, l.y, dir);
+          if (b) { this.emit('steel', l.x); return 'walk'; }
+        }
+        if (st === 5) { let x = l.x + dir * 8, n = 0; while (n < 4 && !g(x, l.y - 6)) { x += dir; n++; } if (n === 4) return 'walk'; }
+        return null;
+      }
+      case 'mine': {
+        l.frame = (l.frame + 1) % 24;
+        if (l.frame === 1 || l.frame === 2) {
+          const b = this.clearMask((l.right ? this.S.masks.mineR : this.S.masks.mineL)[l.frame - 1], 13, l.x, l.y, dir);
+          if (b) { this.emit('steel', l.x); return 'walk'; }
+        }
+        if (l.frame === 3 || l.frame === 15) {
+          if (l.frame === 3) l.y++;
+          l.x += dir; if (!g(l.x, l.y)) return 'fall';
+        }
+        return null;
+      }
+      case 'block': {
+        if (l.state === 0) {
+          this.triggers.push({ type: T.BLOCK_L, x1: l.x - 6, y1: l.y - 10, x2: l.x - 3, y2: l.y + 4, owner: l, until: 0 });
+          this.triggers.push({ type: T.BLOCK_R, x1: l.x + 4, y1: l.y - 10, x2: l.x + 7, y2: l.y + 4, owner: l, until: 0 });
+          l.state = 1;
+        }
+        l.frame++;
+        if (!g(l.x, l.y + 1)) { this.removeTriggersOf(l); return 'fall'; }
+        return null;
+      }
+      case 'shrug': l.frame++; return l.frame >= 8 ? 'walk' : null;
+      case 'ohno': {
+        l.frame++; if (l.frame === 16) { this.removeTriggersOf(l); return 'explode'; }
+        if (!g(l.x, l.y + 1)) l.y++;
+        return null;
+      }
+      case 'explode': {
+        l.disabled = true; l.frame++;
+        if (l.frame === 1) {
+          this.removeTriggersOf(l); this.emit('boom', l.x);
+          // Lemmings 2 explosion mask (-2): a 23-px circle drawn at (x-11, y-15)
+          for (let dy = 0; dy < 23; dy++) for (let dx = 0; dx < 23; dx++) {
+            const nx = dx - 11, ny = dy - 11; if (nx * nx + ny * ny > 11.6 * 11.6) continue;
+            const X = l.x - 11 + dx, Y = l.y - 15 + dy; if (this.ground(X, Y) && !this.steel[Y * LW + X]) this.clear(X, Y);
+          }
+          l.particles = []; for (let i = 0; i < 80; i++) { const a = Math.random() * Math.PI * 2, s = Math.random() * 3 + 0.5; l.particles.push([0, -6, Math.cos(a) * s, Math.sin(a) * s - 2.5, 1 + (i % 7)]); }
+        }
+        if (l.particles) for (const p of l.particles) { p[0] += p[2]; p[1] += p[3]; p[3] += 0.25; }
+        return l.frame >= 52 ? 'out' : null;
+      }
+      case 'splat': l.disabled = true; l.frame++; return l.frame >= 16 ? 'out' : null;
+      case 'fry': l.disabled = true; l.frame++; return l.frame >= 14 ? 'out' : null;
+      case 'drown': {
+        l.disabled = true; l.frame++; if (l.frame >= 16) return 'out';
+        if (!g(l.x + dir * 8, l.y)) l.x += dir; else l.right = !l.right;
+        return null;
+      }
+      case 'exit': {
+        l.disabled = true; l.frame++;
+        if (l.frame === 1) this.emit('yippee', l.x);
+        if (l.frame >= 8) { this.saved++; this.savedP[this.twoP ? (l.exitBy || 0) : 0]++; l.action = 'saved'; this.out--; l.removed = true; return null; }
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // sprite for drawing: {img(16xh indices), h, dy}
+  spriteOf(l) {
+    const S = this.S, R = l.right;
+    const pick = (a, f) => a.frames[((f % a.frames.length) + a.frames.length) % a.frames.length] && { img: a.frames[((f % a.frames.length) + a.frames.length) % a.frames.length], h: a.h, dy: a.dy };
+    switch (l.action) {
+      case 'walk': return pick(R ? S.walkR : S.walkL, l.frame);
+      case 'jump': return pick(R ? S.jumpR : S.jumpL, 0);
+      case 'fall': return pick(R ? S.fallR : S.fallL, l.frame);
+      case 'climb': return pick(R ? S.climbR : S.climbL, l.frame);
+      case 'hoist': return pick(R ? S.hoistR : S.hoistL, l.frame);
+      case 'float': return pick(R ? S.floatR : S.floatL, [0, 1, 3, 5, 5, 5, 5, 5, 5, 6, 7, 7, 6, 5, 4, 4][l.frame] ?? 4);
+      case 'dig': return pick(S.dig, l.frame);
+      case 'build': return pick(R ? S.buildR : S.buildL, l.frame);
+      case 'bash': return pick(R ? S.bashR : S.bashL, l.frame);
+      case 'mine': return pick(R ? S.mineR : S.mineL, l.frame);
+      case 'block': return pick(S.block, l.frame);
+      case 'shrug': return pick(R ? S.shrugR : S.shrugL, l.frame);
+      case 'ohno': return pick(S.ohno, l.frame);
+      case 'splat': return pick(S.splat, l.frame);
+      case 'drown': return pick(S.drown, l.frame);
+      case 'fry': return pick(S.fry, l.frame);
+      case 'exit': return pick(S.exit, l.frame);
+    }
+    return null;
+  }
+  actionName(l) {
+    const m = { walk: 'WALKER', fall: 'FALLER', jump: 'WALKER', climb: 'CLIMBER', hoist: 'CLIMBER', float: 'FLOATER', dig: 'DIGGER', build: 'BUILDER', bash: 'BASHER', mine: 'MINER', block: 'BLOCKER', shrug: 'SHRUGGER', ohno: 'BOMBER', explode: 'BOMBER', splat: 'SPLATTER', drown: 'DROWNER', fry: 'FRIED', exit: 'EXITING' };
+    let n = m[l.action] || '';
+    if (n === 'WALKER' || n === 'FALLER') { if (l.climber && l.floater) n = 'ATHLETE'; else if (l.climber) n = 'CLIMBER'; else if (l.floater) n = 'FLOATER'; }
+    return n;
+  }
+}
+if (false) module.exports = { World, SK, LW, LH };
+
+// ===== Lemmings 2 skills beyond the Classic eight (behaviour modelled on the original game) =====
+// Each skill: anim (alemms chunk), how it is assigned, and a per-tick action.
+const XSKILL = {
+  Bomber: { anim: 'LM07', act: 'bomb', from: ['walk', 'run', 'shrug', 'block', 'fall', 'tumble', 'stun', 'climb', 'float'] },
+  Runner: { anim: 'LM02', perm: 'runner' },
+  Jumper: { anim: 'LM01', act: 'leap', from: ['walk', 'run'] },
+  Hopper: { anim: 'LM09', act: 'leap', from: ['walk', 'run'], set: l => l.hopper = true },
+  'Pole Vaulter': { anim: 'LM20', act: 'leap', from: ['walk', 'run'], set: l => l.vault = true },
+  Platformer: { anim: 'LM22', act: 'platform', from: ['walk', 'run', 'shrug'] },
+  Stacker: { anim: 'LM1F', act: 'stack', from: ['walk', 'run', 'shrug'] },
+  Stomper: { anim: 'LM1D', act: 'stomp', from: ['walk', 'run'] },
+  Twister: { anim: 'LM2E', act: 'stomp', from: ['walk', 'run'] },
+  Filler: { anim: 'LM03', act: 'pour', from: ['walk', 'run'], set: l => l.grainColor = 9 },
+  'Glue Pourer': { anim: 'LM30', act: 'pour', from: ['walk', 'run'], set: l => l.grainColor = 13 },
+  'Sand Pourer': { anim: 'LM2F', act: 'pour', from: ['walk', 'run'], set: l => l.grainColor = 11 },
+  Fencer: { anim: 'LM1C', act: 'fence', from: ['walk', 'run'] },
+  'Laser Blaster': { anim: 'LM17', act: 'laser', from: ['walk', 'run'] },
+  'Flame Thrower': { anim: 'LM24', act: 'flame', from: ['walk', 'run'] },
+  Attractor: { anim: 'LM06', act: 'attract', from: ['walk', 'run'] },
+  Ballooner: { anim: 'LM04', act: 'balloon', from: ['walk', 'run', 'fall'] },
+  'Jet Pack': { anim: 'LM2B', act: 'jet', from: ['walk', 'run', 'fall'] },
+  Archer: { anim: 'LM05', act: 'shoot', from: ['walk', 'run'], set: l => l.shot = 'arrow' },
+  Spearer: { anim: 'LM1B', act: 'shoot', from: ['walk', 'run'], set: l => l.shot = 'arrow' },
+  Thrower: { anim: 'LM10', act: 'shoot', from: ['walk', 'run'], set: l => l.shot = 'arrow' },
+  Bazooker: { anim: 'LM1A', act: 'shoot', from: ['walk', 'run'], set: l => l.shot = 'rocket' },
+  Mortar: { anim: 'LM21', act: 'shoot', from: ['walk', 'run'], set: l => l.shot = 'shell' },
+  'Super Lem!': { anim: 'LM25', act: 'superlem', from: ['walk', 'run', 'fall'] },
+  'Rock Climber': { perm: 'climber', anim: 'LM2A' },
+  'Icarus Wings': { anim: 'LM31', act: 'jet', from: ['walk', 'run', 'fall'], set: l => l.wings = true },
+  'Hang Glider': { anim: 'LM32', act: 'glide', from: ['walk', 'run', 'fall'] },
+  'Magic Carpet': { anim: 'LM0E', act: 'glide', from: ['walk', 'run', 'fall'] },
+  Roper: { anim: 'LM2D', act: 'rope', from: ['walk', 'run'] },
+  Shimmier: { anim: 'LM2C', act: 'shimmy', from: ['walk', 'run', 'fall', 'leap'] },
+  Slider: { perm: 'slider', anim: 'LM29' },
+  Roller: { anim: 'LM0D', perm: 'roller' },
+  Skater: { anim: 'LM0A', perm: 'roller' },
+  Skier: { anim: 'LM1E', perm: 'roller' },
+  Surfer: { anim: 'LM26', perm: 'swimmer' },
+  Swimmer: { anim: 'LM0C', perm: 'swimmer' },
+  Diver: { anim: 'LM23', perm: 'swimmer' },
+  Kayaker: { anim: 'LM0B', perm: 'swimmer' },
+  'Magno Boots': { perm: 'climber', anim: 'LM19' },
+  Planter: { anim: 'LM27', act: 'stack', from: ['walk', 'run', 'shrug'], set: l => l.tall = true },
+};
+const XNAMES = { laser: 'LASERER', bomb: 'BOMBER', tumble: 'FALLER', stun: 'STUNNED', rope: 'ROPER', shimmy: 'SHIMMIER', run: 'RUNNER', leap: 'JUMPER', platform: 'PLATFORMER', stack: 'STACKER', stomp: 'STOMPER', pour: 'FILLER', fence: 'FENCER', flame: 'FLAMER', attract: 'ATTRACTOR', balloon: 'BALLOONER', jet: 'FLYER', shoot: 'SHOOTER', superlem: 'SUPER LEM', glide: 'GLIDER', dance: 'DANCER' };
+
+function xAssign(w, l, name) {
+  const d = XSKILL[name]; if (!d || !l || l.removed || l.disabled) return false;
+  if (d.perm === 'runner') { if (l.runner) return false; l.runner = true; if (l.action === 'walk') l.action = 'run'; return true; }
+  if (d.perm === 'climber') { if (l.climber) return false; l.climber = true; if (d.anim) l.climbAnim = name; return true; }
+  if (d.perm === 'slider') { if (l.slider) return false; l.slider = true; l.slideAnim = name; return true; }
+  if (d.perm === 'roller') { if (l.roller) return false; l.roller = l.runner = l.safe = true; if (l.action === 'walk') l.action = 'run'; return true; }
+  if (d.perm === 'swimmer') { if (l.swimmer) return false; l.swimmer = true; return true; }
+  if (!d.from.includes(l.action)) return false;
+  w.removeTriggersOf(l); w.setAction(l, d.act); l.xskill = name; if (d.set) d.set(l);
+  if (d.act === 'leap') {
+    // original: runner launches at (4,-4), walker at (3,-3); y -= 1; anim table [0,1,2,3,4]
+    if (l.vault) launch(l, 4, -5); else if (l.action === 'run' || l.runner) launch(l, 4, -4); else launch(l, 3, -3);
+    l.y -= 1; l.jframe = l.runner ? -1 : -1;
+  }
+  if (d.act === 'jet') l.t = 0;
+  return true;
+}
+
+function installSkills() {
+  const P = World.prototype;
+  if (P._xi) return; P._xi = true;
+  const origProc = P.process, origSet = P.setAction, origStep = P.step, origSprite = P.spriteOf, origName = P.actionName;
+  P.setAction = function (l, a) { if (a === 'walk' && l.runner) a = 'run'; return origSet.call(this, l, a); };
+  P.process = function (l) {
+    if (l.danceUntil > this.tick && (l.action === 'walk' || l.action === 'run')) { l.frame++; return null; }
+    if (l.fanPush && ['float', 'balloon', 'glide', 'jet', 'fall', 'leap', 'superlem'].includes(l.action)) {
+      const nx = l.x + l.fanPush; if (!this.ground(nx, l.y - 4) && !this.ground(nx, l.y - 8)) l.x = nx; l.fanPush = 0;
+    }
+    if (l.action === 'fall' && l.slider && (this.ground(l.x - 2, l.y - 4) || this.ground(l.x + 2, l.y - 4)) && this.tick % 2) { l.frame++; return null; }
+    const h = XACT[l.action];
+    if (!h) { const r = origProc.call(this, l); if (r === 'splat' && l.safe) return 'walk'; if (r === 'drown' && l.swimmer) return null; return r; }
+    if (l.x < 0 || l.x >= LW || l.y < 0 || l.y >= LH + 6) return 'out';
+    if (l.countdown > 0) { l.countdown--; if (l.countdown === 0) return 'ohno'; }
+    return h.call(this, l);
+  };
+  P.step = function () {
+    origStep.call(this);
+    if (!this.parts2) return;
+    for (const g of this.parts2) if (!g.dead) PART[g.kind].call(this, g);
+    this.parts2 = this.parts2.filter(g => !g.dead);
+  };
+  P.spriteOf = function (l) {
+    if (XACT[l.action] && l.action !== 'run') {
+      const a = l.action === 'tumble' ? Game.XS._tumble : l.action === 'stun' ? Game.XS._stun : Game.XS[l.xskill]; if (!a) return origSprite.call(this, Object.assign({}, l, { action: 'walk' }));
+      const set = a[l.right ? 'R' : 'L'] || a.all, f = set.frames[((l.frame % set.frames.length) + set.frames.length) % set.frames.length];
+      return { img: f, h: set.h, dy: set.dy };
+    }
+    if (l.danceUntil > this.tick && (l.action === 'walk' || l.action === 'run') && Game.XS._dance) { const set = Game.XS._dance[l.right ? 'R' : 'L']; return { img: set.frames[l.frame % set.frames.length], h: set.h, dy: set.dy }; }
+    const permA = (l.action === 'climb' || l.action === 'hoist') && l.climbAnim ? Game.XS[l.climbAnim] : null;
+    if (permA) { const set = permA[l.right ? 'R' : 'L'] || permA.all; return { img: set.frames[l.frame % set.frames.length], h: set.h, dy: set.dy }; }
+    if (l.action === 'run') { const a = Game.XS.Runner; const set = a[l.right ? 'R' : 'L']; return { img: set.frames[l.frame % set.frames.length], h: set.h, dy: set.dy }; }
+    return origSprite.call(this, l);
+  };
+  P.actionName = function (l) { return XNAMES[l.action] || origName.call(this, l); };
+}
+
+// helpers
+function addPart(w, p) { (w.parts2 || (w.parts2 = [])).push(p); }
+function walkStep(w, l, dir) {
+  const g = (x, y) => w.ground(x, y);
+  l.x += dir;
+  let up = 0; while (up < 6 && g(l.x, l.y - up)) up++;
+  if (up === 6) { if (l.climber) return 'climb'; l.right = !l.right; l.x -= dir; return null; }
+  if (up > 0) { l.y -= up - 1; return null; }
+  let dn = 1; while (dn < 4 && !g(l.x, l.y + dn)) dn++;
+  if (dn === 4 && l.runner && !l.hopper) { launch(l, 2, 0); l.y -= 4; l.jframe = 3; l.xskill = 'Jumper'; return 'leap'; }   // runners leap off ledges (4fac)
+  l.y += dn; return dn === 4 ? 'fall' : null;
+}
+// Archer (state 5, 61fc): 16-frame wind-up, then aims at the pointer; each click fires one of 6 arrows (3ab6)
+function archerStep(l) {
+  if (!this.ground(l.x, l.y) && !this.ground(l.x, l.y + 1)) { if (this.aimer === l) this.aimer = null; return 'fall'; }
+  if (l.arrows === undefined) { l.arrows = 6; l.ph = 0; l.rt = 0; }
+  if (l.ph === 0) { l.frame = Math.min(15, ++l.rt); if (l.rt >= 16) l.ph = 1; return null; }
+  if (l.ph === 1) {
+    if (this.aimer && this.aimer !== l && !this.aimer.removed && this.aimer.ph === 1) return null;
+    this.aimer = l;
+    const dir = l.right ? 1 : -1, hx = l.x + dir * 4, hy = l.y - 8;
+    let dx = (Game.viewX + Game.cursor.x / 2) - hx, dy = (Game.viewY + Game.cursor.y / 2) - hy;
+    if (dx * dir < 1) dx = dir;
+    l.frame = 16 + Math.max(0, Math.min(6, Math.round((Math.atan2(-dy, Math.abs(dx)) + Math.PI / 2) / Math.PI * 6)));
+    if (l.fire) {
+      l.fire = false; const d = Math.hypot(dx, dy) || 1;
+      addPart(this, { kind: 'arrow2', x: hx, y: hy, vx: Math.round(dx / d * 8), vy: Math.round(dy / d * 8), fy: 0, c: this.packPal[3] });
+      this.emit('assign', l.x);
+      if (--l.arrows <= 0) { l.ph = 2; l.rt = 0; this.aimer = null; }
+    }
+    return null;
+  }
+  return ++l.rt >= 10 ? 'walk' : null;
+}
+// ---- Lemmings 2 projectile physics (2aa6 / 2b14 / 97e0)
+const GRAV_DELAY = [0, 0, 0, 1, 1, 2, 2, 3, 3];
+function launch(l, vx, vy) {
+  const dir = l.right ? 1 : -1; l.vx = Math.max(-8, Math.min(8, vx * dir)); l.vy = Math.max(-8, Math.min(8, vy));
+  l.fx = 7; l.fy = GRAV_DELAY[Math.abs(l.vy)]; l.fallDist = 0;
+}
+function physStep(w, l) {
+  // integrate velocity (friction every 8 updates, gravity with growing delay)
+  const tx = l.x + l.vx, ty = l.y + l.vy;
+  if (Math.abs(l.vx) > 1 && --l.fx < 0) { l.vx -= Math.sign(l.vx); l.fx = 7; }
+  if (l.vy >= 0) l.fallDist += l.vy; else l.fallDist = 0;
+  if (--l.fy < 0) { l.vy = Math.min(8, l.vy + 1); l.fy = GRAV_DELAY[Math.abs(l.vy)]; }
+  // trace the path one pixel at a time: y first, then x; check the head 9 px up
+  let x = l.x, y = l.y;
+  while (x !== tx || y !== ty) {
+    if (y !== ty) { const ny = y + Math.sign(ty - y); if (w.ground(x, ny)) { l.x = x; l.y = ny; return 'land'; } y = ny; }
+    else { const nx = x + Math.sign(tx - x); if (w.ground(nx, y)) { l.x = x; l.y = y; return 'wall'; } x = nx; }
+    if (w.ground(x, y - 9)) { l.x = x; l.y = y + 1; return 'head'; }
+  }
+  l.x = x; l.y = y; return null;
+}
+function landResult(w, l) {
+  const d = l.fallDist;
+  if (d > 99) { w.emit('splat', l.x); return 'splat'; }
+  if (d > 64) return 'stun';
+  return l.runner ? 'run' : 'walk';
+}
+function clearCircle(w, cx, cy, r) {
+  let hitSteel = false;
+  for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) { if (x * x + y * y > r * r) continue; const X = Math.round(cx + x), Y = Math.round(cy + y); if (!w.ground(X, Y)) continue; if (w.steel[Y * LW + X]) { hitSteel = true; continue; } w.clear(X, Y); }
+  return hitSteel;
+}
+
+// original terrain masks from the game's L2AM sets (hunk1 $d31c): flame (-12) facing right/left
+const FLAME_MASK = { R: ["....................###.........", ".................#######........", "............#############.......", "..........##################....", "........#######################.", ".......########################.", ".....#########################..", "..##############################", "################################", ".....##########################.", "......########################..", ".......######################...", "........##..##############......", "............############........", ".............##########.........", "...............#####............"], L: [".........###....................", "........#######.................", ".......#############............", "....##################..........", ".#######################........", ".########################.......", "..#########################.....", "##############################..", "################################", ".##########################.....", "..########################......", "...######################.......", "......##############..##........", "........############............", ".........##########.............", "............#####..............."] };
+const XACT = {
+  run(l) { l.frame++; let r = walkStep(this, l, l.right ? 1 : -1); if (r) return r === 'fall' ? 'fall' : r; return walkStep(this, l, l.right ? 1 : -1); },
+  leap(l) {
+    // anim: table [0,1,2,3,4] then hold (runner table [0,0,0,1,2,3,3,4])
+    l.jframe = Math.min(4, (l.jframe ?? -1) + 1); l.frame = l.jframe;
+    const r = physStep(this, l);
+    if (r === 'land') { while (this.ground(l.x, l.y - 1) && l.y > 0) l.y--; if (l.hopper) { launch(l, 2, -4); l.jframe = -1; return null; } l.vault = false; return landResult(this, l); }
+    if (r === 'head') { l.vx = 0; l.vy = l.vy > 0 ? l.vy >> 1 : 0; return 'tumble'; }
+    if (r === 'wall') { l.right = !l.right; l.vx = -(l.vx >> 1); return null; }
+    if (l.fallDist > 64 && !l.hopper) return 'tumble';
+    return null;
+  },
+  tumble(l) {   // state 0x41: airborne under physics, anim LM41
+    l.frame++;
+    const r = physStep(this, l);
+    if (r === 'land') { while (this.ground(l.x, l.y - 1) && l.y > 0) l.y--; return landResult(this, l); }
+    if (r === 'head') { l.vx = 0; l.vy = l.vy > 0 ? l.vy >> 1 : 0; }
+    if (r === 'wall') { l.right = !l.right; l.vx = -(l.vx >> 1); }
+    if (l.floater && l.fallDist >= 16) { l.state = 20; return 'float'; }
+    return null;
+  },
+  stun(l) {     // state 0x42: lies dazed (LM42), then gets up and walks
+    l.frame++; return l.frame >= 35 ? (l.runner ? 'run' : 'walk') : null;
+  },
+  platform(l) {   // Platformer state 0x22 (8a8c): setup, then 16-frame loop: lay a 5x2 slab at the feet, step 4 px; 11 slabs
+    if (!l.plInit) { l.plInit = true; l.slabs = 11; l.pf = 0; }
+    l.pf++; l.frame = Math.min(l.pf, 37);
+    if (l.pf >= 0x26) { if (--l.slabs <= 0) return 'shrug'; l.pf = 0x16; }
+    const dir = l.right ? 1 : -1, f = l.pf, c = this.packPal[7];
+    // slab = bob 4 (5x2, hotspot 5,6)
+    const slab = (x0, y0) => { for (let x = 0; x < 5; x++) for (let y = 0; y < 2; y++) if (!this.ground(x0 + x, y0 + y)) this.setGround(x0 + x, y0 + y, c); };
+    if (f === 10) { slab(l.right ? l.x + 1 : l.x - 5, l.y - 2); if (this.ground(l.x + dir * 6, l.y - 2)) return 'walk'; }
+    else if (f === 14) { l.x += dir; l.y -= 1; }
+    else if (f === 15) l.y -= 1;
+    else if (f === 16 || f === 18 || f === 19 || f === 20 || f === 29 || f === 31 || f === 33 || f === 35) {
+      l.x += dir; if (this.ground(l.x + (l.right ? 0 : -1), l.y - 1)) return 'shrug';
+    } else if (f === 28) { if (l.slabs <= 3) this.emit('ting', l.x); slab(l.right ? l.x : l.x - 4, l.y); if (this.ground(l.x + dir * 5, l.y)) return 'walk'; }
+    return null;
+  },
+  stack(l) {   // Stacker state 0x1f (895c): 32-frame cycle, 12 bricks; builds a 4-px pillar under itself and rides it up
+    if (l.state === 0 && !l.stInit) { l.stInit = true; l.bricks = 12; l.sf = l.right ? 0 : 16; }
+    l.sf = (l.sf + 1) % 32; l.frame = l.sf;
+    const f = l.sf, c = this.packPal[7];
+    if (f === 0 || f === 16) {
+      if (--l.bricks <= 0) return 'shrug';
+      if (this.ground(l.x, l.y - 10)) return 'walk';
+    } else if (f === 7 || f === 23) {
+      const dx = l.right ? 1 : -2;   // brick bob 3: 2x4, hotspot (8,4)/(6,4) from (x-7, y-6)
+      for (let x = 0; x < 2; x++) for (let y = -2; y < 2; y++) if (!this.ground(l.x + dx + x, l.y + y)) this.setGround(l.x + dx + x, l.y + y, c);
+      if (l.bricks <= 3) this.emit('ting', l.x);
+    } else if (f === 11 || f === 27) l.y -= 2;
+    else if (f === 12 || f === 28) { l.right = !l.right; l.x += l.right ? 1 : -1; }
+    return null;
+  },
+  laser(l) {   // state 0x17 (5e86): blasts a 6-px shaft straight up (mask -10, 6x8 segments from y-17), rescanning every 16 updates
+    l.frame = (l.frame + 1) & 1;
+    if (!this.ground(l.x, l.y)) return 'fall';
+    const x0 = l.right ? l.x - 1 : l.x - 6, y0 = l.y - 17;
+    const segHit = k => { for (let x = 0; x < 6; x++) for (let y = 0; y < 8; y++) if (this.ground(x0 + x, y0 - k * 8 + y)) return true; return false; };
+    const scan = () => { let k = 0; while (k < 12 && y0 - k * 8 >= 0 && !segHit(k)) k++; return k; };
+    if (!l.lt) { const n = scan(); if (n === l.lseg || n >= 12) return 'walk'; l.lseg = n; }
+    l.lt = ((l.lt || 0) + 1) & 15;
+    for (let k = 0; k <= Math.min(l.lseg, 11); k++) for (let x = 0; x < 6; x++) for (let y = 0; y < 8; y++) { const X = x0 + x, Y = y0 - k * 8 + y; if (Y >= 0 && this.ground(X, Y) && !this.steel[Y * LW + X]) this.clear(X, Y); }
+    l.beam = l.lseg;
+    return null;
+  },
+  bomb(l) {   // state 7 (5282): 10-frame fuse animation, explodes on the 10th update (no countdown)
+    l.frame++; return l.frame >= 10 ? 'explode' : null;
+  },
+  stomp(l) {   // state 0x1d (88da): 8-update cycle; on frame 7 stamp the 10x4 mask (-4) under the feet and sink 2 px
+    l.frame = (l.frame + 1) % 8; if (l.frame !== 7) return null;
+    const isSteel = (x, y) => this.ground(x, y) && this.steel[y * LW + x];
+    if (isSteel(l.x - 3, l.y) || isSteel(l.x + 3, l.y)) return 'walk';
+    for (let x = l.x - 5; x < l.x + 5; x++) for (let y = l.y - 2; y < l.y + 2; y++) if (this.ground(x, y) && !this.steel[y * LW + x]) this.clear(x, y);
+    l.y += 2;
+    return this.ground(l.x, l.y) ? null : 'fall';
+  },
+  pour(l) {   // filler state 3 (51d4) / pourers: 2 grains per update from the spout until 78 are out (or the spout is blocked), then 6 frames and walk
+    if (!this.ground(l.x, l.y) && !this.ground(l.x, l.y + 1)) return 'fall';
+    l.frame = Math.min(l.frame + 1, 4);
+    if (l.ph === undefined) l.ph = 0;
+    if (l.ph === 0) {
+      const sx = l.x + (l.right ? 4 : -4), sy = l.y - 8;
+      if (this.ground(sx, sy) || l.state >= 78) { l.ph = 1; l.t2 = 0; return null; }
+      const liquid = l.xskill === 'Filler', c = this.packPal[l.grainColor] || this.packPal[7];
+      addPart(this, { kind: liquid ? 'goo' : 'grain', x: sx, y: sy, c, d: l.right ? 1 : -1 });
+      addPart(this, { kind: liquid ? 'goo' : 'grain', x: sx, y: sy - 1, c, d: l.right ? 1 : -1 });
+      l.state += 2; return null;
+    }
+    l.frame = 5 + l.t2; return ++l.t2 >= 6 ? 'walk' : null;
+  },
+  fence(l) {
+    l.frame++; if (l.frame % 3) return null;
+    const dir = l.right ? 1 : -1;
+    if (clearCircle(this, l.x + dir * 6, l.y - 6, 5)) return 'walk';
+    let ahead = false; for (let i = 4; i < 16; i++) if (this.ground(l.x + dir * i, l.y - 6 - (i >> 1))) { ahead = true; break; }
+    l.x += dir; if (l.frame % 6 === 0) l.y--;
+    if (!this.ground(l.x, l.y + 1) && !this.ground(l.x, l.y + 2)) return 'fall';
+    l.state = ahead ? 0 : l.state + 1;
+    return l.state > 6 ? 'walk' : null;
+  },
+  flame(l) {   // state 0x24 (5f9c): stands still; for 15 updates erases the flame mask (-12) in front, then walks on
+    l.frame++;
+    if (!this.ground(l.x, l.y)) return 'fall';
+    l.state = (l.state + 1) & 15; if (l.state === 0) return 'walk';
+    const m = l.right ? FLAME_MASK.R : FLAME_MASK.L, ox = l.right ? l.x : l.x - 32, oy = l.y - 12;
+    const reach = Math.min(32, 4 + l.state * 4);   // the burn grows outward over the first updates
+    for (let y = 0; y < m.length; y++) for (let x = 0; x < 32; x++) {
+      if (m[y][x] !== '#') continue; const d = l.right ? x : 31 - x; if (d >= reach) continue;
+      const X = ox + x, Y = oy + y; if (this.ground(X, Y) && !this.steel[Y * LW + X]) this.clear(X, Y);
+    }
+    const dir = l.right ? 1 : -1;
+    for (let k = 0; k < 3; k++) addPart(this, { kind: 'spark', x: l.x + dir * 4, y: l.y - 6 + (k - 1) * 2, vx: dir * (3 + k), vy: (k - 1) * 0.4, c: [0xff2060ff, 0xff20a0ff, 0xff80e0ff][k], life: 4 + k * 2 });
+    return null;
+  },
+  attract(l) {
+    l.frame++;
+    for (const m of this.lems) if (m !== l && !m.removed && Math.abs(m.x - l.x) < 28 && Math.abs(m.y - l.y) < 16 && (m.action === 'walk' || m.action === 'run')) m.danceUntil = this.tick + 2;
+    if (!this.ground(l.x, l.y + 1)) return 'fall';
+    return l.frame > 200 ? 'walk' : null;
+  },
+  balloon(l) {
+    l.frame++;
+    if (this.ground(l.x, l.y - 14) || l.frame > 150) { this.emit('splat', l.x); l.state = 0; return l.floater ? 'float' : 'fall'; }
+    if (l.frame % 2 === 0) l.y--;
+    return null;
+  },
+  jet(l) {
+    l.frame++; l.t++;
+    const dir = l.right ? 1 : -1;
+    if (this.ground(l.x + dir * 4, l.y - 6)) { l.right = !l.right; }
+    else l.x += dir;
+    if (!this.ground(l.x, l.y - 12) && l.t < 40) l.y -= 1;
+    if (l.t > 90 || (l.t > 40 && this.ground(l.x, l.y + 1))) { l.state = 0; return this.ground(l.x, l.y + 1) ? 'walk' : 'fall'; }
+    if (l.t > 40) l.y += 1;
+    return null;
+  },
+  glide(l) {
+    l.frame++;
+    const dir = l.right ? 1 : -1;
+    if (this.ground(l.x + dir * 3, l.y - 4)) l.right = !l.right; else l.x += dir;
+    if (l.frame % 2 === 0) { if (this.ground(l.x, l.y + 1)) return 'walk'; l.y++; }
+    return null;
+  },
+  shoot(l) {
+    if (l.xskill === 'Archer') return archerStep.call(this, l);
+    l.frame++;
+    if (l.frame === 13 && (l.xskill === 'Spearer' || l.xskill === 'Thrower')) {   // 7840 / 7664: thrown on frame 13 with the game's gravity
+      const dir = l.right ? 1 : -1, sp = l.xskill === 'Spearer';
+      addPart(this, { kind: 'arrow2', x: l.x + (sp ? -1 : -4) * dir, y: l.y - (sp ? 8 : 6), vx: dir * (sp ? 6 : 5), vy: sp ? -4 : -5, fy: 0, c: this.packPal[sp ? 3 : 9], rock: !sp });
+    }
+    if (l.xskill === 'Spearer' || l.xskill === 'Thrower') return l.frame >= 21 ? 'walk' : null;
+    if (l.xskill === 'Bazooker' || l.xskill === 'Mortar') {   // 7a5e / 79f6: rocket on frame 10 at (8,-3); shell on frame 12 at (5,-5)
+      if (!this.ground(l.x, l.y)) return 'fall';
+      const dir = l.right ? 1 : -1, bz = l.xskill === 'Bazooker';
+      if (l.frame === (bz ? 10 : 12)) addPart(this, { kind: 'arrow2', x: l.x + (bz ? -2 : 1) * dir, y: l.y - (bz ? 6 : 1) - (bz ? 0 : 6), vx: dir * (bz ? 8 : 5), vy: bz ? -3 : -5, fy: bz ? 2 : 0, c: this.packPal[5], boom: true });
+      return l.frame >= (bz ? 27 : 25) ? 'walk' : null;
+    }
+    if (l.frame === 12) {
+      const dir = l.right ? 1 : -1;
+      if (l.shot === 'arrow') addPart(this, { kind: 'arrow', x: l.x + dir * 8, y: l.y - 7, vx: dir * 4, vy: 0, c: this.packPal[3] });
+      else addPart(this, { kind: 'rocket', x: l.x + dir * 8, y: l.y - 8, vx: dir * (l.shot === 'shell' ? 2.5 : 4), vy: l.shot === 'shell' ? -4 : 0, g: l.shot === 'shell' ? 0.2 : 0, c: this.packPal[5] });
+    }
+    return l.frame >= 24 ? 'walk' : null;
+  },
+  superlem(l) {   // state 0x25 (80de): 20-update wind-up, then Bresenham flight 8 px/update toward the pointer
+    l.frame++;
+    if ((l.slTake = (l.slTake || 0) + 1) <= 20) { if (l.slTake === 20) l.y -= 7; return null; }
+    const tx = Math.round(Game.viewX + Game.cursor.x / 2), ty = Math.round(Game.viewY + Game.cursor.y / 2);
+    const dx = tx - l.x, dy = ty - l.y, ax = Math.abs(dx), ay = Math.abs(dy);
+    if (ax < 8 && ay < 8) return null;            // hover at the pointer
+    l.right = dx >= 0;
+    const n = 8, major = Math.max(ax, ay);
+    for (let k = 1; k <= n; k++) {
+      const nx = l.x + Math.round(dx * k / major * (ax >= ay ? 1 : 1)) - (k > 1 ? Math.round(dx * (k - 1) / major) : 0);
+      const ny = l.y + Math.round(dy * k / major) - (k > 1 ? Math.round(dy * (k - 1) / major) : 0);
+      if (this.ground(nx, ny - 1) || this.ground(nx, ny - 8)) { l.state = 0; l.slTake = 0; l.vx = 0; l.vy = 1; l.fx = 7; l.fy = 0; l.fallDist = 0; return 'tumble'; }   // crash
+      l.x = nx; l.y = ny;
+      if (l.x < 0 || l.x >= LW || l.y < 0 || l.y >= LH) return 'out';
+    }
+    return null;
+  },
+};
+XACT.rope = function (l) {   // state 0x2d (8dbe): wind up, aim at the pointer until the player clicks, fire, rope flies until it hooks
+  const dir = l.right ? 1 : -1;
+  if (!this.ground(l.x, l.y) && !this.ground(l.x, l.y + 1)) { if (this.aimer === l) this.aimer = null; return 'fall'; }
+  l.ph = l.ph || 0;
+  if (l.ph === 0) { l.rt = (l.rt || 0) + 1; l.frame = Math.min(19, l.rt); if (l.rt >= 20) { l.ph = 1; this.aimer = l; } return null; }
+  const hx = l.x + dir * 4, hy = l.y - 8;
+  if (l.ph === 1) {
+    if (this.aimer && this.aimer !== l && this.aimer.ph === 1 && !this.aimer.removed) return null;   // one roper aims at a time
+    this.aimer = l;
+    let dx = (Game.viewX + Game.cursor.x / 2) - hx, dy = (Game.viewY + Game.cursor.y / 2) - hy;
+    if (dx * dir < 2) dx = 2 * dir; if (dy > 0) dy = 0;                // forward and upward only
+    const ang = Math.atan2(-dy, Math.abs(dx));                          // 0 = level .. pi/2 = straight up
+    l.aim = Math.max(0, Math.min(4, Math.round(ang / (Math.PI / 2) * 4)));
+    l.frame = 20 + l.aim;
+    if (l.fire) { const d = Math.hypot(dx, dy) || 1; l.rvx = dx / d; l.rvy = dy / d; l.rx = hx; l.ry = hy; l.rlen = 0; l.ph = 2; l.fire = false; this.aimer = null; this.emit('assign', l.x); }
+    return null;
+  }
+  if (l.ph === 2) {   // the rope flies 8 px per update
+    l.frame = 25 + Math.min(5, (l.rlen / 16) | 0);
+    for (let k = 0; k < 8; k++) {
+      const nx = l.rx + l.rvx, ny = l.ry + l.rvy; l.rlen++;
+      if (nx < 0 || nx >= LW || ny < 0 || l.rlen > 200) { l.ph = 0; l.rt = 0; return 'walk'; }
+      if (this.ground(Math.round(nx), Math.round(ny))) {
+        // hooked: lay the rope as a 1-px walkable line from the hand to the anchor
+        const c = this.packPal[3], n = Math.ceil(l.rlen);
+        for (let t = 0; t <= n; t++) { const X = Math.round(hx + l.rvx * t), Y = Math.round(hy + l.rvy * t) + 7; if (!this.ground(X, Y)) this.setGround(X, Y, c); }
+        l.ph = 0; l.rt = 0; return 'walk';
+      }
+      l.rx = nx; l.ry = ny;
+    }
+    if (!l.ropeTrail) l.ropeTrail = true;
+    return null;
+  }
+  return 'walk';
+};
+XACT.shimmy = function (l) {
+  l.frame++;
+  const dir = l.right ? 1 : -1;
+  if (!l.hanging) {                                        // reach up for a ceiling within 24 px
+    let k = 1; while (k < 24 && !this.ground(l.x, l.y - 12 - k)) k++;
+    if (k >= 24) return 'fall';
+    l.y -= k - 1; l.hanging = true; return null;
+  }
+  if (this.ground(l.x + dir * 3, l.y - 8)) { l.right = !l.right; return null; }
+  l.x += dir;
+  let up = 0; while (up < 4 && !this.ground(l.x, l.y - 12 - up)) up++;
+  if (up === 4) { l.hanging = false; l.state = 0; return 'fall'; }
+  l.y -= up;
+  if (this.ground(l.x, l.y)) { l.hanging = false; return 'walk'; }
+  return null;
+};
+const PART = {
+  arrow2(g) {   // archer arrow: flies under the game's gravity, sticks into terrain as a short walkable peg
+    const tx = g.x + g.vx, ty = g.y + g.vy;
+    if (--g.fy < 0) { g.vy = Math.min(8, g.vy + 1); g.fy = GRAV_DELAY[Math.abs(g.vy)]; }
+    const n = Math.max(Math.abs(tx - g.x), Math.abs(ty - g.y)) || 1, sx = (tx - g.x) / n, sy = (ty - g.y) / n;
+    for (let k = 0; k < n; k++) {
+      const X = Math.round(g.x + sx), Y = Math.round(g.y + sy);
+      if (X < 0 || X >= LW || Y < 0 || Y >= LH) { g.dead = true; return; }
+      if (this.ground(X, Y)) { if (g.boom) { for (let dy = -11; dy <= 11; dy++) for (let dx = -11; dx <= 11; dx++) { if (dx * dx + dy * dy > 135) continue; const PX = X + dx, PY = Y + dy; if (this.ground(PX, PY) && !this.steel[PY * LW + PX]) this.clear(PX, PY); } this.emit('boom', X); g.dead = true; return; } if (g.rock) { clearCircle(this, X, Y, 4); g.dead = true; return; } const ux = Math.sign(sx) || 1; for (let i = 0; i < 7; i++) { const PX = Math.round(g.x) - ux * i, PY = Math.round(g.y); if (!this.ground(PX, PY)) this.setGround(PX, PY, g.c); } g.dead = true; return; }
+      g.x += sx; g.y += sy;
+    }
+  },
+  goo(g) {   // filler goo: falls, slides, and runs sideways (up to 12 px) looking for somewhere lower before it sets
+    for (let k = 0; k < 2; k++) {
+      if (g.x < 0 || g.x >= LW || g.y >= LH) { g.dead = true; return; }
+      if (!this.ground(g.x, g.y + 1)) { g.y++; g.run = 0; continue; }
+      if (!this.ground(g.x + g.d, g.y + 1)) { g.x += g.d; g.y++; g.run = 0; continue; }
+      if (!this.ground(g.x - g.d, g.y + 1)) { g.d = -g.d; g.x += g.d; g.y++; g.run = 0; continue; }
+      g.run = (g.run || 0) + 1;
+      if (g.run < 12 && !this.ground(g.x + g.d, g.y)) { g.x += g.d; continue; }
+      if (g.run < 12 && !this.ground(g.x - g.d, g.y)) { g.d = -g.d; g.x += g.d; continue; }
+      this.setGround(g.x, g.y, g.c); g.dead = true; return;
+    }
+  },
+  spark(g) { g.x += g.vx; g.y += g.vy; if (--g.life <= 0 || g.x < 0 || g.x >= LW || g.y < 0 || g.y >= LH) g.dead = true; },
+  grain(g) {
+    for (let k = 0; k < 2; k++) {
+      if (g.x < 0 || g.x >= LW || g.y >= LH) { g.dead = true; return; }
+      if (!this.ground(g.x, g.y + 1)) { g.y++; continue; }
+      if (!this.ground(g.x - 1, g.y + 1)) { g.x--; g.y++; continue; }
+      if (!this.ground(g.x + 1, g.y + 1)) { g.x++; g.y++; continue; }
+      this.setGround(g.x, g.y, g.c); g.dead = true; return;
+    }
+  },
+  arrow(g) {
+    for (let k = 0; k < 4; k++) {
+      g.x += Math.sign(g.vx); if (g.x < 0 || g.x >= LW) { g.dead = true; return; }
+      if (this.ground(g.x, g.y)) { for (let i = -2; i < 8; i++) this.setGround(g.x - Math.sign(g.vx) * i, g.y, g.c); g.dead = true; return; }
+    }
+  },
+  rocket(g) {
+    const steps = Math.ceil(Math.abs(g.vx) + Math.abs(g.vy));
+    for (let k = 0; k < steps; k++) {
+      g.x += g.vx / steps; g.y += g.vy / steps; const X = Math.round(g.x), Y = Math.round(g.y);
+      if (X < 0 || X >= LW || Y >= LH) { g.dead = true; return; }
+      if (this.ground(X, Y)) { clearCircle(this, X, Y, 9); this.emit('boom', X); g.dead = true; return; }
+    }
+    g.vy += g.g || 0;
+  },
+};
+
+// ===== Sound effects (8SVX banks) and an OctaMED MMD0/MMD1 player for the tribe tunes =====
+const Audio2 = {
+  ac: null, out: null, sfx: {}, musicOn: (() => { try { return localStorage.getItem('l2.music') !== '0'; } catch { return true; } })(), sfxOn: true,
+  unlock() {
+    if (this.ac) { if (this.ac.state === 'suspended') this.ac.resume(); return; }
+    try { this.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch { return; }
+    this.out = this.ac.createGain(); this.out.gain.value = 0.7; this.out.connect(this.ac.destination);
+    for (const f of ['soundfx/l2basicfx', 'soundfx/l2extendedfx', 'l2extendedfx2']) if (Game.G.files[f]) this.bank(L2.unrnc(Game.G.files[f]));
+  },
+  bank(d) {
+    if (!d) return; const be32 = L2.be32, be16 = L2.be16; let p = 0;
+    while (p < d.length - 12 && d[p] === 0x46 && d[p + 1] === 0x4f) {
+      const n = be32(d, p + 4); let q = p + 12, name = '', rate = 8363, body = null, one = 0;
+      while (q < p + 8 + n) {
+        const id = String.fromCharCode(d[q], d[q + 1], d[q + 2], d[q + 3]), cn = be32(d, q + 4);
+        if (id === 'NAME') { for (let i = 0; i < cn && d[q + 8 + i]; i++) name += String.fromCharCode(d[q + 8 + i]); }
+        if (id === 'VHDR') { one = be32(d, q + 8); rate = be16(d, q + 20); }
+        if (id === 'BODY') body = d.subarray(q + 8, q + 8 + cn);
+        q += 8 + cn + (cn & 1);
+      }
+      if (body && name) { const b = this.ac.createBuffer(1, body.length, Math.max(3000, rate)), c = b.getChannelData(0); for (let i = 0; i < body.length; i++) c[i] = ((body[i] << 24) >> 24) / 128; this.sfx[name.toLowerCase()] = b; }
+      p += 8 + n + (n & 1);
+    }
+  },
+  play(name, vol = 1) {
+    if (!this.sfxOn || !this.ac) return; const b = this.sfx[name.toLowerCase()]; if (!b) return;
+    const s = this.ac.createBufferSource(), g = this.ac.createGain(); g.gain.value = vol; s.buffer = b; s.connect(g); g.connect(this.out); s.start();
+  },
+  event(e) {
+    const m = { assign: 'ting', door: 'Door2', letsgo: 'LetsGo', ohno: 'OHNO1', boom: 'bang', splat: 'Splat', yippee: 'Yipeee', splash: 'water1', fire: 'fireok', trap: 'TenTonn', die: 'Aaargh! 1', chink: 'chink', steel: 'SteelScrape4', arrow: 'Arrow1', pop: 'BalloonBurst1', super: 'SuperLemming', hup: 'Hup!' };
+    if (m[e.name]) this.play(m[e.name], 0.8);
+  },
+
+  // ---------- MED ----------
+  med: null, timer: null,
+  loadMED(d) {
+    const be32 = L2.be32, be16 = L2.be16, id = String.fromCharCode(d[0], d[1], d[2], d[3]);
+    if (id !== 'MMD0' && id !== 'MMD1') return null;
+    const s = be32(d, 8), blockArr = be32(d, 16), smplArr = be32(d, 24);
+    const samples = [];
+    for (let i = 0; i < 63; i++) { const o = s + i * 8; samples.push({ rep: be16(d, o) * 2, replen: be16(d, o + 2) * 2, vol: d[o + 6], trans: (d[o + 7] << 24) >> 24 }); }
+    const numBlocks = be16(d, s + 504), songLen = be16(d, s + 506), seq = [...d.subarray(s + 508, s + 508 + songLen)];
+    const tempo = be16(d, s + 764), transp = (d[s + 766] << 24) >> 24, flags = d[s + 767], flags2 = d[s + 768], speed = d[s + 769] || 6;
+    const trkvol = [...d.subarray(s + 770, s + 786)], master = d[s + 786] || 64, numSamples = d[s + 787];
+    const blocks = [];
+    for (let b = 0; b < numBlocks; b++) {
+      const bp = be32(d, blockArr + b * 4); let tracks, lines, data;
+      if (id === 'MMD0') { tracks = d[bp]; lines = d[bp + 1] + 1; data = bp + 2; }
+      else { tracks = be16(d, bp); lines = be16(d, bp + 2) + 1; data = bp + 8; }
+      const rows = [];
+      for (let l = 0; l < lines; l++) {
+        const row = [];
+        for (let t = 0; t < tracks; t++) {
+          if (id === 'MMD0') { const o = data + (l * tracks + t) * 3, a = d[o], b2 = d[o + 1]; row.push({ note: a & 0x3f, inst: ((b2 >> 4) | ((a & 0x80) ? 16 : 0) | ((a & 0x40) ? 32 : 0)), cmd: b2 & 15, arg: d[o + 2] }); }
+          else { const o = data + (l * tracks + t) * 4; row.push({ note: d[o] & 0x7f, inst: d[o + 1] & 0x3f, cmd: d[o + 2], arg: d[o + 3] }); }
+        }
+        rows.push(row);
+      }
+      blocks.push({ tracks, rows });
+    }
+    const bufs = [];
+    for (let i = 0; i < numSamples; i++) {
+      const ip = be32(d, smplArr + i * 4); if (!ip) { bufs.push(null); continue; }
+      const len = be32(d, ip), type = be16(d, ip + 4); if (type !== 0 || !len) { bufs.push(null); continue; }
+      const b = this.ac.createBuffer(1, len, 8363), c = b.getChannelData(0);
+      for (let k = 0; k < len; k++) c[k] = ((d[ip + 6 + k] << 24) >> 24) / 128;
+      bufs.push(b);
+    }
+    return { samples, seq, tempo, transp, flags, flags2, speed, trkvol, master, blocks, bufs };
+  },
+  playTune(d) {
+    this.stopTune(); if (!this.musicOn || !this.ac || !d) return;
+    const m = this.loadMED(L2.unrnc(d)); if (!m) return;
+    const out = this.ac.createGain(); out.gain.value = 0.55; out.connect(this.out);
+    const ch = Array.from({ length: 8 }, () => { const g = this.ac.createGain(); g.gain.value = 0; g.connect(out); return { g, src: null, inst: 0, note: 0, per: 0, vol: 0, cmd: 0, arg: 0, target: 0 }; });
+    this.med = { m, ch, out, pos: 0, line: 0, tick: 0, speed: m.speed, tempo: m.tempo, t: this.ac.currentTime + 0.1, brk: -1 };
+    this.timer = setInterval(() => this.pump(), 40); this.pump();
+  },
+  stopTune() {
+    if (this.timer) clearInterval(this.timer); this.timer = null;
+    const s = this.med; this.med = null; if (!s) return;
+    const t = this.ac.currentTime; for (const c of s.ch) try { c.src && c.src.stop(t + 0.05); } catch { }
+    s.out.gain.setTargetAtTime(0, t, 0.03); setTimeout(() => s.out.disconnect(), 400);
+  },
+  toggleMusic(d) { this.musicOn = !this.musicOn; try { localStorage.setItem('l2.music', this.musicOn ? '1' : '0'); } catch { } if (this.musicOn) this.playTune(d); else this.stopTune(); },
+  tickLen(s) {
+    const t = s.tempo;
+    if (s.m.flags2 & 0x20) return 2.5 / (t * ((s.m.flags2 & 0x1f) + 1) / 4);   // BPM mode
+    return t <= 10 ? 0.02 * t / 1 : 2.5 / (t * 125 / 33);
+  },
+  pump() {
+    const s = this.med; if (!s) return; const ac = this.ac;
+    if (s.t < ac.currentTime) s.t = ac.currentTime + 0.02;
+    while (s.t < ac.currentTime + 0.25) { this.tick(s, s.t); s.t += this.tickLen(s); }
+  },
+  vol(s, c, i, t) { c.g.gain.setValueAtTime(Math.max(0, Math.min(64, c.vol)) / 64 * (s.m.trkvol[i] || 64) / 64 * s.m.master / 64 * 0.5, t); },
+  rate(c, t) { if (c.src && c.per > 0) c.src.playbackRate.setValueAtTime((3546895 / c.per) / 8363, t); },
+  trigger(s, c, i, t) {
+    const m = s.m, smp = m.samples[c.inst - 1], buf = m.bufs[c.inst - 1]; if (!buf || !smp) return;
+    if (c.src) try { c.src.stop(t); } catch { }
+    const n = c.note + m.transp + smp.trans, per = 856 * Math.pow(2, -(n - 1) / 12);
+    const src = this.ac.createBufferSource(); src.buffer = buf;
+    if (smp.replen > 2) { src.loop = true; src.loopStart = smp.rep / 8363; src.loopEnd = Math.min(buf.length, smp.rep + smp.replen) / 8363; }
+    c.per = per; c.base = per; src.playbackRate.value = (3546895 / per) / 8363;
+    src.connect(c.g); src.start(t); c.src = src; this.vol(s, c, i, t);
+  },
+  tick(s, t) {
+    const m = s.m, blk = m.blocks[m.seq[s.pos]] || m.blocks[0];
+    if (s.tick === 0) {
+      const row = blk.rows[s.line] || [];
+      row.forEach((n, i) => {
+        if (i >= s.ch.length) return; const c = s.ch[i];
+        if (n.inst) { c.inst = n.inst; const smp = m.samples[n.inst - 1]; if (smp) c.vol = smp.vol; }
+        c.cmd = n.cmd; c.arg = n.arg;
+        if (n.note && n.cmd !== 3) { c.note = n.note; this.trigger(s, c, i, t); }
+        else if (n.note && n.cmd === 3) c.target = 856 * Math.pow(2, -(n.note + m.transp - 1) / 12);
+        else if (n.inst) this.vol(s, c, i, t);
+        switch (n.cmd) {
+          case 0x0c: c.vol = (m.flags & 0x10) ? n.arg : (n.arg >> 4) * 10 + (n.arg & 15); this.vol(s, c, i, t); break;
+          case 0x09: if (n.arg && n.arg <= 0x20) s.speed = n.arg; break;
+          case 0x0b: s.jump = n.arg; break;
+          case 0x0f:
+            if (n.arg === 0) s.brk = 0;
+            else if (n.arg <= 0xf0) s.tempo = n.arg;
+            else if (n.arg === 0xff) { if (c.src) try { c.src.stop(t); } catch { } c.src = null; }
+            else if (n.arg === 0xfe) { s.pos = 0; s.line = -1; }
+            break;
+        }
+      });
+    } else {
+      blk.rows[s.line] && s.ch.forEach((c, i) => {
+        const a = c.arg;
+        switch (c.cmd) {
+          case 0x00: if (a && c.src) { const k = s.tick % 3, n = k === 0 ? 0 : k === 1 ? a >> 4 : a & 15; c.per = c.base * Math.pow(2, -n / 12); this.rate(c, t); } break;
+          case 0x01: c.per = Math.max(113, c.per - a); this.rate(c, t); break;
+          case 0x02: c.per = Math.min(1712, c.per + a); this.rate(c, t); break;
+          case 0x03: if (c.target) { c.per = c.per < c.target ? Math.min(c.target, c.per + a) : Math.max(c.target, c.per - a); this.rate(c, t); } break;
+          case 0x0d: case 0x05: case 0x06: c.vol = Math.max(0, Math.min(64, c.vol + ((a >> 4) || -(a & 15)))); this.vol(s, c, i, t); break;
+        }
+      });
+    }
+    if (++s.tick >= s.speed) {
+      s.tick = 0;
+      if (s.jump != null) { s.pos = s.jump % m.seq.length; s.line = 0; s.jump = null; s.brk = -1; return; }
+      if (s.brk >= 0) { s.brk = -1; s.line = 0; s.pos = (s.pos + 1) % m.seq.length; return; }
+      if (++s.line >= blk.rows.length) { s.line = 0; s.pos = (s.pos + 1) % m.seq.length; }
+    }
+  },
+};
+
+// ===== Lemmings 2 player: world building from tiles/objects, sprites, UI =====
+const CW = 640, CH = 400, VW = 320, VH = 160, PANEL_Y = 336;
+const cv = document.getElementById('screen'), ctx = cv.getContext('2d');
+cv.width = CW * 2; cv.height = CH * 2;
+const SKILL_MAP = { Climber: SK.CLIMB, Floater: SK.FLOAT, Parachute: SK.FLOAT, Exploder: SK.BOMB, Blocker: SK.BLOCK, Builder: SK.BUILD, Basher: SK.BASH, 'Club Basher': SK.BASH, Miner: SK.MINE, Scooper: SK.MINE, Digger: SK.DIG };
+const ICON_ANIM = {'Jumper': 'LM01', 'Runner': 'LM02', 'Filler': 'LM03', 'Ballooner': 'LM04', 'Archer': 'LM05', 'Attractor': 'LM06', 'Bomber': 'LM07', 'Scooper': 'LM08', 'Hopper': 'LM09', 'Skater': 'LM0A', 'Kayaker': 'LM0B', 'Swimmer': 'LM0C', 'Roller': 'LM0D', 'Magic Carpet': 'LM0E', 'Club Basher': 'LM0F', 'Thrower': 'LM10', 'Digger': 'LM11', 'Climber': 'LM12', 'Builder': 'LM13', 'Basher': 'LM14', 'Miner': 'LM15', 'Floater': 'LM16', 'Laser Blaster': 'LM17', 'Exploder': 'LM18', 'Magno Boots': 'LM19', 'Bazooker': 'LM1A', 'Spearer': 'LM1B', 'Fencer': 'LM1C', 'Stomper': 'LM1D', 'Skier': 'LM1E', 'Stacker': 'LM1F', 'Pole Vaulter': 'LM20', 'Mortar': 'LM21', 'Platformer': 'LM22', 'Diver': 'LM23', 'Flame Thrower': 'LM24', 'Super Lem!': 'LM25', 'Surfer': 'LM26', 'Planter': 'LM27', 'Parachute': 'LM28', 'Slider': 'LM29', 'Rock Climber': 'LM2A', 'Jet Pack': 'LM2B', 'Shimmier': 'LM2C', 'Roper': 'LM2D', 'Twister': 'LM2E', 'Sand Pourer': 'LM2F', 'Glue Pourer': 'LM30', 'Icarus Wings': 'LM31', 'Hang Glider': 'LM32', 'Blocker': 'LM33' };
+
+// Lemmings 2 (Amiga PAL) runs its game logic once every 4 vblanks = 12.5 updates/s
+const TPS = 12.5;
+const Game = {
+  G: null, screen: 'boot', tribe: 0, level: 0, world: null, info: null, viewX: 0, viewY: 0,
+  slot: 0, slots: [], paused: false, fast: false, menu: false, uiSel: 0, smooth: true,
+  cursor: { x: 0, y: 0, shown: false }, pool: [], medals: (() => { try { return JSON.parse(localStorage.getItem('l2.medals') || '{}'); } catch { return {}; } })(),
+};
+
+// ---- sprites from alemms.comp, mapped onto the engine's actions
+function buildSprites(G, tribe) {
+  if (!G.anims) G.anims = L2.readAnims(G.files['alemms.comp']);
+  const by = {}; for (const a of G.anims) by[a.name] = a;
+  const conv = f => f.map(v => v === 0 ? 255 : v);
+  const A = (name, from = 0, n, dy) => { const a = by[name]; const fr = a.frames.slice(from, n ? from + n : undefined).map(conv); return { h: a.h, frames: fr, dy: dy ?? -a.h }; };
+  const half = (name, right) => { const a = by[name], n = a.frames.length >> 1; return A(name, right ? 0 : n, n); };
+  const exitName = 'LM' + (0x50 + tribe).toString(16).toUpperCase();
+  const S = {
+    walkR: half('LM01', 1), walkL: half('LM01', 0), jumpR: A('LM01', 0, 1), jumpL: A('LM01', 5, 1), fallR: half('LM40', 1), fallL: half('LM40', 0),
+    climbR: half('LM12', 1), climbL: half('LM12', 0), hoistR: half('LM12', 1), hoistL: half('LM12', 0), floatR: half('LM16', 1), floatL: half('LM16', 0),
+    dig: A('LM11'), buildR: half('LM13', 1), buildL: half('LM13', 0), bashR: half('LM14', 1), bashL: half('LM14', 0), mineR: half('LM15', 1), mineL: half('LM15', 0),
+    block: A('LM33'), splat: A('LM80'), drown: A('LM5D'), fry: A('LM7E'), shrugR: half('LM7B', 1), shrugL: half('LM7B', 0), ohno: A('LM18'), exit: A(by[exitName] ? exitName : 'LM50'),
+  };
+  // terrain-removal masks (1 = clear), shaped like the originals
+  const mk = (h, fn) => { const m = new Uint8Array(16 * h); for (let y = 0; y < h; y++) for (let x = 0; x < 16; x++) m[y * 16 + x] = fn(x, y) ? 1 : 0; return m; };
+  const bashR = [0, 1, 2, 3].map(f => mk(10, (x, y) => x >= 8 && x <= 11 + f && y >= 1 && y <= 9 && !(y === 1 && x > 10 + f)));
+  const bashL = bashR.map(m => mk(10, (x, y) => m[y * 16 + 15 - x]));
+  const mineR = [0, 1].map(f => mk(13, (x, y) => { const dx = x - 9, dy = y - 6.5; return dx * dx / 30 + dy * dy / 36 < 1 && x >= 4 + f; }));
+  const mineL = mineR.map(m => mk(13, (x, y) => m[y * 16 + 15 - x]));
+  S.masks = { bashR, bashL, mineR, mineL };
+  Game.XS = {};
+  for (const [name, d] of Object.entries(XSKILL)) {
+    if (!d.anim || !by[d.anim]) continue;
+    const a = by[d.anim], n = a.frames.length;
+    Game.XS[name] = n % 2 === 0 && n >= 4 ? { R: half(d.anim, 1), L: half(d.anim, 0) } : { all: A(d.anim) };
+  }
+  Game.XS._dance = (() => { const n = 'LM' + (0x43 + (tribe % 11)).toString(16).toUpperCase(); return by[n] ? { R: half(n, 1), L: half(n, 0) } : null; })(); Game.XS._tumble = { R: half('LM41', 1), L: half('LM41', 0) }; Game.XS._stun = { R: half('LM42', 1), L: half('LM42', 0) };
+  return S;
+}
+
+// ---- level → World
+function levelOf(G, t, k) { return t === 'p' ? G.tribes.practice[k] : G.tribes[t][k]; }
+function buildWorld(G, t, k, count) {
+  const lv = levelOf(G, t, k), st = L2.styleFull(G, lv.tribe);
+  LW = lv.W * 16; LH = lv.H * 8;
+  const P = st.pal.map(c => (255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0]);
+  const cells = Uint16Array.from(lv.cells), flags = Uint16Array.from(lv.flags);
+  const overlays = [], entrances = [], exits = [], traps = [], waters = [];
+  for (const o of lv.objects) {
+    const rec = st.obj.recs[o.type]; if (!rec) continue;
+    for (const part of rec.parts) {
+      const reps = (part.fl & 0x2000) ? (o.d5 & 0xff) + 1 : 1, repsY = (part.fl & 0x1000) ? (o.d6 & 0xff) + 1 : 1;
+      for (let ry = 0; ry < repsY; ry++) for (let rx = 0; rx < reps; rx++) {
+        const X = ((part.fl & 0x8000) ? 0 : o.x) + part.dx * (rx + 1) - (reps > 1 ? 0 : 0) - (rx === 0 ? 0 : 0), Y = ((part.fl & 0x4000) ? 0 : o.y) + part.dy + ry * 8;
+        let px = reps > 1 ? o.x + part.dx * rx : X;
+        // 'tiled' parts (abs+repeat bits together, e.g. steel plates): dx/dy are the tile step, placed relative to the object
+        let Yt = Y;
+        const hi = part.fl & 0xf000;
+        if (hi === 0xf000 || hi === 0xa000) px = o.x + part.dx * (reps > 1 ? rx : 1);
+        if (hi === 0xf000) Yt = o.y + part.dy * ry;
+        if (part.d4 === 0x8000) {
+          if (rec.kind === 3) exits.push({ x: px, y: Y });
+          else if (rec.kind === 9 || rec.kind === 10 || rec.kind === 14) traps.push({ x: px, y: Y });
+          else if (rec.kind === 11) waters.push({ x: px, y: Y });
+          continue;
+        }
+        if (part.d4 & 0x2000) continue;
+        const b = st.obj.blocks[part.d4 & 0xff]; if (!b) continue;
+        const c0 = px >> 4, r0 = Yt >> 3, overlay = !!(part.d3 & 0x40000000);
+        const ob = { b, c0, r0, frame: 0, anim: b.frames.length > 1, type: o.type };
+        if (overlay) overlays.push(ob);
+        else for (let r = 0; r < b.h; r++) for (let c = 0; c < b.w; c++) {
+          const v = b.frames[0][r * b.w + c], R = r0 + r, C = c0 + c;
+          if (v && R >= 0 && R < lv.H && C >= 0 && C < lv.W) { cells[R * lv.W + C] = v; flags[R * lv.W + C] = (part.d3 >>> 16) & 0xffff; }
+        }
+        if (rec.kind === 2 && rx === 0 && ry === 0 && !entrances.some(e => e.ob === ob)) entrances.push({ x: c0 * 16 + b.w * 8 - 24, y: r0 * 8 + b.h * 8 - 16, ob });
+        if (rec.kind === 3 && !rec.parts.some(q => q.d4 === 0x8000) && rx === 0 && ry === 0) exits.push({ x: c0 * 16 + b.w * 8 - 8, y: r0 * 8 + b.h * 8 - 2 });
+      }
+    }
+  }
+  // fake level for the engine
+  const fake = { terrain: [], objects: [], steel: [], skills: [0, 0, 0, 0, 0, 0, 0, 0], releaseRate: 60, count, need: 0, time: lv.time || 9, startX: 0 };
+  const w = new World(fake, { pal: st.pal, terrain: [], objects: [] }, null, Game.S);
+  for (let r = 0; r < lv.H; r++) for (let c = 0; c < lv.W; c++) {
+    const id = cells[r * lv.W + c]; if (!id || id >= st.tiles.length) continue;
+    const f = flags[r * lv.W + c], solid = !(f & 0x4000), steel = !!(f & 0x1000), tile = st.tiles[id];
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 16; x++) {
+      const v = tile[y * 16 + x]; if (!v) continue;
+      const i = (r * 8 + y) * LW + c * 16 + x;
+      if (solid) { w.rgba[i] = P[v]; w.solid[i] = 1; if (steel) w.steel[i] = 1; } else w.rgba[i] = w.rgba[i] || P[v];
+    }
+  }
+  w.packPal = P; w.overlays = overlays; w.P = P; w.st = st; w.bg = P[0];
+  w.entrances = entrances.map(e => ({ x: e.x, y: e.y, ob: e.ob, info: { frames: e.ob.b.frames.length }, frame: 0, owner: 0 }));
+  for (const t of waters) w.triggers.push({ type: 5, x1: t.x, x2: t.x + 16, y1: t.y, y2: t.y + 8, obj: {}, until: 0 });
+  for (const t of traps) w.triggers.push({ type: 6, x1: t.x, x2: t.x + 16, y1: t.y - 4, y2: t.y + 10, obj: {}, until: 0 });
+  for (const e of exits) w.triggers.push({ type: 1, x1: e.x - 4, x2: e.x + 20, y1: e.y - 12, y2: e.y + 6, obj: {}, until: 0, exitOwner: 0 });
+  w.lv2 = lv; w.minRate = w.rate = 60;
+  return w;
+}
+
+// ---- smoothing
+function scale2x(src, w, h) {
+  const out = new Uint32Array(w * h * 4), W2 = w * 2;
+  for (let y = 0; y < h; y++) { const yu = y ? y - 1 : y, yd = y < h - 1 ? y + 1 : y;
+    for (let x = 0; x < w; x++) { const E = src[y * w + x], B = src[yu * w + x], H = src[yd * w + x], D = src[y * w + (x ? x - 1 : x)], F = src[y * w + (x < w - 1 ? x + 1 : x)], o = y * 2 * W2 + x * 2;
+      if (B !== H && D !== F) { out[o] = D === B ? D : E; out[o + 1] = B === F ? F : E; out[o + W2] = D === H ? D : E; out[o + W2 + 1] = H === F ? F : E; } else out[o] = out[o + 1] = out[o + W2] = out[o + W2 + 1] = E; } }
+  return out;
+}
+const fb = new Uint32Array(VW * VH), big = document.createElement('canvas'); big.width = VW * 4; big.height = VH * 4;
+const bctx = big.getContext('2d'), bimg = bctx.createImageData(VW * 4, VH * 4), b32 = new Uint32Array(bimg.data.buffer);
+const small = document.createElement('canvas'); small.width = VW; small.height = VH; const sctx = small.getContext('2d'), simg = sctx.createImageData(VW, VH), s32 = new Uint32Array(simg.data.buffer);
+
+// ---- drawing
+const FONT = s => `bold ${s}px "Lucida Console","Courier New",monospace`;
+function text(s, x, y, size = 16, color = '#0d0', align = 'left') { ctx.font = FONT(size); ctx.textAlign = align; ctx.textBaseline = 'top'; ctx.fillStyle = '#000'; ctx.fillText(s, x + 2, y + 2); ctx.fillStyle = color; ctx.fillText(s, x, y); }
+let widgets = [];
+function button(id, label, x, y, w, h, opt = {}) {
+  const i = widgets.length; widgets.push({ id, x, y, w, h });
+  const sel = Game.uiSel === i, hov = Game.cursor.shown && Game.cursor.x >= x && Game.cursor.x < x + w && Game.cursor.y >= y && Game.cursor.y < y + h;
+  ctx.fillStyle = opt.bg || '#101830'; ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = sel ? '#ff4' : hov ? '#8f8' : '#4a5'; ctx.lineWidth = sel ? 3 : 1.5; ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  if (label) text(label, x + w / 2, y + (h - (opt.size || 15)) / 2, opt.size || 15, opt.color || '#0d0', 'center');
+}
+function hit(x, y) { for (let i = widgets.length - 1; i >= 0; i--) { const w = widgets[i]; if (x >= w.x && x < w.x + w.w && y >= w.y && y < w.y + w.h) return i; } return -1; }
+
+function drawSpriteIcon(name, x, y, scale, P) {
+  const a = Game.G.anims.find(a => a.name === name); if (!a) return;
+  const f = a.frames[Math.min(a.frames.length - 1, (a.frames.length >> 2))];
+  for (let yy = 0; yy < a.h; yy++) for (let xx = 0; xx < 16; xx++) { const v = f[yy * 16 + xx]; if (v) { ctx.fillStyle = `rgb(${P[v]})`; ctx.fillRect(x + xx * scale, y + yy * scale, scale, scale); } }
+}
+
+function renderLevel() {
+  const w = Game.world, vx = Game.viewX | 0, vy = Game.viewY | 0, P = w.P;
+  fb.fill(w.bg || 0xff000000);
+  for (let y = 0; y < VH; y++) { const Y = vy + y; if (Y < 0 || Y >= LH) continue; for (let x = 0; x < VW; x++) { const X = vx + x; if (X >= 0 && X < LW) { const c = w.rgba[Y * LW + X]; if (c) fb[y * VW + x] = c; } } }
+  const put = (X, Y, c) => { const x = X - vx, y = Y - vy; if (x >= 0 && x < VW && y >= 0 && y < VH) fb[y * VW + x] = c; };
+  // animated object overlays (hatches, exits, decorations)
+  const st = w.st;
+  for (const o of w.overlays) {
+    const fr = o.b.frames[o.frame % o.b.frames.length];
+    for (let r = 0; r < o.b.h; r++) for (let c = 0; c < o.b.w; c++) {
+      const id = fr[r * o.b.w + c]; if (!id || id >= st.tiles.length) continue;
+      const tile = st.tiles[id], X0 = (o.c0 + c) * 16, Y0 = (o.r0 + r) * 8;
+      if (X0 + 16 < vx || X0 > vx + VW || Y0 + 8 < vy || Y0 > vy + VH) continue;
+      for (let y = 0; y < 8; y++) for (let x = 0; x < 16; x++) { const v = tile[y * 16 + x]; if (v) put(X0 + x, Y0 + y, P[v]); }
+    }
+  }
+  for (const l of w.lems) {
+    if (l.removed) continue;
+    if (l.action === 'explode') { if (l.particles && l.frame < 52) for (const q of l.particles) put(Math.round(l.x + q[0]), Math.round(l.y + q[1]), P[q[4]]); continue; }
+    const s = w.spriteOf(l); if (!s) continue;
+    const x0 = l.x - 8, y0 = l.y + s.dy;
+    for (let y = 0; y < s.h; y++) for (let x = 0; x < 16; x++) { const v = s.img[y * 16 + x]; if (v !== 255) put(x0 + x, y0 + y, P[v]); }
+    if (l.countdown > 0) { const n = Math.ceil(l.countdown / 16); Game.countLabels.push([l.x, y0 - 6, n]); }
+  }
+  for (const l of w.lems) if (!l.removed && l.action === 'laser' && l.beam !== undefined) {   // laser beam
+    const x0 = l.right ? l.x + 1 : l.x - 3, top = l.y - 17 - (l.beam + 1) * 8 + 8;
+    for (let y = l.y - 12; y >= top; y--) if ((y + w.tick) % 3) { put(x0, y, 0xff40ffff); put(x0 + 1, y, 0xffffffff); }
+  }
+  for (const l of w.lems) if (!l.removed && l.action === 'rope' && l.ph === 2) {   // rope in flight
+    const hx = l.x + (l.right ? 4 : -4), hy = l.y - 8, n = Math.ceil(l.rlen), c = w.packPal[3];
+    for (let t = 0; t <= n; t++) put(Math.round(hx + l.rvx * t), Math.round(hy + l.rvy * t), c);
+  }
+  if (w.parts2) for (const g of w.parts2) { put(Math.round(g.x), Math.round(g.y), g.c); if (g.kind !== 'grain' && g.kind !== 'goo') { put(Math.round(g.x - Math.sign(g.vx)), Math.round(g.y), g.c); put(Math.round(g.x - 2 * Math.sign(g.vx)), Math.round(g.y), g.c); } }
+  if (Game.smooth) {
+    b32.set(scale2x(scale2x(fb, VW, VH), VW * 2, VH * 2)); bctx.putImageData(bimg, 0, 0);
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(big, 0, 0, 1280, 640); ctx.restore();
+  } else { s32.set(fb); sctx.putImageData(simg, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(small, 0, 0, 640, 320); }
+  for (const [x, y, n] of Game.countLabels) text(String(n), (x - vx) * 2, (y - vy) * 2 - 10, 12, '#fff', 'center');
+  Game.countLabels.length = 0;
+}
+function slotRect(i) { return { x: i * 44 + 2, y: PANEL_Y + 2, w: 42, h: 60 }; }
+function renderPanel() {
+  const w = Game.world, P = w.st.pal;
+  ctx.fillStyle = '#18100a'; ctx.fillRect(0, 320, CW, CH - 320);
+  // status
+  const lemsLeft = w.toRelease, saved = w.saved;
+  const hov = Game.hover ? `${w.actionName(Game.hover)}  ` : '';
+  const secs = Math.ceil(w.timeLeft / TPS), tm = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+  text(`${hov}OUT ${w.out}   HOME ${saved}   TO COME ${lemsLeft}`, 8, 322, 13, '#8f8');
+  text(`TIME ${tm}`, 520, 322, 13, secs <= 30 ? '#f66' : '#8f8');
+  if (w.aimer && !w.aimer.removed && w.aimer.ph === 1) text(w.aimer.action === 'shoot' ? `ARCHER: CLICK TO FIRE (${w.aimer.arrows} LEFT)` : 'ROPER AIMING: CLICK TO FIRE', 250, 322, 13, '#ff4');
+  if (Game.fast) text('>>', 490, 322, 13, '#ff4');
+  // skill slots
+  Game.slots.forEach((s, i) => {
+    const r = slotRect(i), sel = i === Game.slot;
+    ctx.fillStyle = sel ? '#3a5a20' : '#2a2014'; ctx.fillRect(r.x, r.y, r.w, r.h);
+    ctx.strokeStyle = sel ? '#ff4' : '#654'; ctx.lineWidth = sel ? 3 : 1; ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+    if (s.icon) drawSpriteIcon(s.icon, r.x + 5, r.y + 18, 2, P);
+    text(s.count > 0 ? String(s.count) : '', r.x + r.w / 2, r.y + 2, 13, s.sk == null ? '#888' : '#fff', 'center');
+    if (s.sk == null) { ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(r.x, r.y, r.w, r.h); }
+  });
+  // buttons: pause/menu, fast, nuke
+  const bx = 8 * 44 + 6;
+  [['❚❚', 'menu'], ['>>', 'fast'], ['☢', 'nuke'], ['✇', 'fan']].forEach(([lab], i) => {
+    const x = bx + i * 34; ctx.fillStyle = (i === 2 && Game.nukeArm > performance.now()) ? '#a22' : (i === 3 && Game.fan) ? '#2a6a8a' : '#2a2014'; ctx.fillRect(x, PANEL_Y + 2, 32, 60);
+    ctx.strokeStyle = '#654'; ctx.strokeRect(x + 0.5, PANEL_Y + 2.5, 31, 59); text(lab, x + 16, PANEL_Y + 24, 15, '#fd8', 'center');
+  });
+  // minimap
+  const mx = bx + 4 * 34 + 4, mw = CW - mx - 4, mh = 60, my = PANEL_Y + 2;
+  if (!Game.mini || Game.miniDirty) { Game.mini = makeMini(); Game.miniDirty = false; }
+  const s = Math.min(mw / LW, mh / LH), dw = LW * s, dh = LH * s, ox = mx + (mw - dw) / 2, oy = my + (mh - dh) / 2;
+  Game.miniRect = { x: ox, y: oy, s };
+  ctx.fillStyle = '#000'; ctx.fillRect(mx, my, mw, mh); ctx.imageSmoothingEnabled = true; ctx.drawImage(Game.mini, ox, oy, dw, dh); ctx.imageSmoothingEnabled = false;
+  for (const l of w.lems) if (!l.removed) { ctx.fillStyle = '#ff0'; ctx.fillRect(ox + l.x * s - 1, oy + l.y * s - 2, 2, 2); }
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(ox + Game.viewX * s, oy + Game.viewY * s, VW * s, VH * s);
+  if (Game.hint) text(Game.hint, 8, 322, 13, '#ff4');
+}
+function makeMini() {
+  const w = Game.world, c = document.createElement('canvas'); c.width = Math.ceil(LW / 4); c.height = Math.ceil(LH / 4);
+  const cx = c.getContext('2d'), id = cx.createImageData(c.width, c.height), u = new Uint32Array(id.data.buffer);
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) { const v = w.rgba[(y * 4) * LW + x * 4]; u[y * c.width + x] = v || w.bg; }
+  cx.putImageData(id, 0, 0); return c;
+}
+
+// ---- screens
+function drawTitle() {
+  widgets = []; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, CW, CH);
+  text('LEMMINGS 2: THE TRIBES', 320, 14, 24, '#5f5', 'center');
+  text('Choose a tribe', 320, 48, 15, '#fff', 'center');
+  L2.TRIBE_NAMES.forEach((n, i) => {
+    const x = 20 + (i % 4) * 152, y = 76 + (i / 4 | 0) * 70;
+    const medals = Array.from({ length: 10 }, (_, k) => Game.medals[i + ':' + k] || 0), got = medals.filter(Boolean).length;
+    button('tribe' + i, '', x, y, 144, 62, { bg: i === 0 ? '#14301a' : '#101830' });
+    text(n, x + 72, y + 8, 16, i === 0 ? '#8f8' : '#9bf', 'center');
+    text(i === 0 ? 'all skills' : 'most skills', x + 72, y + 30, 10, i === 0 ? '#bfb' : '#bcd', 'center');
+    text(`${got}/10 done`, x + 72, y + 44, 10, '#cc8', 'center');
+  });
+  button('practice', 'Practice levels', 170, 292, 300, 34);
+  text('Greyed-out skills (Roper, Shimmier, Kayaker, Skater…) are still to come.', 320, 340, 10, '#9ab', 'center');
+}
+function drawLevels() {
+  widgets = []; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, CW, CH);
+  const t = Game.tribe, lvls = t === 'p' ? Game.G.tribes.practice : Game.G.tribes[t];
+  text(t === 'p' ? 'Practice levels' : L2.TRIBE_NAMES[t] + ' tribe', 320, 8, 20, '#fff', 'center');
+  if (t !== 'p') text(`Lemmings in the tribe: ${Game.pool[t]}`, 320, 34, 13, '#8f8', 'center');
+  else text('Practice levels have no exit: try out the skills, then nuke or press Esc', 320, 34, 12, '#8cf', 'center');
+  lvls.forEach((lv, k) => {
+    const x = 20 + (k % 2) * 306, y = 56 + (k >> 1) * 56, m = Game.medals[t + ':' + k];
+    button('lvl' + k, '', x, y, 296, 50, { bg: m ? '#14301a' : '#101830' });
+    text(`${k + 1}. ${lv.name}`, x + 8, y + 6, 13, '#ff8');
+    text(lv.skillNames.join(', ').slice(0, 44), x + 8, y + 26, 9, '#9ab');
+    if (m) text(['', 'BRONZE', 'SILVER', 'GOLD'][m], x + 288, y + 6, 10, ['', '#c84', '#ccd', '#fd4'][m], 'right');
+  });
+  button('back', 'Back', 250, 352, 140, 36);
+}
+function drawResults() {
+  widgets = []; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, CW, CH);
+  const r = Game.result;
+  text(r.title, 320, 50, 22, '#fff', 'center');
+  text(`You saved ${r.saved} of ${r.count} lemmings`, 320, 110, 20, '#4f4', 'center');
+  text(r.medal ? `${['', 'Bronze', 'Silver', 'Gold'][r.medal]} medal!` : 'No medal this time', 320, 150, 20, ['#aaa', '#c84', '#ccd', '#fd4'][r.medal], 'center');
+  if (Game.tribe !== 'p') text(`${Game.pool[Game.tribe]} lemmings go on to the next level`, 320, 190, 14, '#9cf', 'center');
+  button('next', Game.level < 9 && Game.pool[Game.tribe] > 0 ? 'Next level' : 'Back to levels', 170, 240, 300, 42);
+  button('retry', 'Retry this level', 170, 292, 300, 38);
+}
+function drawMenu() {
+  const items = [['resume', 'Resume'], ['restart', 'Restart level'], ['fast', 'Speed: ' + (Game.fast ? 'Fast (F)' : 'Normal (F)')], ['gfx', 'Graphics: ' + (Game.smooth ? 'Smooth' : 'Pixels')], ['music', 'Music: ' + (Audio2.musicOn ? 'On' : 'Off')], ['sfx', 'Sound effects: ' + (Audio2.sfxOn ? 'On' : 'Off')], ['levels', 'Choose a level'], ['full', document.fullscreenElement ? 'Leave fullscreen' : 'Fullscreen'], ['disks', 'Load other disks']];
+  widgets = []; ctx.fillStyle = 'rgba(0,0,0,.8)'; ctx.fillRect(0, 0, CW, CH);
+  text('PAUSED', 320, 40, 20, '#ff4', 'center');
+  items.forEach(([id, l], i) => button('m_' + id, l, 170, 66 + i * 36, 300, 31));
+}
+
+// ---- game flow
+function startLevel(t, k) {
+  Game.tribe = t; Game.level = k;
+  const lv = levelOf(Game.G, t, k);
+  Game.S = buildSprites(Game.G, lv.tribe);
+  const count = t === 'p' ? 20 : Math.max(1, Game.pool[t]);
+  const w = Game.world = buildWorld(Game.G, t, k, count);
+  Game.slots = lv.skillNames.map((n, i) => ({ name: n, sk: SKILL_MAP[n] ?? null, xs: SKILL_MAP[n] == null && XSKILL[n] ? n : null, count: lv.counts[i], icon: ICON_ANIM[n] || (XSKILL[n] && XSKILL[n].anim) || 'LM01' }));
+  Game.slots.forEach(s => { if (s.xs) s.sk = -1; });
+  Game.slot = Math.max(0, Game.slots.findIndex(s => s.sk != null));
+  const e = w.entrances[0] || { x: 0, y: 0 };
+  Game.viewX = clampX(e.x + 24 - VW / 2); Game.viewY = clampY(e.y - VH / 3);
+  Game.paused = false; Game.menu = false; Game.acc = 0; Game.miniDirty = true; Game.screen = 'game'; Game.countLabels = [];
+  Audio2.unlock(); Audio2.playTune(Game.G.files[L2.TRIBES[lv.tribe] + '/tune']);
+}
+const clampX = v => Math.max(Math.min(0, LW - VW), Math.min(Math.max(0, LW - VW), v));
+const clampY = v => Math.max(Math.min(0, LH - VH), Math.min(Math.max(0, LH - VH), v));
+function finishLevel() {
+  const w = Game.world, count = w.lv.count, saved = w.saved;
+  const medal = saved >= count ? 3 : saved >= count * 0.75 ? 2 : saved >= count * 0.5 ? 1 : 0;
+  Game.result = { title: w.done === 'nuke' ? 'Nuked!' : 'Level over', saved, count, medal };
+  if (Game.tribe !== 'p') {
+    Game.pool[Game.tribe] = saved;
+    const key = Game.tribe + ':' + Game.level; Game.medals[key] = Math.max(Game.medals[key] || 0, medal);
+    try { localStorage.setItem('l2.medals', JSON.stringify(Game.medals)); localStorage.setItem('l2.pool', JSON.stringify(Game.pool)); } catch { }
+  }
+  Game.screen = 'results'; Game.uiSel = 0; Audio2.stopTune();
+  if (medal) Audio2.play(['', 'FFBronze2', 'FFSilver2', 'FFGold2'][medal]);
+}
+function activate(id) {
+  if (id.startsWith('tribe')) { Game.tribe = +id.slice(5); Game.screen = 'levels'; Game.uiSel = 0; return; }
+  if (id === 'practice') { Game.tribe = 'p'; Game.screen = 'levels'; Game.uiSel = 0; return; }
+  if (id.startsWith('lvl')) {
+    const k = +id.slice(3);
+    if (Game.tribe !== 'p' && k === 0 && Game.pool[Game.tribe] <= 0) Game.pool[Game.tribe] = 60;
+    startLevel(Game.tribe, k); return;
+  }
+  if (id.startsWith('m_')) {
+    const m = id.slice(2);
+    if (m === 'resume') { Game.menu = false; Game.paused = false; }
+    if (m === 'restart') startLevel(Game.tribe, Game.level);
+    if (m === 'fast') Game.fast = !Game.fast;
+    if (m === 'gfx') Game.smooth = !Game.smooth;
+    if (m === 'music') Audio2.toggleMusic(Game.G.files[L2.TRIBES[levelOf(Game.G, Game.tribe, Game.level).tribe] + '/tune']);
+    if (m === 'sfx') Audio2.sfxOn = !Audio2.sfxOn;
+    if (m === 'levels') { Game.menu = false; Game.screen = 'levels'; Game.uiSel = 0; Audio2.stopTune(); }
+    if (m === 'full') { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); }
+    if (m === 'disks') { Game.menu = false; document.getElementById('boot').classList.add('show'); Game.screen = 'boot'; }
+    return;
+  }
+  if (id === 'back') { Game.screen = 'title'; Game.uiSel = 0; }
+  if (id === 'next') { if (Game.level < 9 && Game.tribe !== 'p' && Game.pool[Game.tribe] > 0) startLevel(Game.tribe, Game.level + 1); else if (Game.tribe === 'p' && Game.level < 3) startLevel('p', Game.level + 1); else { Game.screen = 'levels'; Game.uiSel = 0; } }
+  if (id === 'retry') startLevel(Game.tribe, Game.level);
+}
+
+// ---- input
+const toCanvas = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * CW / r.width, y: (e.clientY - r.top) * CH / r.height }; };
+let drag = null;
+function assignAt(x, y, reach) {
+  { const w = Game.world, r = w && w.aimer; if (r && !r.removed && (r.action === 'rope' || r.action === 'shoot') && r.ph === 1) { r.fire = true; return; } }   // a Roper is aiming: this click fires the rope
+  const w = Game.world, s = Game.slots[Game.slot]; if (!s || s.sk == null || s.count <= 0) return;
+  const l = w.lemmingAt(Game.viewX + x / 2, Game.viewY + y / 2, reach); if (!l) return;
+  if (s.xs) { if (xAssign(w, l, s.xs)) { s.count--; Audio2.event({ name: s.xs === 'Super Lem!' ? 'super' : /Jump|Hop|Vault/.test(s.xs) ? 'hup' : 'assign' }); } return; }
+  w.skillsP[0][s.sk] = 1; if (w.assign(l, s.sk)) s.count--; w.skillsP[0][s.sk] = 0;
+  w.events.forEach(e => Audio2.event(e)); w.events.length = 0;
+}
+function panelPress(x, y) {
+  for (let i = 0; i < Game.slots.length; i++) { const r = slotRect(i); if (x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) { Game.slot = i; return true; } }
+  const bx = 8 * 44 + 6;
+  if (y >= PANEL_Y && x >= bx && x < bx + 136) {
+    const b = (x - bx) / 34 | 0;
+    if (b === 3) { Game.fan = !Game.fan; return true; }
+    if (b === 0) { Game.menu = true; Game.paused = true; Game.uiSel = 0; }
+    if (b === 1) Game.fast = !Game.fast;
+    if (b === 2) { if (Game.nukeArm > performance.now()) { Game.world.nuke(0); Game.nukeArm = 0; } else Game.nukeArm = performance.now() + 1500; }
+    return true;
+  }
+  if (Game.miniRect && y >= PANEL_Y && x >= bx + 140) { const m = Game.miniRect; Game.viewX = clampX((x - m.x) / m.s - VW / 2); Game.viewY = clampY((y - m.y) / m.s - VH / 2); return true; }
+  return y >= 320;
+}
+cv.addEventListener('pointerdown', e => {
+  if (Game.G) Audio2.unlock();
+  const p = toCanvas(e); Game.cursor = { ...p, shown: true }; Game.lastPointer = e.pointerType;
+  try { cv.setPointerCapture(e.pointerId); } catch { }
+  drag = { x0: p.x, y0: p.y, vx: Game.viewX, vy: Game.viewY, moved: false, panel: false };
+  if (Game.screen === 'game' && !Game.menu) {
+    if (p.y >= 320) { drag.panel = panelPress(p.x, p.y); return; }
+    if (Game.fan && e.button === 0) { Game.blowing = true; drag.fan = true; return; }
+    if (e.pointerType === 'mouse' && e.button === 0) assignAt(p.x, p.y, 3);
+    if (e.button === 2) drag.right = true;
+  }
+});
+cv.addEventListener('pointermove', e => {
+  const p = toCanvas(e); Game.cursor = { ...p, shown: true }; if (e.pointerType === 'mouse') Game.lastPointer = 'mouse';
+  if (Game.screen !== 'game' || Game.menu) { const i = hit(p.x, p.y); if (i >= 0) Game.uiSel = i; }
+  if (!drag || Game.screen !== 'game' || Game.menu || drag.panel) return;
+  if ((e.pointerType === 'touch' || drag.right) && (Math.abs(p.x - drag.x0) + Math.abs(p.y - drag.y0) > 12 || drag.moved)) {
+    drag.moved = true; Game.viewX = clampX(drag.vx - (p.x - drag.x0) / 2); Game.viewY = clampY(drag.vy - (p.y - drag.y0) / 2);
+  }
+});
+cv.addEventListener('pointerup', e => {
+  const p = toCanvas(e), d = drag; drag = null; Game.blowing = false;
+  if (d && d.fan) return;
+  if (Game.screen === 'game' && !Game.menu) { if (d && e.pointerType === 'touch' && !d.moved && !d.panel && p.y < 320) assignAt(p.x, p.y, 7); return; }
+  const i = hit(p.x, p.y); if (i >= 0) activate(widgets[i].id);
+});
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('wheel', e => { if (Game.screen !== 'game') return; e.preventDefault(); const p = toCanvas(e); if (p.y >= 320) { Game.slot = (Game.slot + (e.deltaY > 0 ? 1 : Game.slots.length - 1)) % Game.slots.length; return; } if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) Game.viewX = clampX(Game.viewX + (e.deltaX || e.deltaY) * 0.5); else Game.viewY = clampY(Game.viewY + e.deltaY * 0.5); }, { passive: false });
+const keys = {};
+addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (Game.screen === 'game') {
+    if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') { Game.menu = !Game.menu; Game.paused = Game.menu; Game.uiSel = 0; return; }
+    if (!Game.menu) {
+      if (/^[1-8]$/.test(e.key) && Game.slots[+e.key - 1]) Game.slot = +e.key - 1;
+      if (e.key === 'f' || e.key === 'F') Game.fast = !Game.fast;
+      if (e.key === 'g' || e.key === 'G') Game.smooth = !Game.smooth;
+      if (e.key === 'v' || e.key === 'V') Game.fan = !Game.fan;
+      if (e.key === ' ') { Game.paused = !Game.paused; e.preventDefault(); }
+      if (e.key === 'n' || e.key === 'N') panelPress(8 * 44 + 6 + 70, PANEL_Y + 10);
+      return;
+    }
+  }
+  if (e.key === 'Escape' && Game.screen === 'levels') { Game.screen = 'title'; Game.uiSel = 0; return; }
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) { nav(e.key); e.preventDefault(); }
+  if (e.key === 'Enter' && widgets[Game.uiSel]) activate(widgets[Game.uiSel].id);
+});
+addEventListener('keyup', e => { keys[e.key] = false; });
+function nav(k) {
+  const cur = widgets[Game.uiSel] || widgets[0]; if (!cur) return;
+  const dx = k === 'ArrowLeft' ? -1 : k === 'ArrowRight' ? 1 : 0, dy = k === 'ArrowUp' ? -1 : k === 'ArrowDown' ? 1 : 0;
+  let best = -1, bd = 1e9;
+  widgets.forEach((w, i) => { if (i === Game.uiSel) return; const vx = w.x + w.w / 2 - cur.x - cur.w / 2, vy = w.y + w.h / 2 - cur.y - cur.h / 2; if (dx && Math.sign(vx) !== dx) return; if (dy && Math.sign(vy) !== dy) return; const d = vx * vx * (dy ? 3 : 1) + vy * vy * (dx ? 3 : 1); if (d < bd) { bd = d; best = i; } });
+  if (best >= 0) Game.uiSel = best;
+}
+const padPrev = [];
+function pollPad(dt) {
+  const g = (navigator.getGamepads ? [...navigator.getGamepads()] : []).find(Boolean); if (!g) return;
+  const b = i => !!(g.buttons[i] && g.buttons[i].pressed), edge = i => b(i) && !padPrev[i];
+  const ax = g.axes[0] || 0, ay = g.axes[1] || 0, rx = g.axes[2] || 0, ry = g.axes[3] || 0;
+  if (Game.screen === 'game' && !Game.menu) {
+    if (Math.abs(ax) > .15 || Math.abs(ay) > .15) { if (!Game.cursor.shown) Game.cursor = { x: 320, y: 160, shown: true }; Game.lastPointer = 'pad'; Game.cursor.x = Math.max(0, Math.min(639, Game.cursor.x + ax * dt * .45)); Game.cursor.y = Math.max(0, Math.min(319, Game.cursor.y + ay * dt * .45)); }
+    if (Math.abs(rx) > .2) Game.viewX = clampX(Game.viewX + rx * dt * .3); if (Math.abs(ry) > .2) Game.viewY = clampY(Game.viewY + ry * dt * .3);
+    if (edge(0)) assignAt(Game.cursor.x, Game.cursor.y, 7);
+    if (edge(4)) Game.slot = (Game.slot + Game.slots.length - 1) % Game.slots.length;
+    if (edge(5)) Game.slot = (Game.slot + 1) % Game.slots.length;
+    if (edge(2)) Game.paused = !Game.paused; if (edge(3)) Game.fast = !Game.fast;
+    if (edge(9)) { Game.menu = true; Game.paused = true; Game.uiSel = 0; }
+  } else {
+    const dir = b(12) || ay < -.6 ? 'ArrowUp' : b(13) || ay > .6 ? 'ArrowDown' : b(14) || ax < -.6 ? 'ArrowLeft' : b(15) || ax > .6 ? 'ArrowRight' : null;
+    if (dir && (!pollPad.t || performance.now() - pollPad.t > 220)) { nav(dir); pollPad.t = performance.now(); } if (!dir) pollPad.t = 0;
+    if (edge(0) && widgets[Game.uiSel]) activate(widgets[Game.uiSel].id);
+    if (edge(1) || edge(9)) { if (Game.menu) { Game.menu = false; Game.paused = false; } else if (Game.screen === 'levels') Game.screen = 'title'; }
+  }
+  g.buttons.forEach((x, i) => padPrev[i] = x.pressed);
+}
+
+// ---- main loop
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(100, now - last); last = now; pollPad(dt);
+  ctx.setTransform(2, 0, 0, 2, 0, 0); ctx.imageSmoothingEnabled = false;
+  cv.style.imageRendering = Game.smooth ? 'auto' : 'pixelated';
+  if (Game.screen === 'game') {
+    const w = Game.world;
+    if (!Game.paused) {
+      Game.acc = (Game.acc || 0) + dt * (Game.fast ? 3 : 1);
+      while (Game.acc >= 1000 / TPS) {
+        Game.acc -= 1000 / TPS;
+        if (Game.fan && Game.blowing && Game.cursor.y < 320) {
+          const fx = Game.viewX + Game.cursor.x / 2, fy = Game.viewY + Game.cursor.y / 2;
+          for (const l of w.lems) if (!l.removed && Math.abs(l.y - 6 - fy) < 40 && Math.abs(l.x - fx) < 100) l.fanPush = l.x >= fx ? 1 : -1;
+        }
+        w.step();
+        // animate object overlays: hatch opens with the door timer, others loop
+        for (const e of w.events) Audio2.event(e);
+        for (const e of w.entrances) e.ob.frame = w.doorOpen ? e.ob.b.frames.length - 1 : w.doorTimer > 20 ? Math.min(e.ob.b.frames.length - 1, ((w.doorTimer - 20) >> 1) + 1) : 0;
+        if (w.tick % 3 === 0) for (const o of w.overlays) if (o.type !== 0 && o.anim) o.frame++;
+        if (w.dirty && w.tick % 8 === 0) { Game.miniDirty = true; w.dirty = false; }
+        if (w.done) { finishLevel(); break; }
+      }
+    }
+    // scrolling: keys, mouse at the edges
+    const sp = dt * 0.3;
+    if (keys.ArrowLeft || keys.a) Game.viewX = clampX(Game.viewX - sp); if (keys.ArrowRight || keys.d) Game.viewX = clampX(Game.viewX + sp);
+    if (keys.ArrowUp || keys.w) Game.viewY = clampY(Game.viewY - sp); if (keys.ArrowDown || keys.s) Game.viewY = clampY(Game.viewY + sp);
+    if (Game.cursor.shown && Game.lastPointer === 'mouse' && !Game.menu && Game.cursor.y < 320) {
+      if (Game.cursor.x < 10) Game.viewX = clampX(Game.viewX - sp); if (Game.cursor.x > CW - 10) Game.viewX = clampX(Game.viewX + sp);
+      if (Game.cursor.y < 8) Game.viewY = clampY(Game.viewY - sp); if (Game.cursor.y > 312) Game.viewY = clampY(Game.viewY + sp);
+    }
+    Game.hover = Game.cursor.shown && Game.cursor.y < 320 ? w.lemmingAt(Game.viewX + Game.cursor.x / 2, Game.viewY + Game.cursor.y / 2, Game.lastPointer === 'touch' ? 7 : 3) : null;
+    Game.hint = '';
+    if (Game.cursor.shown && Game.cursor.y >= PANEL_Y) { for (let i = 0; i < Game.slots.length; i++) { const r = slotRect(i); if (Game.cursor.x >= r.x && Game.cursor.x < r.x + r.w) Game.hint = Game.slots[i].name + (Game.slots[i].sk == null ? ' (coming soon)' : ''); } const bx = 8 * 44 + 6; if (Game.cursor.x >= bx && Game.cursor.x < bx + 136) Game.hint = ['Pause + menu', 'Fast forward', 'Nuke (click twice)', 'Fan: hold the pointer to blow floating lemmings'][(Game.cursor.x - bx) / 34 | 0]; }
+    if (Game.nukeArm > now) Game.hint = 'CLICK AGAIN TO NUKE!';
+    renderLevel(); renderPanel();
+    if (Game.paused && !Game.menu) text('PAUSED', 320, 140, 24, '#ff4', 'center');
+    if (Game.menu) drawMenu();
+  } else if (Game.screen === 'title') drawTitle();
+  else if (Game.screen === 'levels') drawLevels();
+  else if (Game.screen === 'results') drawResults();
+  else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, CW, CH); }
+  // cursor over the level
+  const over = Game.screen === 'game' && !Game.menu && Game.cursor.shown && Game.cursor.y < 320;
+  cv.style.cursor = over && Game.lastPointer === 'mouse' ? 'none' : 'default';
+  if (over && Game.lastPointer !== 'touch') {
+    const { x, y } = Game.cursor, hv = !!Game.hover && !Game.fan;
+    if (Game.fan) { ctx.strokeStyle = Game.blowing ? '#8ef' : '#fff'; ctx.lineWidth = 2; for (let r = 6; r <= (Game.blowing ? 22 : 10); r += 8) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke(); } }
+    const shape = () => { ctx.beginPath(); if (hv) ctx.rect(x - 16, y - 16, 32, 32); else { ctx.moveTo(x - 18, y); ctx.lineTo(x - 5, y); ctx.moveTo(x + 5, y); ctx.lineTo(x + 18, y); ctx.moveTo(x, y - 18); ctx.lineTo(x, y - 5); ctx.moveTo(x, y + 5); ctx.lineTo(x, y + 18); } ctx.stroke(); };
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 6; shape(); ctx.strokeStyle = hv ? '#ff4' : '#fff'; ctx.lineWidth = 2.5; shape();
+  }
+  requestAnimationFrame(frame);
+}
+
+// ---- boot
+async function readFiles(list) { const out = []; for (const f of list) { const b = await f.arrayBuffer(), u = new Uint8Array(b); if (u[0] === 0x50 && u[1] === 0x4b) out.push(...await unzip(b)); else out.push(b); } return out; }
+async function unzip(buf) {
+  const d = new Uint8Array(buf), dv = new DataView(buf), out = []; let eocd = -1;
+  for (let i = d.length - 22; i >= Math.max(0, d.length - 70000); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) return out; let p = dv.getUint32(eocd + 16, true);
+  for (let k = 0, n = dv.getUint16(eocd + 10, true); k < n; k++) {
+    const m = dv.getUint16(p + 10, true), cs = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lo = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(d.subarray(p + 46, p + 46 + nl)); p += 46 + nl + el + cl; if (!/\.adf$/i.test(name)) continue;
+    const ds = lo + 30 + dv.getUint16(lo + 26, true) + dv.getUint16(lo + 28, true), raw = d.slice(ds, ds + cs);
+    if (m === 0) out.push(raw.buffer); else if (m === 8) out.push(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+  }
+  return out;
+}
+const DB = {
+  open() { return new Promise((res, rej) => { const r = indexedDB.open('lemmings2-disks', 1); r.onupgradeneeded = () => r.result.createObjectStore('d'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); },
+  async put(v) { const db = await this.open(); return new Promise(r => { const t = db.transaction('d', 'readwrite'); t.objectStore('d').put(v, 'disks'); t.oncomplete = r; t.onerror = r; }); },
+  async get() { const db = await this.open(); return new Promise(r => { const q = db.transaction('d').objectStore('d').get('disks'); q.onsuccess = () => r(q.result); q.onerror = () => r(null); }); },
+};
+async function useDisks(bufs, remember) {
+  const g = L2.load(bufs); if (g.error) { document.getElementById('msg').textContent = g.error + ' Select all three disks together.'; return; }
+  Game.G = g; g.anims = L2.readAnims(g.files['alemms.comp']); installSkills();
+  try { Game.pool = JSON.parse(localStorage.getItem('l2.pool')) || []; } catch { Game.pool = []; }
+  for (let i = 0; i < 12; i++) if (Game.pool[i] == null) Game.pool[i] = 60;
+  if (remember) try { await DB.put(bufs); } catch { }
+  document.getElementById('boot').classList.remove('show'); Game.screen = 'title'; Game.uiSel = 0;
+}
+document.getElementById('disks').addEventListener('change', async e => useDisks(await readFiles(e.target.files), document.getElementById('remember').checked));
+document.getElementById('boot').addEventListener('dragover', e => e.preventDefault());
+document.getElementById('boot').addEventListener('drop', async e => { e.preventDefault(); useDisks(await readFiles(e.dataTransfer.files), true); });
+(async () => { try { const s = await DB.get(); if (s && s.length) { const b = document.getElementById('useSaved'); b.style.display = ''; b.onclick = () => useDisks(s, false); } } catch { } })();
+function fit() { const r = Math.min(innerWidth / CW, innerHeight / CH); cv.style.width = CW * r + 'px'; cv.style.height = CH * r + 'px'; }
+addEventListener('resize', fit); fit(); requestAnimationFrame(frame);
+
+</script><script data-goatcounter="https://gigajunky.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body></html>
